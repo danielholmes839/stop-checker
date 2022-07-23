@@ -71,16 +71,18 @@ func (b *BaseParser) NewCalendarFromGTFS(data gtfs.Calendar) Service {
 	end, _ := time.Parse(b.DateLayout, data.End)
 
 	return Service{
-		Id:        data.ServiceID,
-		Monday:    data.Monday == 1,
-		Tuesday:   data.Tuesday == 1,
-		Wednesday: data.Wednesday == 1,
-		Thursday:  data.Thursday == 1,
-		Friday:    data.Friday == 1,
-		Saturday:  data.Saturday == 1,
-		Sunday:    data.Sunday == 1,
-		Start:     start,
-		End:       end,
+		Id: data.ServiceID,
+		On: map[time.Weekday]bool{
+			time.Sunday:    data.Sunday == 1,
+			time.Monday:    data.Monday == 1,
+			time.Tuesday:   data.Tuesday == 1,
+			time.Wednesday: data.Wednesday == 1,
+			time.Thursday:  data.Thursday == 1,
+			time.Friday:    data.Friday == 1,
+			time.Saturday:  data.Saturday == 1,
+		},
+		Start: start,
+		End:   end,
 	}
 }
 

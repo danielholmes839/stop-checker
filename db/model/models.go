@@ -12,16 +12,8 @@ type Agency struct {
 }
 
 type Service struct {
-	Id        string
-	Monday    bool
-	Tuesday   bool
-	Wednesday bool
-	Thursday  bool
-	Friday    bool
-	Saturday  bool
-	Sunday    bool
-
-	// start and end date
+	Id    string
+	On    map[time.Weekday]bool
 	Start time.Time
 	End   time.Time
 }

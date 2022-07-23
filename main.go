@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"stop-checker.com/db"
 	"stop-checker.com/db/gtfs"
@@ -22,6 +23,16 @@ func main() {
 	fmt.Printf("%#v\n", route)
 
 	// routes := database.RouteIndex.Get("AK145")
-	// arrivals := database.ScheduleIndex.Get("AK145", "49-340")
+	now := time.Now().Truncate(time.Hour * 24)
+	fmt.Println("time:", now.UTC())
+
+	t1 := time.Now()
+	arrivals := database.ScheduleIndex.
+		Get("AK145", "49-340").Next(now, 20).Return()
+
+	t2 := time.Now()
+
+	fmt.Println(t2.Sub(t1))
+	fmt.Printf("records: #%d first: %#v\n", len(arrivals), arrivals[0])
 
 }
