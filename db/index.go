@@ -1,49 +1,48 @@
 package db
 
-import (
-	"container/list"
-	"fmt"
-	"time"
-)
-
 type KeyFunc[T any] func(t T) (key string)
 
-type LookupFunc[T any] func(key string) (results []T, ok bool)
-
-type InvertedIndex[T any] struct {
+type Index[T any] struct {
 	key  KeyFunc[T]
-	data map[string]*list.List
+	data map[string]T
 }
 
-func NewInvertedIndex[T any](data []T, key KeyFunc[T]) *InvertedIndex[T] {
-	now := time.Now()
-	index := &InvertedIndex[T]{
-		key:  key,
-		data: map[string]*list.List{},
+func NewIndex[T any](data []T, key KeyFunc[T]) *Index[T] {
+	index := &Index[T]{
+		data: map[string]T{},
 	}
 
 	for _, value := range data {
-		index.add(value)
+		index.data[key(value)] = value
 	}
 
-	fmt.Println("--- inverted index created", time.Since(now))
 	return index
 }
 
-func (index *InvertedIndex[T]) add(data T) {
-	key := index.key(data)
+func (index *Index[T]) Get(key string) (T, bool) {
+	result, ok := index.data[key]
+	return result, ok
+}
 
-	if _, ok := index.data[key]; !ok {
-		linkedList := list.New()
-		linkedList.PushFront(data)
-		index.data[key] = linkedList
-		return
+type InvertedIndex[T any] struct {
+	data map[string][]T
+}
+
+func NewInvertedIndex[T any](data []T, key KeyFunc[T]) *InvertedIndex[T] {
+	index := &InvertedIndex[T]{
+		data: map[string][]T{},
 	}
 
-	index.data[key].PushFront(data)
+	for _, value := range data {
+		// add values
+		k := key(value)
+		index.data[k] = append(index.data[k], value)
+	}
+
+	return index
 }
 
 func (index *InvertedIndex[T]) Get(key string) ([]T, bool) {
-	_, ok := index.data[key]
-	return []T{}, ok
+	results, ok := index.data[key]
+	return results, ok
 }

@@ -1,6 +1,8 @@
 package db
 
-import "stop-checker.com/db/model"
+import (
+	"stop-checker.com/db/model"
+)
 
 type InMemoryDB struct {
 	StopTimesByTripId *InvertedIndex[model.StopTime]
