@@ -11,37 +11,23 @@ import (
 
 func main() {
 	dataset, _ := gtfs.NewDatasetFromFilesystem("./db/data")
-	tz := dataset.TimeZone
 
-	octranspo := &model.BaseParser{
-		TimeZone:   tz,
+	base := model.NewBaseFromGTFS(dataset, &model.BaseParser{
+		TimeZone:   dataset.TimeZone,
 		TimeLayout: "15:04:05",
 		DateLayout: "20060102",
-	}
-
-	base := model.NewBaseFromGTFS(dataset, octranspo)
+	})
 
 	database := db.NewDatabase(base)
 
-	before := time.Duration(0)
-	after := time.Duration(0)
-	day := time.Duration(0)
+	geoindex := db.NewStopGeoIndex(database.BaseIndex, base, db.ResolutionConfig{
+		Level:      9,
+		EdgeLength: 174.375668,
+	})
 
-	n := time.Duration(100_000)
+	t1 := time.Now()
+	stops := geoindex.Query(model.Location{Latitude: 45.423891, Longitude: -75.6898797}, 1000)
+	dur := time.Since(t1)
 
-	for i := 0; i < int(n); i++ {
-		t1 := time.Now().In(tz)
-		_ = database.ScheduleIndex.Get("AK145", "49-340").Before(t1, 1)
-		before = before + time.Since(t1)
-
-		t1 = time.Now().In(tz)
-		_ = database.ScheduleIndex.Get("AK145", "49-340").After(t1, 3)
-		after = after + time.Since(t1)
-
-		t1 = time.Now().In(tz)
-		_ = database.ScheduleIndex.Get("AK145", "49-340").Day(t1)
-		day = day + time.Since(t1)
-	}
-
-	fmt.Println(before/n, after/n, day/n)
+	fmt.Println("results:", len(stops), "duration:", dur, "furthest:", stops[len(stops)-1].Distance)
 }
