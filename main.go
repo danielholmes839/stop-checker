@@ -23,18 +23,25 @@ func main() {
 
 	database := db.NewDatabase(base)
 
-	t1 := time.Now().In(tz)
+	before := time.Duration(0)
+	after := time.Duration(0)
+	day := time.Duration(0)
 
-	fmt.Println(t1)
-	results := database.ScheduleIndex.Get("AK145", "49-340")
+	n := time.Duration(100_000)
 
-	fmt.Println("--- next 3")
-	for _, stopTime := range results.Next(t1, 3) {
-		fmt.Printf("%#v\n", stopTime)
+	for i := 0; i < int(n); i++ {
+		t1 := time.Now().In(tz)
+		_ = database.ScheduleIndex.Get("AK145", "49-340").Before(t1, 1)
+		before = before + time.Since(t1)
+
+		t1 = time.Now().In(tz)
+		_ = database.ScheduleIndex.Get("AK145", "49-340").After(t1, 3)
+		after = after + time.Since(t1)
+
+		t1 = time.Now().In(tz)
+		_ = database.ScheduleIndex.Get("AK145", "49-340").Day(t1)
+		day = day + time.Since(t1)
 	}
 
-	fmt.Println("--- monday")
-	for _, stopTime := range results.Day(t1) {
-		fmt.Printf("%#v\n", stopTime)
-	}
+	fmt.Println(before/n, after/n, day/n)
 }
