@@ -1,0 +1,16 @@
+type Stop {
+
+}
+
+type Route {
+
+}
+
+type StopTime {
+
+}
+
+type Query {
+    # should work with route numbers, stop codes, stop name, location
+    search(text: String!): [Stop!]! 
+}
