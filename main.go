@@ -23,16 +23,19 @@ func main() {
 	fmt.Printf("%#v\n", route)
 
 	// routes := database.RouteIndex.Get("AK145")
-	now := time.Now().Truncate(time.Hour * 24)
+	now := time.Now().UTC().Truncate(time.Hour * 24)
 	fmt.Println("time:", now.UTC())
 
-	t1 := time.Now()
-	arrivals := database.ScheduleIndex.
-		Get("AK145", "49-340").Next(now, 20).Return()
+	t1 := time.Now().UTC()
+	results := database.ScheduleIndex.Get("AK145", "49-340")
 
-	t2 := time.Now()
+	fmt.Println("--- next 3")
+	for _, stopTime := range results.Next(t1, 3) {
+		fmt.Printf("%#v\n", stopTime)
+	}
 
-	fmt.Println(t2.Sub(t1))
-	fmt.Printf("records: #%d first: %#v\n", len(arrivals), arrivals[0])
-
+	fmt.Println("--- monday")
+	for _, stopTime := range results.Day(t1.Add(time.Hour * 48)) {
+		fmt.Printf("%#v\n", stopTime)
+	}
 }

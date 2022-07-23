@@ -48,8 +48,8 @@ func NewScheduleIndex(indexes *BaseIndex, base *model.Base) *ScheduleIndex {
 func (schedule *ScheduleIndex) Get(stopId, routeId string) *ScheduleResults {
 	results, _ := schedule.index.Get(fmt.Sprintf("%s:%s", stopId, routeId))
 	return &ScheduleResults{
-		results:                   results,
 		indexesRequiredBySchedule: schedule.indexesRequiredBySchedule,
+		results:                   results,
 	}
 }
 
@@ -58,8 +58,7 @@ type ScheduleResults struct {
 	results []model.StopTime
 }
 
-//
-func (s *ScheduleResults) Next(after time.Time, limit int) *ScheduleResults {
+func (s *ScheduleResults) Next(after time.Time, limit int) []model.StopTime {
 	results := s.nextToday(after, limit)
 
 	attempts := 0
@@ -69,10 +68,12 @@ func (s *ScheduleResults) Next(after time.Time, limit int) *ScheduleResults {
 		results = append(results, s.nextToday(after, limit-len(results))...)
 	}
 
-	return &ScheduleResults{
-		indexesRequiredBySchedule: s.indexesRequiredBySchedule,
-		results:                   results,
-	}
+	return results
+}
+
+func (s *ScheduleResults) Day(on time.Time) []model.StopTime {
+	fmt.Println(len(s.results))
+	return s.nextToday(on.Truncate(time.Hour*24), -1)
 }
 
 func (s *ScheduleResults) nextToday(after time.Time, limit int) []model.StopTime {
@@ -80,8 +81,11 @@ func (s *ScheduleResults) nextToday(after time.Time, limit int) []model.StopTime
 
 	for _, stopTime := range s.results {
 		if !ahead(stopTime.Time, after) {
+			fmt.Println(stopTime.Time, after)
 			continue
 		}
+
+		fmt.Println(1)
 
 		trip, _ := s.trips.Get(stopTime.TripId)
 		service, _ := s.services.Get(trip.ServiceId)
@@ -91,11 +95,14 @@ func (s *ScheduleResults) nextToday(after time.Time, limit int) []model.StopTime
 			continue
 		}
 
+		fmt.Println(2)
+
 		// results must have service on the given day
 		if !service.On[after.Weekday()] {
 			continue
 		}
 
+		fmt.Println(3)
 		// results must not have execpetions
 		// - todo... may want a specialized index for serviceid-date
 
@@ -107,10 +114,6 @@ func (s *ScheduleResults) nextToday(after time.Time, limit int) []model.StopTime
 	}
 
 	return results
-}
-
-func (s *ScheduleResults) Return() []model.StopTime {
-	return s.results
 }
 
 func ahead(a, b time.Time) bool {
