@@ -10,8 +10,8 @@ import (
 
 type indexesRequiredBySchedule struct {
 	trips             *Index[model.Trip]
-	services          *Index[model.Service]                  // services by id
-	serviceExceptions *InvertedIndex[model.ServiceException] // service exceptions by service ID
+	services          *Index[model.Service]  // services by id
+	serviceExceptions *ServiceExceptionIndex // service exceptions by service ID and time
 }
 
 type ScheduleIndex struct {
@@ -36,11 +36,9 @@ func NewScheduleIndex(indexes *BaseIndex, base *model.Base) *ScheduleIndex {
 	return &ScheduleIndex{
 		index: index,
 		indexesRequiredBySchedule: &indexesRequiredBySchedule{
-			trips:    indexes.Trips,
-			services: indexes.Services,
-			serviceExceptions: NewInvertedIndex(base.ServiceExceptions, func(record model.ServiceException) (key string) {
-				return record.ServiceId
-			}),
+			trips:             indexes.Trips,
+			services:          indexes.Services,
+			serviceExceptions: indexes.ServiceExeceptions,
 		},
 	}
 }
@@ -59,33 +57,29 @@ type ScheduleResults struct {
 }
 
 func (s *ScheduleResults) Next(after time.Time, limit int) []model.StopTime {
-	results := s.nextToday(after, limit)
+	results := s.nextWithinDay(after, limit)
 
 	attempts := 0
 	for len(results) != limit && attempts < 14 {
-		after = after.AddDate(0, 0, 1)
-		after.Truncate(time.Hour * 24)
-		results = append(results, s.nextToday(after, limit-len(results))...)
+		attempts++
+		after = truncate(after.AddDate(0, 0, 1))
+		results = append(results, s.nextWithinDay(after, limit-len(results))...)
 	}
 
 	return results
 }
 
 func (s *ScheduleResults) Day(on time.Time) []model.StopTime {
-	fmt.Println(len(s.results))
-	return s.nextToday(on.Truncate(time.Hour*24), -1)
+	return s.nextWithinDay(truncate(on), -1)
 }
 
-func (s *ScheduleResults) nextToday(after time.Time, limit int) []model.StopTime {
+func (s *ScheduleResults) nextWithinDay(after time.Time, limit int) []model.StopTime {
 	results := []model.StopTime{}
 
 	for _, stopTime := range s.results {
 		if !ahead(stopTime.Time, after) {
-			fmt.Println(stopTime.Time, after)
 			continue
 		}
-
-		fmt.Println(1)
 
 		trip, _ := s.trips.Get(stopTime.TripId)
 		service, _ := s.services.Get(trip.ServiceId)
@@ -95,16 +89,15 @@ func (s *ScheduleResults) nextToday(after time.Time, limit int) []model.StopTime
 			continue
 		}
 
-		fmt.Println(2)
-
 		// results must have service on the given day
 		if !service.On[after.Weekday()] {
 			continue
 		}
 
-		fmt.Println(3)
 		// results must not have execpetions
-		// - todo... may want a specialized index for serviceid-date
+		if exception, exists := s.serviceExceptions.Get(service.Id, after); exists && !exception.Added {
+			continue
+		}
 
 		results = append(results, stopTime)
 
@@ -120,8 +113,15 @@ func ahead(a, b time.Time) bool {
 	// if a is ahead of b
 	if a.Hour() >= b.Hour() {
 		return true
-	} else if a.Hour() == b.Hour() && a.Hour() > b.Hour() {
+	} else if a.Hour() == b.Hour() && a.Minute() > b.Minute() {
 		return true
 	}
 	return false
+}
+
+func truncate(t time.Time) time.Time {
+	// truncate time leaving only the date
+	_, offset := t.Zone()
+	sub := time.Duration(offset) * time.Second
+	return t.Add(-sub).Truncate(time.Hour * 24).Add(-sub)
 }

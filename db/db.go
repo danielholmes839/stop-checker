@@ -9,7 +9,7 @@ import (
 
 type BaseIndex struct {
 	Routes             *Index[model.Route]
-	ServiceExeceptions *Index[model.ServiceException]
+	ServiceExeceptions *ServiceExceptionIndex // lookup by serviceId and time
 	Services           *Index[model.Service]
 	Stops              *Index[model.Stop]
 	StopTimes          *Index[model.StopTime]
@@ -35,7 +35,7 @@ func NewDatabase(base *model.Base) *Database {
 	baseIndex := &BaseIndex{
 		// basic indexes
 		Routes:             NewIndex(base.Routes),
-		ServiceExeceptions: NewIndex(base.ServiceExceptions),
+		ServiceExeceptions: NewServiceExceptionIndex(base.ServiceExceptions),
 		Services:           NewIndex(base.Services),
 		Stops:              NewIndex(base.Stops),
 		StopTimes:          NewIndex(base.StopTimes),

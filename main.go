@@ -11,22 +11,21 @@ import (
 
 func main() {
 	dataset, _ := gtfs.NewDatasetFromFilesystem("./db/data")
+	tz := dataset.TimeZone
 
-	base := model.NewBaseFromGTFS(dataset, &model.BaseParser{
+	octranspo := &model.BaseParser{
+		TimeZone:   tz,
 		TimeLayout: "15:04:05",
 		DateLayout: "20060102",
-	})
+	}
+
+	base := model.NewBaseFromGTFS(dataset, octranspo)
 
 	database := db.NewDatabase(base)
 
-	route, _ := database.Routes.Get("49-340")
-	fmt.Printf("%#v\n", route)
+	t1 := time.Now().In(tz)
 
-	// routes := database.RouteIndex.Get("AK145")
-	now := time.Now().UTC().Truncate(time.Hour * 24)
-	fmt.Println("time:", now.UTC())
-
-	t1 := time.Now().UTC()
+	fmt.Println(t1)
 	results := database.ScheduleIndex.Get("AK145", "49-340")
 
 	fmt.Println("--- next 3")
@@ -35,7 +34,7 @@ func main() {
 	}
 
 	fmt.Println("--- monday")
-	for _, stopTime := range results.Day(t1.Add(time.Hour * 48)) {
+	for _, stopTime := range results.Day(t1) {
 		fmt.Printf("%#v\n", stopTime)
 	}
 }

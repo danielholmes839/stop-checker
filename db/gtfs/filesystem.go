@@ -1,9 +1,12 @@
 package gtfs
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	fp "path/filepath"
+	"time"
 
 	csvtag "github.com/artonge/go-csv-tag/v2"
 )
@@ -24,6 +27,7 @@ func parse[T any](input io.Reader) ([]T, error) {
 }
 
 type Dataset struct {
+	TimeZone      *time.Location
 	Agencies      []Agency
 	Routes        []Route
 	Stops         []Stop
@@ -40,6 +44,15 @@ func NewDatasetFromFilesystem(path string) (*Dataset, error) {
 	gtfs.Agencies, err = parseFile[Agency](fp.Join(path, "agency.txt"))
 	if err != nil {
 		return nil, err
+	}
+
+	// set the dataset timezone
+	if len(gtfs.Agencies) == 0 {
+		return nil, errors.New("dataset error: zero agencies")
+	} else if tz, err := time.LoadLocation(gtfs.Agencies[0].Timezone); err == nil {
+		gtfs.TimeZone = tz
+	} else {
+		return nil, fmt.Errorf("dataset error: %w", err)
 	}
 
 	gtfs.CalendarDates, err = parseFile[CalendarDate](fp.Join(path, "calendar_dates.txt"))

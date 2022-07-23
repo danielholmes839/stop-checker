@@ -62,13 +62,14 @@ func NewBaseFromGTFS(data *gtfs.Dataset, parser *BaseParser) *Base {
 }
 
 type BaseParser struct {
+	TimeZone   *time.Location
 	TimeLayout string
 	DateLayout string
 }
 
 func (b *BaseParser) NewCalendarFromGTFS(data gtfs.Calendar) Service {
-	start, _ := time.Parse(b.DateLayout, data.Start)
-	end, _ := time.Parse(b.DateLayout, data.End)
+	start, _ := time.ParseInLocation(b.DateLayout, data.Start, b.TimeZone)
+	end, _ := time.ParseInLocation(b.DateLayout, data.End, b.TimeZone)
 
 	return Service{
 		Id: data.ServiceID,
@@ -87,7 +88,7 @@ func (b *BaseParser) NewCalendarFromGTFS(data gtfs.Calendar) Service {
 }
 
 func (b *BaseParser) NewCalendarDateFromGTFS(data gtfs.CalendarDate) ServiceException {
-	date, _ := time.Parse(b.DateLayout, data.Date)
+	date, _ := time.ParseInLocation(b.DateLayout, data.Date, b.TimeZone)
 
 	return ServiceException{
 		ServiceId: data.ServiceID,
@@ -108,7 +109,7 @@ func (b *BaseParser) NewRouteFromGTFS(data gtfs.Route) Route {
 
 func (b *BaseParser) NewStopTimeFromGTFS(data gtfs.StopTime) StopTime {
 	seq, _ := strconv.Atoi(data.StopSeq)
-	arrival, _ := time.Parse(b.TimeLayout, data.Departure)
+	arrival, _ := time.ParseInLocation(b.TimeLayout, data.Departure, b.TimeZone)
 
 	return StopTime{
 		StopId:  data.StopID,
