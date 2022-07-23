@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"stop-checker.com/db"
 	"stop-checker.com/db/gtfs"
@@ -9,35 +10,38 @@ import (
 )
 
 func main() {
-	dataset, err := gtfs.NewDatasetFromFilesystem("./data")
+	loadingDataset := time.Now()
+	dataset, err := gtfs.NewDatasetFromFilesystem("./db/data")
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println("loaded dataset in", time.Since(loadingDataset))
+
+	loadingBase := time.Now()
 
 	base := model.NewBaseFromGTFS(dataset, &model.BaseParser{
 		TimeLayout: "15:04:05",
 		DateLayout: "20060102",
 	})
 
-	fmt.Printf("%#v\n", dataset.Agencies[0])
-	fmt.Printf("%#v\n", dataset.CalendarDates[0])
-	fmt.Printf("%#v\n", dataset.Calendars[0])
-	fmt.Printf("%#v\n", dataset.Routes[0])
-	fmt.Printf("%#v\n", dataset.StopTimes[0])
-	fmt.Printf("%#v\n", dataset.Stops[0])
-	fmt.Printf("%#v\n", dataset.Trips[0])
+	fmt.Println("loaded base in", time.Since(loadingBase))
 
-	fmt.Printf("%#v\n", base.Agency)
-	fmt.Printf("%#v\n", base.CalendarDates[0])
-	fmt.Printf("%#v\n", base.Calendars[0])
-	fmt.Printf("%#v\n", base.Routes[0])
-	fmt.Printf("%#v\n", base.StopTimes[0])
-	fmt.Printf("%#v\n", base.Stops[0])
-	fmt.Printf("%#v\n", base.Trips[0])
+	database := db.NewDatabase(base)
 
-	db := db.NewInMemoryDB(base)
+	t1 := time.Now()
+	routes := database.RouteIndex.Get("AK145")
+	fmt.Println(routes)
 
-	if stopTimes, ok := db.StopTimesByTripId.Get(base.Trips[0].ID); ok {
-		fmt.Println(stopTimes)
+	t2 := time.Now()
+	arrivals := database.ScheduleIndex.Get("AK145", "49-340")
+
+	for _, arrival := range arrivals {
+		fmt.Println(arrival.Time.String())
 	}
+
+	t3 := time.Now()
+
+	fmt.Println("loaded routes in:", t2.Sub(t1))
+	fmt.Println("loaded stop times in:", t3.Sub(t2))
 }
