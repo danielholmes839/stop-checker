@@ -6,14 +6,12 @@ type RouteIndex struct {
 	index *InvertedIndex[model.Route]
 }
 
-func NewRouteIndex(base *model.Base) *RouteIndex {
-	tripIndex := NewIndex(base.Trips)
-	routeIndex := NewIndex(base.Routes)
-
+func NewRouteIndex(indexes *BaseIndex, base *model.Base) *RouteIndex {
 	routes := make(map[string]map[string]struct{})
 
+	// create a map of unique route ids for each stop id
 	for _, stopTime := range base.StopTimes {
-		trip, _ := tripIndex.Get(stopTime.TripId)
+		trip, _ := indexes.Trips.Get(stopTime.TripId)
 		stopId := stopTime.StopId
 		routeId := trip.RouteId
 
@@ -31,7 +29,7 @@ func NewRouteIndex(base *model.Base) *RouteIndex {
 	for stopId, routes := range routes {
 		index.data[stopId] = []model.Route{}
 		for routeId := range routes {
-			route, _ := routeIndex.Get(routeId)
+			route, _ := indexes.Routes.Get(routeId)
 			index.data[stopId] = append(index.data[stopId], route)
 		}
 	}

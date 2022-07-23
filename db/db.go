@@ -7,20 +7,22 @@ import (
 	"stop-checker.com/db/model"
 )
 
-type Database struct {
-	// basic indexes
+type BaseIndex struct {
 	Routes             *Index[model.Route]
 	ServiceExeceptions *Index[model.ServiceException]
 	Services           *Index[model.Service]
 	Stops              *Index[model.Stop]
 	StopTimes          *Index[model.StopTime]
 	Trips              *Index[model.Trip]
+}
 
-	// inverted indexes
+type Database struct {
+	// basic indexes
+	*BaseIndex
 
 	// specialized indexes
-	*RouteIndex
-	*ScheduleIndex
+	*RouteIndex    // get routes by stop id
+	*ScheduleIndex // get schedule by stop and route id
 }
 
 func NewDatabase(base *model.Base) *Database {
@@ -30,7 +32,7 @@ func NewDatabase(base *model.Base) *Database {
 		fmt.Println("created database indexes in", time.Since(now))
 	}()
 
-	return &Database{
+	baseIndex := &BaseIndex{
 		// basic indexes
 		Routes:             NewIndex(base.Routes),
 		ServiceExeceptions: NewIndex(base.ServiceExceptions),
@@ -38,9 +40,11 @@ func NewDatabase(base *model.Base) *Database {
 		Stops:              NewIndex(base.Stops),
 		StopTimes:          NewIndex(base.StopTimes),
 		Trips:              NewIndex(base.Trips),
+	}
 
-		// specialized indexes
-		RouteIndex:    NewRouteIndex(base),
-		ScheduleIndex: NewScheduleIndex(base),
+	return &Database{
+		BaseIndex:     baseIndex,
+		RouteIndex:    NewRouteIndex(baseIndex, base),
+		ScheduleIndex: NewScheduleIndex(baseIndex, base),
 	}
 }
