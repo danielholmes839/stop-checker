@@ -1,36 +1,40 @@
 package db
 
-type KeyFunc[T any] func(t T) (key string)
-
-type Index[T any] struct {
-	key  KeyFunc[T]
-	data map[string]T
+type WithID interface {
+	ID() string
 }
 
-func NewIndex[T any](data []T, key KeyFunc[T]) *Index[T] {
-	index := &Index[T]{
-		data: map[string]T{},
+type KeyFunc[R any] func(record R) (key string)
+
+type Index[R any] struct {
+	key  KeyFunc[R]
+	data map[string]R
+}
+
+func NewIndex[R WithID](data []R) *Index[R] {
+	index := &Index[R]{
+		data: map[string]R{},
 	}
 
-	for _, value := range data {
-		index.data[key(value)] = value
+	for _, record := range data {
+		index.data[record.ID()] = record
 	}
 
 	return index
 }
 
-func (index *Index[T]) Get(key string) (T, bool) {
-	result, ok := index.data[key]
-	return result, ok
+func (index *Index[R]) Get(key string) (R, bool) {
+	record, ok := index.data[key]
+	return record, ok
 }
 
-type InvertedIndex[T any] struct {
-	data map[string][]T
+type InvertedIndex[R any] struct {
+	data map[string][]R
 }
 
-func NewInvertedIndex[T any](data []T, key KeyFunc[T]) *InvertedIndex[T] {
-	index := &InvertedIndex[T]{
-		data: map[string][]T{},
+func NewInvertedIndex[R any](data []R, key KeyFunc[R]) *InvertedIndex[R] {
+	index := &InvertedIndex[R]{
+		data: map[string][]R{},
 	}
 
 	for _, value := range data {
@@ -42,7 +46,7 @@ func NewInvertedIndex[T any](data []T, key KeyFunc[T]) *InvertedIndex[T] {
 	return index
 }
 
-func (index *InvertedIndex[T]) Get(key string) ([]T, bool) {
-	results, ok := index.data[key]
-	return results, ok
+func (index *InvertedIndex[R]) Get(key string) ([]R, bool) {
+	records, ok := index.data[key]
+	return records, ok
 }

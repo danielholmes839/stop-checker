@@ -12,15 +12,13 @@ type ScheduleIndex struct {
 }
 
 func NewScheduleIndex(base *model.Base) *ScheduleIndex {
-	tripIndex := NewIndex(base.Trips, func(trip model.Trip) (key string) {
-		return trip.ID
-	})
+	tripIndex := NewIndex(base.Trips)
 
 	// create the schedule index
 	scheduleIndex := &ScheduleIndex{
 		index: NewInvertedIndex(base.StopTimes, func(stopTime model.StopTime) (key string) {
-			trip, _ := tripIndex.Get(stopTime.TripID)
-			return fmt.Sprintf("%s:%s", stopTime.StopID, trip.RouteID)
+			trip, _ := tripIndex.Get(stopTime.TripId)
+			return fmt.Sprintf("%s:%s", stopTime.StopId, trip.RouteId)
 		}),
 	}
 
@@ -28,7 +26,7 @@ func NewScheduleIndex(base *model.Base) *ScheduleIndex {
 	data := scheduleIndex.index.data
 	for _, schedule := range data {
 		sort.Slice(schedule, func(i, j int) bool {
-			return schedule[i].Arrival.Before(schedule[j].Arrival)
+			return schedule[i].Time.Before(schedule[j].Time)
 		})
 	}
 

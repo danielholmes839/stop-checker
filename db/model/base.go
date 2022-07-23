@@ -8,13 +8,13 @@ import (
 )
 
 type Base struct {
-	Agency        Agency
-	Routes        []Route
-	Stops         []Stop
-	StopTimes     []StopTime
-	Trips         []Trip
-	Calendars     []Calendar
-	CalendarDates []CalendarDate
+	Agency            Agency
+	Routes            []Route
+	Stops             []Stop
+	StopTimes         []StopTime
+	Trips             []Trip
+	Services          []Service
+	ServiceExceptions []ServiceException
 }
 
 func NewBaseFromGTFS(data *gtfs.Dataset, parser *BaseParser) *Base {
@@ -26,12 +26,12 @@ func NewBaseFromGTFS(data *gtfs.Dataset, parser *BaseParser) *Base {
 			URL:      agency.URL,
 			Timezone: agency.Timezone,
 		},
-		Routes:        make([]Route, len(data.Routes)),
-		Stops:         make([]Stop, len(data.Stops)),
-		StopTimes:     make([]StopTime, len(data.StopTimes)),
-		Trips:         make([]Trip, len(data.Trips)),
-		Calendars:     make([]Calendar, len(data.Calendars)),
-		CalendarDates: make([]CalendarDate, len(data.CalendarDates)),
+		Routes:            make([]Route, len(data.Routes)),
+		Stops:             make([]Stop, len(data.Stops)),
+		StopTimes:         make([]StopTime, len(data.StopTimes)),
+		Trips:             make([]Trip, len(data.Trips)),
+		Services:          make([]Service, len(data.Calendars)),
+		ServiceExceptions: make([]ServiceException, len(data.CalendarDates)),
 	}
 
 	for i, route := range data.Routes {
@@ -51,11 +51,11 @@ func NewBaseFromGTFS(data *gtfs.Dataset, parser *BaseParser) *Base {
 	}
 
 	for i, calendar := range data.Calendars {
-		base.Calendars[i] = parser.NewCalendarFromGTFS(calendar)
+		base.Services[i] = parser.NewCalendarFromGTFS(calendar)
 	}
 
 	for i, calendarDate := range data.CalendarDates {
-		base.CalendarDates[i] = parser.NewCalendarDateFromGTFS(calendarDate)
+		base.ServiceExceptions[i] = parser.NewCalendarDateFromGTFS(calendarDate)
 	}
 
 	return base
@@ -66,12 +66,12 @@ type BaseParser struct {
 	DateLayout string
 }
 
-func (b *BaseParser) NewCalendarFromGTFS(data gtfs.Calendar) Calendar {
+func (b *BaseParser) NewCalendarFromGTFS(data gtfs.Calendar) Service {
 	start, _ := time.Parse(b.DateLayout, data.Start)
 	end, _ := time.Parse(b.DateLayout, data.End)
 
-	return Calendar{
-		ServiceID: data.ServiceID,
+	return Service{
+		Id:        data.ServiceID,
 		Monday:    data.Monday == 1,
 		Tuesday:   data.Tuesday == 1,
 		Wednesday: data.Wednesday == 1,
@@ -84,19 +84,19 @@ func (b *BaseParser) NewCalendarFromGTFS(data gtfs.Calendar) Calendar {
 	}
 }
 
-func (b *BaseParser) NewCalendarDateFromGTFS(data gtfs.CalendarDate) CalendarDate {
+func (b *BaseParser) NewCalendarDateFromGTFS(data gtfs.CalendarDate) ServiceException {
 	date, _ := time.Parse(b.DateLayout, data.Date)
 
-	return CalendarDate{
-		ServiceID:     data.ServiceID,
-		Date:          date,
-		ExceptionType: data.ExceptionType,
+	return ServiceException{
+		ServiceId: data.ServiceID,
+		Date:      date,
+		Added:     data.ExceptionType == 1,
 	}
 }
 
 func (b *BaseParser) NewRouteFromGTFS(data gtfs.Route) Route {
 	return Route{
-		ID:        data.ID,
+		Id:        data.ID,
 		Name:      data.ShortName,
 		Type:      data.Type,
 		Color:     data.Color,
@@ -107,20 +107,18 @@ func (b *BaseParser) NewRouteFromGTFS(data gtfs.Route) Route {
 func (b *BaseParser) NewStopTimeFromGTFS(data gtfs.StopTime) StopTime {
 	seq, _ := strconv.Atoi(data.StopSeq)
 	arrival, _ := time.Parse(b.TimeLayout, data.Departure)
-	departure, _ := time.Parse(b.TimeLayout, data.Departure)
 
 	return StopTime{
-		StopID:    data.StopID,
-		StopSeq:   seq,
-		TripID:    data.TripID,
-		Arrival:   arrival,
-		Departure: departure,
+		StopId:  data.StopID,
+		StopSeq: seq,
+		TripId:  data.TripID,
+		Time:    arrival,
 	}
 }
 
 func (b *BaseParser) NewStopFromGTFS(data gtfs.Stop) Stop {
 	return Stop{
-		ID:   data.ID,
+		Id:   data.ID,
 		Code: data.Code,
 		Name: data.Name,
 		Type: data.Type,
@@ -133,11 +131,11 @@ func (b *BaseParser) NewStopFromGTFS(data gtfs.Stop) Stop {
 
 func (b *BaseParser) NewTripFromGTFS(data gtfs.Trip) Trip {
 	return Trip{
-		ID:          data.ID,
-		RouteID:     data.RouteID,
-		ServiceID:   data.ServiceID,
-		ShapeID:     data.ShapeID,
-		DirectionID: data.DirectionID,
+		Id:          data.ID,
+		RouteId:     data.RouteID,
+		ServiceId:   data.ServiceID,
+		ShapeId:     data.ShapeID,
+		DirectionId: data.DirectionID,
 		Headsign:    data.Headsign,
 	}
 }

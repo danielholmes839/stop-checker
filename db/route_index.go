@@ -7,20 +7,15 @@ type RouteIndex struct {
 }
 
 func NewRouteIndex(base *model.Base) *RouteIndex {
-	tripIndex := NewIndex(base.Trips, func(trip model.Trip) (key string) {
-		return trip.ID
-	})
-
-	routeIndex := NewIndex(base.Routes, func(route model.Route) (key string) {
-		return route.ID
-	})
+	tripIndex := NewIndex(base.Trips)
+	routeIndex := NewIndex(base.Routes)
 
 	routes := make(map[string]map[string]struct{})
 
 	for _, stopTime := range base.StopTimes {
-		trip, _ := tripIndex.Get(stopTime.TripID)
-		stopId := stopTime.StopID
-		routeId := trip.RouteID
+		trip, _ := tripIndex.Get(stopTime.TripId)
+		stopId := stopTime.StopId
+		routeId := trip.RouteId
 
 		if _, ok := routes[stopId]; !ok {
 			routes[stopId] = map[string]struct{}{}

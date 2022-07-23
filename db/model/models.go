@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -10,8 +11,8 @@ type Agency struct {
 	Timezone string
 }
 
-type Calendar struct {
-	ServiceID string
+type Service struct {
+	Id        string
 	Monday    bool
 	Tuesday   bool
 	Wednesday bool
@@ -25,43 +26,66 @@ type Calendar struct {
 	End   time.Time
 }
 
-type CalendarDate struct {
-	ServiceID     string
-	Date          time.Time
-	ExceptionType int
+func (s Service) ID() string {
+	return s.Id
+}
+
+type ServiceException struct {
+	ServiceId string
+	Date      time.Time
+	Added     bool // false when service is cancelled
+}
+
+func (s ServiceException) ID() string {
+	return fmt.Sprintf("exception:%s:%s", s.ServiceId, s.Date.Format("2006-01-02"))
 }
 
 type Route struct {
-	ID        string
+	Id        string
 	Name      string
 	Type      int
 	Color     string
 	TextColor string
 }
 
+func (r Route) ID() string {
+	return r.Id
+}
+
 type StopTime struct {
-	StopID    string
-	StopSeq   int
-	TripID    string
-	Arrival   time.Time
-	Departure time.Time
+	TripId  string
+	StopId  string
+	StopSeq int
+	Time    time.Time
+}
+
+func (st StopTime) ID() string {
+	return fmt.Sprintf("stoptime:%s:%s:%d", st.StopId, st.TripId, st.StopSeq)
 }
 
 type Stop struct {
-	ID       string
+	Id       string
 	Code     string
 	Name     string
 	Type     string
 	Location Location
 }
 
+func (s Stop) ID() string {
+	return s.Id
+}
+
 type Trip struct {
-	ID          string
-	RouteID     string
-	ServiceID   string
-	ShapeID     string
-	DirectionID string
+	Id          string
+	RouteId     string
+	ServiceId   string
+	ShapeId     string
+	DirectionId string
 	Headsign    string
+}
+
+func (t Trip) ID() string {
+	return t.Id
 }
 
 type Location struct {
