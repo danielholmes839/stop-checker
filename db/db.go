@@ -21,8 +21,8 @@ type Database struct {
 	*BaseIndex
 
 	// specialized indexes
-	*RouteIndex    // get routes by stop id
-	*ScheduleIndex // get schedule by stop and route id
+	*StopRouteIndex // get routes by stop id
+	*ScheduleIndex  // get schedule by stop and route id
 }
 
 func NewDatabase(base *model.Base) *Database {
@@ -43,8 +43,8 @@ func NewDatabase(base *model.Base) *Database {
 	}
 
 	return &Database{
-		BaseIndex:     baseIndex,
-		RouteIndex:    NewRouteIndex(baseIndex, base),
-		ScheduleIndex: NewScheduleIndex(baseIndex, base),
+		BaseIndex:      baseIndex,
+		StopRouteIndex: NewStopRouteIndex(baseIndex, base),
+		ScheduleIndex:  NewScheduleIndex(baseIndex, base),
 	}
 }

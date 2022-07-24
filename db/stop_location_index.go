@@ -14,18 +14,18 @@ type ResolutionConfig struct {
 	EdgeLength float64 // in meters
 }
 
-type StopGeoResult struct {
+type StopLocationResult struct {
 	model.Stop
 	Distance float64
 }
 
-type StopGeoIndex struct {
+type StopLocationIndex struct {
 	resolution ResolutionConfig
 	index      *InvertedIndex[model.Stop]
 }
 
-func NewStopGeoIndex(indexes *BaseIndex, base *model.Base, resolution ResolutionConfig) *StopGeoIndex {
-	return &StopGeoIndex{
+func NewStopLocationIndex(indexes *BaseIndex, base *model.Base, resolution ResolutionConfig) *StopLocationIndex {
+	return &StopLocationIndex{
 		resolution: resolution,
 		index: NewInvertedIndex(base.Stops, func(stop model.Stop) string {
 			key := h3.FromGeo(h3.GeoCoord(stop.Location), resolution.Level)
@@ -35,7 +35,7 @@ func NewStopGeoIndex(indexes *BaseIndex, base *model.Base, resolution Resolution
 }
 
 // radius in meters
-func (s *StopGeoIndex) Query(origin model.Location, searchRadius float64) []StopGeoResult {
+func (s *StopLocationIndex) Query(origin model.Location, searchRadius float64) []StopLocationResult {
 	// determine the hexs that could contain stops
 	rings := int(math.Round(searchRadius/(s.resolution.EdgeLength*2))) + 1
 	originHex := h3.FromGeo(h3.GeoCoord(origin), s.resolution.Level)
@@ -50,7 +50,7 @@ func (s *StopGeoIndex) Query(origin model.Location, searchRadius float64) []Stop
 		stops = append(stops, results...)
 	}
 
-	filtered := []StopGeoResult{}
+	filtered := []StopLocationResult{}
 
 	for _, stop := range stops {
 		// check the distance
@@ -60,7 +60,7 @@ func (s *StopGeoIndex) Query(origin model.Location, searchRadius float64) []Stop
 		}
 
 		// add the stop
-		filtered = append(filtered, StopGeoResult{
+		filtered = append(filtered, StopLocationResult{
 			Stop:     stop,
 			Distance: distance,
 		})

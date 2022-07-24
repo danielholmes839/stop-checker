@@ -20,14 +20,31 @@ func main() {
 
 	database := db.NewDatabase(base)
 
-	geoindex := db.NewStopGeoIndex(database.BaseIndex, base, db.ResolutionConfig{
+	stopLocationIndex := db.NewStopLocationIndex(database.BaseIndex, base, db.ResolutionConfig{
 		Level:      9,
 		EdgeLength: 174.375668,
 	})
 
+	stopRanker := db.NewStopRanker(database.StopRouteIndex)
+
 	t1 := time.Now()
-	stops := geoindex.Query(model.Location{Latitude: 45.423891, Longitude: -75.6898797}, 1000)
+
+	stops := stopRanker.Rank(
+		stopLocationIndex.Query(model.Location{Latitude: 45.423891, Longitude: -75.6898797}, 1000),
+		// stopLocationIndex.Query(model.Location{Latitude: 45.3957197, Longitude: -75.632076}, 1000),
+	)
+
 	dur := time.Since(t1)
 
+	for _, stop := range stops {
+		fmt.Println("---", stop.Name, "---")
+		for _, route := range database.StopRouteIndex.Get(stop.Id) {
+			fmt.Println(" -", route.Name, route.DirectionId)
+		}
+	}
+
+	// for _, stop := range stops {
+	// 	fmt.Printf("%#v\n", stop)
+	// }
 	fmt.Println("results:", len(stops), "duration:", dur, "furthest:", stops[len(stops)-1].Distance)
 }
