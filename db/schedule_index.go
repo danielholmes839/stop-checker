@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -54,6 +55,16 @@ func (schedule *ScheduleIndex) Get(stopId, routeId string) *ScheduleResults {
 type ScheduleResults struct {
 	*indexesRequiredBySchedule
 	results []model.StopTime
+}
+
+func (s *ScheduleResults) Next(after time.Time) (model.StopTime, error) {
+	results := s.After(after, 1)
+
+	if len(results) == 0 {
+		return model.StopTime{}, errors.New("not found")
+	}
+
+	return results[0], nil
 }
 
 func (s *ScheduleResults) Before(before time.Time, limit int) []model.StopTime {
