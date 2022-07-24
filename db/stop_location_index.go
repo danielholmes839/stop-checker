@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"math"
 	"sort"
 
 	"github.com/uber/h3-go"
@@ -34,10 +33,10 @@ func NewStopLocationIndex(indexes *BaseIndex, base *model.Base, resolution Resol
 	}
 }
 
-// radius in meters
 func (s *StopLocationIndex) Query(origin model.Location, searchRadius float64) []StopLocationResult {
 	// determine the hexs that could contain stops
-	rings := int(math.Round(searchRadius/(s.resolution.EdgeLength*2))) + 1
+	// https://observablehq.com/@nrabinowitz/h3-radius-lookup
+	rings := int(searchRadius/(s.resolution.EdgeLength*2)) + 1
 	originHex := h3.FromGeo(h3.GeoCoord(origin), s.resolution.Level)
 	ringHexs := h3.KRing(originHex, rings)
 
