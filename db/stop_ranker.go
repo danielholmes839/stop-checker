@@ -6,8 +6,9 @@ import (
 
 type StopRank struct {
 	StopLocationResult
-	Rank       int
-	RouteCount int
+	BestRoute     string
+	BestRouteRank int
+	RouteCount    int
 }
 
 type StopRanker struct {
@@ -42,7 +43,7 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 		stopRoutes := ranker.stopRoutes.Get(stop.Id)
 		rank := &StopRank{
 			StopLocationResult: stop,
-			Rank:               99,
+			BestRouteRank:      99,
 			RouteCount:         len(stopRoutes),
 		}
 
@@ -55,7 +56,8 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 					distance: stop.Distance,
 					position: 0,
 				}
-				rank.Rank = 0
+				rank.BestRouteRank = 0
+				rank.BestRoute = stopRoute.Route.ID()
 				break
 			}
 
@@ -64,8 +66,9 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 			current.distance = stop.Distance
 			current.position++
 
-			if current.position < rank.Rank {
-				rank.Rank = current.position
+			if current.position < rank.BestRouteRank {
+				rank.BestRouteRank = 0
+				rank.BestRoute = stopRoute.Route.ID()
 			}
 		}
 
@@ -77,13 +80,13 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 		a := ranked[i]
 		b := ranked[j]
 
-		if a.Rank < b.Rank {
+		if a.BestRoute < b.BestRoute {
 			return true
 		}
 
 		aDist := a.Distance - ((float64(a.RouteCount) - 1) * 150)
 		bDist := b.Distance - ((float64(b.RouteCount) - 1) * 150)
-		if a.Rank == b.Rank && aDist < bDist {
+		if a.BestRouteRank == b.BestRouteRank && aDist < bDist {
 			return true
 		}
 

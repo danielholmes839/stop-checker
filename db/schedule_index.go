@@ -134,13 +134,16 @@ func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []model.StopTi
 	return results
 }
 
-/* valid stopTime given a specific time
-- the service start and end date include the time
+/* valid stopTime given a specific date
+- the date is between the service start and end date
 - the service is running on the time's day of the week
 - there on no service exception on the time's date
 */
-
 func (s *ScheduleResults) valid(t time.Time, stopTime model.StopTime) bool {
+	if stopTime.Overflow {
+		t = t.Add(time.Hour * -24)
+	}
+
 	trip, _ := s.trips.Get(stopTime.TripId)
 	service, _ := s.services.Get(trip.ServiceId)
 

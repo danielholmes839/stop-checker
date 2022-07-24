@@ -50,6 +50,7 @@ func NewDatasetFromFilesystem(path string) (*Dataset, error) {
 	if len(gtfs.Agencies) == 0 {
 		return nil, errors.New("dataset error: zero agencies")
 	} else if tz, err := time.LoadLocation(gtfs.Agencies[0].Timezone); err == nil {
+		fmt.Println("dataset loaded timezone:", tz)
 		gtfs.TimeZone = tz
 	} else {
 		return nil, fmt.Errorf("dataset error: %w", err)

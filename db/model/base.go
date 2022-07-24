@@ -45,7 +45,7 @@ func NewBaseFromGTFS(data *gtfs.Dataset, parser *BaseParser) *Base {
 	}
 
 	for i, stopTime := range data.StopTimes {
-		base.StopTimes[i] = parser.NewStopTimeFromGTFS(stopTime)
+		base.StopTimes[i] = parser.NewStopTimeFromGTFS(stopTime, data.TimeZone)
 	}
 
 	for i, trips := range data.Trips {
@@ -109,15 +109,27 @@ func (b *BaseParser) NewRouteFromGTFS(data gtfs.Route) Route {
 	}
 }
 
-func (b *BaseParser) NewStopTimeFromGTFS(data gtfs.StopTime) StopTime {
+func (b *BaseParser) NewStopTimeFromGTFS(data gtfs.StopTime, tz *time.Location) StopTime {
 	seq, _ := strconv.Atoi(data.StopSeq)
-	arrival, _ := time.ParseInLocation(b.TimeLayout, data.Departure, b.TimeZone)
+	arrival, err := time.ParseInLocation(b.TimeLayout, data.Departure, b.TimeZone)
+	overflow := false
+
+	if err != nil {
+		hours, _ := strconv.Atoi(data.Departure[0:2])
+		hours %= 24
+
+		minutes, _ := strconv.Atoi(data.Departure[3:5])
+
+		arrival = time.Date(0, 1, 1, hours, minutes, 0, 0, tz)
+		overflow = true
+	}
 
 	return StopTime{
-		StopId:  data.StopID,
-		StopSeq: seq,
-		TripId:  data.TripID,
-		Time:    arrival,
+		StopId:   data.StopID,
+		StopSeq:  seq,
+		TripId:   data.TripID,
+		Time:     arrival,
+		Overflow: overflow,
 	}
 }
 

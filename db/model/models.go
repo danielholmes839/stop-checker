@@ -46,10 +46,11 @@ func (r Route) ID() string {
 }
 
 type StopTime struct {
-	TripId  string
-	StopId  string
-	StopSeq int
-	Time    time.Time
+	TripId   string
+	StopId   string
+	StopSeq  int
+	Time     time.Time
+	Overflow bool // stop times can be past 24 hours.
 }
 
 func (st StopTime) ID() string {
