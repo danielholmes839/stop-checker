@@ -40,5 +40,21 @@ func main() {
 
 	fmt.Println("travel planner...")
 
-	planner.Depart(time.Now().Add(time.Hour*24), "AK151", "CD998")
+	t1 := time.Now()
+	node, _ := planner.Depart(time.Now().Add(time.Hour*12), "AK151", "CD998")
+	dur := time.Since(t1)
+
+	fmt.Println(dur)
+
+	for {
+		stop, _ := database.Stops.Get(node.StopId)
+		fmt.Println("-----------------------")
+		fmt.Println(stop.Name)
+		fmt.Println(node.String())
+		if node.Previous == nil {
+			break
+		}
+
+		node = node.Previous.Node
+	}
 }
