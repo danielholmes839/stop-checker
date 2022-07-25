@@ -30,32 +30,63 @@ func main() {
 
 	fmt.Println("results:", len(stops))
 
-	planner := &travel.Planner{
-		ScheduleIndex:     database.ScheduleIndex,
+	// planner := &travel.Planner{
+	// 	ScheduleIndex:     database.ScheduleIndex,
+	// 	StopIndex:         database.Stops,
+	// 	StopLocationIndex: database.StopLocationIndex,
+	// 	StopRouteIndex:    database.StopRouteIndex,
+	// 	StopTimesFromTrip: database.StopTimesFromTrip,
+	// }
+
+	// fmt.Println("travel planner...")
+
+	// t1 := time.Now()
+	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:00", dataset.TimeZone)
+	// node, _ := planner.Depart(departure, "AK151", "CD998")
+	// for {
+	// 	stop, _ := database.Stops.Get(node.StopId)
+	// 	fmt.Println("-----------------------")
+	// 	fmt.Println(stop.Name)
+	// 	fmt.Println(node.String())
+	// 	if node.Previous == nil {
+	// 		break
+	// 	}
+
+	// 	node = node.Previous.Node
+	// }
+
+	planner := travel.FixedPlanner{
 		StopIndex:         database.Stops,
-		StopLocationIndex: database.StopLocationIndex,
-		StopRouteIndex:    database.StopRouteIndex,
 		StopTimesFromTrip: database.StopTimesFromTrip,
+		ScheduleIndex:     database.ScheduleIndex,
 	}
 
-	fmt.Println("travel planner...")
+	legs, _ := planner.DepartAt(departure, []*travel.FixedLeg{
+		// arch/pleasant park -> hurdman b
+		{
+			Origin:      "AK151",
+			Destination: "AF920",
+			RouteId:     "49-340",
+			Walk:        false,
+		},
 
-	t1 := time.Now()
-	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 11:36", dataset.TimeZone)
-	node, _ := planner.Depart(departure, "AK151", "CD998")
-	dur := time.Since(t1)
+		// hurdman b to o train west
+		{
+			Origin:      "AF920",
+			Destination: "AF990",
+			Walk:        true,
+		},
 
-	fmt.Println(dur)
+		// o train west to uottawa
+		{
+			Origin:      "AF990",
+			Destination: "CD998",
+			RouteId:     "1-340",
+			Walk:        false,
+		},
+	})
 
-	for {
-		stop, _ := database.Stops.Get(node.StopId)
-		fmt.Println("-----------------------")
-		fmt.Println(stop.Name)
-		fmt.Println(node.String())
-		if node.Previous == nil {
-			break
-		}
-
-		node = node.Previous.Node
+	for _, leg := range legs {
+		fmt.Println(leg.String())
 	}
 }
