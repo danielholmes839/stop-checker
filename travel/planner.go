@@ -55,9 +55,21 @@ type Node struct {
 	Blocked  Set       // blocked route ids
 }
 
+func (n *Node) ArrivalWithPenalty() time.Time {
+	if n.Previous == nil || n.Previous.Walking || n.Previous.Node.Previous == nil {
+		return n.Arrival
+	}
+
+	if n.Previous.TripId != n.Previous.Node.Previous.TripId {
+		return n.Arrival.Add(time.Minute * 5)
+	}
+
+	return n.Arrival
+}
+
 func (n *Node) String() string {
 	if n.Previous == nil {
-		return fmt.Sprintf("{origin: %s}", n.StopId)
+		return fmt.Sprintf("{origin: %s, arrival:%s}", n.StopId, n.Arrival.Format("2006-01-02@15:04"))
 	}
 
 	return fmt.Sprintf("{from:%s} -> {stop:%s, arrival:%s, wait:%s, transit:%s, walk:%t, blocked:%s}", n.Previous.Node.StopId,

@@ -5,9 +5,11 @@ import "container/heap"
 // An IntHeap is a min-heap of ints.
 type nodeHeap []*Node
 
-func (h nodeHeap) Len() int           { return len(h) }
-func (h nodeHeap) Less(i, j int) bool { return h[i].Arrival.Before(h[j].Arrival) }
-func (h nodeHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h nodeHeap) Len() int { return len(h) }
+func (h nodeHeap) Less(i, j int) bool {
+	return h[i].ArrivalWithPenalty().Before(h[j].ArrivalWithPenalty())
+}
+func (h nodeHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
 
 func (h *nodeHeap) Push(x any) {
 	// Push and Pop use pointer receivers because they modify the slice's length,

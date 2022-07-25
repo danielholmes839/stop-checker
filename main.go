@@ -41,7 +41,8 @@ func main() {
 	fmt.Println("travel planner...")
 
 	t1 := time.Now()
-	node, _ := planner.Depart(time.Now().Add(time.Hour*12), "AK151", "CD998")
+	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 11:36", dataset.TimeZone)
+	node, _ := planner.Depart(departure, "AK151", "CD998")
 	dur := time.Since(t1)
 
 	fmt.Println(dur)
