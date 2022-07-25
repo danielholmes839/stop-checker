@@ -32,6 +32,8 @@ func main() {
 
 	planner := &travel.Planner{
 		ScheduleIndex:     database.ScheduleIndex,
+		StopIndex:         database.Stops,
+		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopTimesFromTrip: database.StopTimesFromTrip,
 	}
