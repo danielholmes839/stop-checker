@@ -67,6 +67,16 @@ func (s *ScheduleResults) Next(after time.Time) (model.StopTime, error) {
 	return results[0], nil
 }
 
+func (s *ScheduleResults) Previous(before time.Time) (model.StopTime, error) {
+	results := s.Before(before, 1)
+
+	if len(results) == 0 {
+		return model.StopTime{}, errors.New("not found")
+	}
+
+	return results[0], nil
+}
+
 func (s *ScheduleResults) Before(before time.Time, limit int) []model.StopTime {
 	results := s.beforeWithinDay(before, limit)
 
