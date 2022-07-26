@@ -41,8 +41,8 @@ func main() {
 	// fmt.Println("travel planner...")
 
 	// t1 := time.Now()
-	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:00", dataset.TimeZone)
-	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:45", dataset.TimeZone)
+	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 7:55", dataset.TimeZone)
+	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:30", dataset.TimeZone)
 	// node, _ := planner.Depart(departure, "AK151", "CD998")
 	// for {
 	// 	stop, _ := database.Stops.Get(node.StopId)
@@ -63,7 +63,8 @@ func main() {
 	}
 
 	t1 := time.Now()
-	legs, _ := planner.Depart(departure, []*travel.FixedLeg{
+	fmt.Println("-------------------------------")
+	legs, err := planner.Depart(departure, []*travel.FixedLeg{
 		// arch/pleasant park -> hurdman b
 		{
 			Origin:      "AK151",
@@ -88,11 +89,12 @@ func main() {
 		},
 	})
 
-	fmt.Println(time.Since(t1))
+	fmt.Println(time.Since(t1), "depart at", err)
 	for _, leg := range legs {
 		fmt.Println(leg.String())
 	}
 
+	fmt.Println("-------------------------------")
 	t1 = time.Now()
 	legs, _ = planner.Arrive(before, []*travel.FixedLeg{
 		// arch/pleasant park -> hurdman b
@@ -119,7 +121,7 @@ func main() {
 		},
 	})
 
-	fmt.Println(time.Since(t1))
+	fmt.Println(time.Since(t1), "arrive by")
 	for _, leg := range legs {
 		fmt.Println(leg.String())
 	}
