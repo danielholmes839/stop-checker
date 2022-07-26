@@ -9,17 +9,17 @@ import (
 	"stop-checker.com/db/model"
 )
 
-type Transit struct {
+type PlannedLegTransit struct {
 	TripId                string
 	OriginStopTimeId      string
 	DestinationStopTimeId string
 }
 
 type PlannedLeg struct {
-	Origin      string // origin stop id
-	Destination string // destination stop id
-	Walk        bool   // if we walk between the two stops
-	*Transit           // transit info
+	Origin             string // origin stop id
+	Destination        string // destination stop id
+	Walk               bool   // if we walk between the two stops
+	*PlannedLegTransit        // transit info
 
 	Departure time.Time     // when do we depart from the origin
 	Duration  time.Duration // duration between arriving at the destination and leaving the origin
@@ -51,10 +51,24 @@ func (fl *FixedLeg) String() string {
 	return fmt.Sprintf("transit{origin:%s, destination:%s}", fl.Origin, fl.Destination)
 }
 
-type FixedPlanner struct {
+type FixedPlannerConfig struct {
 	StopIndex         *db.Index[model.Stop]
 	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
 	ScheduleIndex     *db.ScheduleIndex
+}
+
+type FixedPlanner struct {
+	stopIndex         *db.Index[model.Stop]
+	stopTimesFromTrip *db.InvertedIndex[model.StopTime]
+	scheduleIndex     *db.ScheduleIndex
+}
+
+func NewFixedPlanner(config *FixedPlannerConfig) *FixedPlanner {
+	return &FixedPlanner{
+		stopIndex:         config.StopIndex,
+		stopTimesFromTrip: config.StopTimesFromTrip,
+		scheduleIndex:     config.ScheduleIndex,
+	}
 }
 
 func (p *FixedPlanner) Depart(at time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
@@ -81,7 +95,7 @@ func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 
 	first := plan[0]
 
-	optimized, err := p.Depart(first.Departure.Add(-time.Minute), fixed)
+	optimized, err := p.Depart(first.Departure, fixed)
 	if err != nil {
 		return nil, err
 	}
@@ -138,13 +152,13 @@ func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 	}
 
 	// planned leg by transit
-	next, err := p.ScheduleIndex.Get(fixed.Origin, fixed.RouteId).Next(acc)
+	next, err := p.scheduleIndex.Get(fixed.Origin, fixed.RouteId).Next(acc)
 	if err != nil {
 		return nil, err
 	}
 
 	// all stop times next trip
-	all, _ := p.StopTimesFromTrip.Get(next.TripId)
+	all, _ := p.stopTimesFromTrip.Get(next.TripId)
 
 	// origin stop times
 	originArrival, err := p.stopTime(fixed.Origin, all)
@@ -167,13 +181,13 @@ func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
-		Transit: &Transit{
+		Departure:   departure,
+		Duration:    transitDuration,
+		PlannedLegTransit: &PlannedLegTransit{
 			TripId:                next.TripId,
 			OriginStopTimeId:      originArrival.ID(),
 			DestinationStopTimeId: destinationArrival.ID(),
 		},
-		Departure: departure,
-		Duration:  transitDuration,
 	}, nil
 }
 
@@ -199,13 +213,13 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 	}
 
 	// planned leg by transit
-	previous, err := p.ScheduleIndex.Get(fixed.Destination, fixed.RouteId).Previous(acc)
+	previous, err := p.scheduleIndex.Get(fixed.Destination, fixed.RouteId).Previous(acc)
 	if err != nil {
 		return nil, err
 	}
 
 	// all stop times next trip
-	all, _ := p.StopTimesFromTrip.Get(previous.TripId)
+	all, _ := p.stopTimesFromTrip.Get(previous.TripId)
 
 	// origin stop times
 	originArrival, err := p.stopTime(fixed.Origin, all)
@@ -227,25 +241,25 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
-		Transit: &Transit{
+		Departure:   acc.Add(-(transitDuration + excess)),
+		Duration:    transitDuration,
+		PlannedLegTransit: &PlannedLegTransit{
 			TripId:                previous.TripId,
 			OriginStopTimeId:      originArrival.ID(),
 			DestinationStopTimeId: destinationArrival.ID(),
 		},
-		Departure: acc.Add(-(transitDuration + excess)),
-		Duration:  transitDuration,
 	}, nil
 }
 
 // helper to get origin and destination stops
 func (p *FixedPlanner) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
 	empty := model.Stop{}
-	origin, ok := p.StopIndex.Get(fixed.Origin)
+	origin, ok := p.stopIndex.Get(fixed.Origin)
 	if !ok {
 		return empty, empty, fmt.Errorf("origin stop %s not found", fixed.Origin)
 	}
 
-	destination, ok := p.StopIndex.Get(fixed.Destination)
+	destination, ok := p.stopIndex.Get(fixed.Destination)
 	if !ok {
 		return empty, empty, fmt.Errorf("destination stop %s not found", fixed.Destination)
 	}

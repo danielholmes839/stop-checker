@@ -56,11 +56,11 @@ func main() {
 	// 	node = node.Previous.Node
 	// }
 
-	planner := travel.FixedPlanner{
+	planner := travel.NewFixedPlanner(&travel.FixedPlannerConfig{
 		StopIndex:         database.Stops,
 		StopTimesFromTrip: database.StopTimesFromTrip,
 		ScheduleIndex:     database.ScheduleIndex,
-	}
+	})
 
 	t1 := time.Now()
 	legs, _ := planner.Depart(departure, []*travel.FixedLeg{
