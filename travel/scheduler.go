@@ -9,73 +9,31 @@ import (
 	"stop-checker.com/db/model"
 )
 
-type PlannedLegTransit struct {
-	TripId                string
-	OriginStopTimeId      string
-	DestinationStopTimeId string
-}
-
-type PlannedLeg struct {
-	Origin             string // origin stop id
-	Destination        string // destination stop id
-	Walk               bool   // if we walk between the two stops
-	*PlannedLegTransit        // transit info
-
-	Departure time.Time     // when do we depart from the origin
-	Duration  time.Duration // duration between arriving at the destination and leaving the origin
-}
-
-func (pl *PlannedLeg) String() string {
-	if pl.Walk {
-		return fmt.Sprintf("{origin:%s, destination:%s, walk:%t, departure:%s, duration:%s}",
-			pl.Origin, pl.Destination, pl.Walk, pl.Departure, pl.Duration)
-	}
-	return fmt.Sprintf("{origin:%s, destination:%s, walk:%t, departure:%s, duration:%s, trip:%s}",
-		pl.Origin, pl.Destination, pl.Walk, pl.Departure, pl.Duration, pl.TripId)
-}
-
-/* FixedLeg
-- leg of a travel plan without assigned times
-*/
-type FixedLeg struct {
-	Origin      string // stop id
-	Destination string // stop id
-	RouteId     string // stop id
-	Walk        bool   // if true then: route id is empty
-}
-
-func (fl *FixedLeg) String() string {
-	if fl.Walk {
-		return fmt.Sprintf("walk{origin:%s, destination:%s}", fl.Origin, fl.Destination)
-	}
-	return fmt.Sprintf("transit{origin:%s, destination:%s}", fl.Origin, fl.Destination)
-}
-
-type FixedPlannerConfig struct {
+type SchedulerConfig struct {
 	StopIndex         *db.Index[model.Stop]
 	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
 	ScheduleIndex     *db.ScheduleIndex
 }
 
-type FixedPlanner struct {
+type Scheduler struct {
 	stopIndex         *db.Index[model.Stop]
 	stopTimesFromTrip *db.InvertedIndex[model.StopTime]
 	scheduleIndex     *db.ScheduleIndex
 }
 
-func NewFixedPlanner(config *FixedPlannerConfig) *FixedPlanner {
-	return &FixedPlanner{
+func NewScheduler(config *SchedulerConfig) *Scheduler {
+	return &Scheduler{
 		stopIndex:         config.StopIndex,
 		stopTimesFromTrip: config.StopTimesFromTrip,
 		scheduleIndex:     config.ScheduleIndex,
 	}
 }
 
-func (p *FixedPlanner) Depart(at time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
-	planned := []*PlannedLeg{}
+func (p *Scheduler) Depart(at time.Time, plan Plan) (Schedule, error) {
+	planned := []*Leg{}
 	acc := at
 
-	for _, leg := range fixed {
+	for _, leg := range plan {
 		plan, err := p.planDepart(acc, leg)
 		if err != nil {
 			return nil, err
@@ -87,15 +45,15 @@ func (p *FixedPlanner) Depart(at time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 	return planned, nil
 }
 
-func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
-	plan, err := p.arrive(by, fixed)
+func (p *Scheduler) Arrive(by time.Time, plan Plan) (Schedule, error) {
+	schedule, err := p.arrive(by, plan)
 	if err != nil {
 		return nil, err
 	}
 
-	first := plan[0]
+	first := schedule[0]
 
-	optimized, err := p.Depart(first.Departure, fixed)
+	optimized, err := p.Depart(first.Departure, plan)
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +61,8 @@ func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 	return optimized, nil
 }
 
-func (p *FixedPlanner) arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
-	planned := []*PlannedLeg{}
+func (p *Scheduler) arrive(by time.Time, fixed []*FixedLeg) ([]*Leg, error) {
+	planned := []*Leg{}
 	acc := by
 
 	// iterate over fixed legs in review
@@ -122,7 +80,7 @@ func (p *FixedPlanner) arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 	}
 
 	// reverse the list of planned legs
-	order := []*PlannedLeg{}
+	order := []*Leg{}
 	for i := 0; i < len(planned); i++ {
 		order = append(order, planned[len(planned)-(i+1)])
 	}
@@ -130,7 +88,7 @@ func (p *FixedPlanner) arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 	return order, nil
 }
 
-func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, error) {
+func (p *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	// origin and destination stops
 	origin, destination, err := p.stops(fixed)
 	if err != nil {
@@ -142,7 +100,7 @@ func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 		distance := origin.Distance(destination.Location)
 		duration := time.Duration(math.Round(distance*1.4/60)) * time.Minute
 
-		return &PlannedLeg{
+		return &Leg{
 			Origin:      fixed.Origin,
 			Destination: fixed.Destination,
 			Walk:        true,
@@ -177,13 +135,13 @@ func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 	departure := acc.Add(waitDuration)
 
 	// planned leg
-	return &PlannedLeg{
+	return &Leg{
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
 		Departure:   departure,
 		Duration:    transitDuration,
-		PlannedLegTransit: &PlannedLegTransit{
+		transit: &transit{
 			TripId:                next.TripId,
 			OriginStopTimeId:      originArrival.ID(),
 			DestinationStopTimeId: destinationArrival.ID(),
@@ -191,7 +149,7 @@ func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 	}, nil
 }
 
-func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, error) {
+func (p *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	// get origin and destination stops
 	origin, destination, err := p.stops(fixed)
 	if err != nil {
@@ -203,7 +161,7 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 		distance := origin.Distance(destination.Location)
 		duration := time.Duration(math.Round(distance*1.4/60)) * time.Minute
 
-		return &PlannedLeg{
+		return &Leg{
 			Origin:      fixed.Origin,
 			Destination: fixed.Destination,
 			Walk:        true,
@@ -237,13 +195,13 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 	transitDuration := stopTimeDiffDuration(originArrival.Time, destinationArrival.Time)
 
 	// planned leg
-	return &PlannedLeg{
+	return &Leg{
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
 		Departure:   acc.Add(-(transitDuration + excess)),
 		Duration:    transitDuration,
-		PlannedLegTransit: &PlannedLegTransit{
+		transit: &transit{
 			TripId:                previous.TripId,
 			OriginStopTimeId:      originArrival.ID(),
 			DestinationStopTimeId: destinationArrival.ID(),
@@ -252,7 +210,7 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 }
 
 // helper to get origin and destination stops
-func (p *FixedPlanner) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
+func (p *Scheduler) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
 	empty := model.Stop{}
 	origin, ok := p.stopIndex.Get(fixed.Origin)
 	if !ok {
@@ -267,7 +225,7 @@ func (p *FixedPlanner) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
 }
 
 // helper to get stop time from a trip
-func (p *FixedPlanner) stopTime(stopId string, all []model.StopTime) (model.StopTime, error) {
+func (p *Scheduler) stopTime(stopId string, all []model.StopTime) (model.StopTime, error) {
 	for _, stopTime := range all {
 		if stopTime.StopId == stopId {
 			return stopTime, nil

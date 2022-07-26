@@ -10,6 +10,12 @@ import (
 	"stop-checker.com/travel"
 )
 
+func printLegs(legs []*travel.Leg) {
+	for _, leg := range legs {
+		fmt.Println(leg.String())
+	}
+}
+
 func main() {
 	dataset, _ := gtfs.NewDatasetFromFilesystem("./db/data")
 
@@ -28,99 +34,30 @@ func main() {
 		database.StopLocationIndex.Query(model.Location{Latitude: 45.423891, Longitude: -75.6898797}, 1000),
 	)
 
-	fmt.Println("results:", len(stops))
-
-	// planner := &travel.Planner{
-	// 	ScheduleIndex:     database.ScheduleIndex,
-	// 	StopIndex:         database.Stops,
-	// 	StopLocationIndex: database.StopLocationIndex,
-	// 	StopRouteIndex:    database.StopRouteIndex,
-	// 	StopTimesFromTrip: database.StopTimesFromTrip,
-	// }
-
-	// fmt.Println("travel planner...")
-
-	// t1 := time.Now()
-	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 7:55", dataset.TimeZone)
-	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:30", dataset.TimeZone)
-	// node, _ := planner.Depart(departure, "AK151", "CD998")
-	// for {
-	// 	stop, _ := database.Stops.Get(node.StopId)
-	// 	fmt.Println("-----------------------")
-	// 	fmt.Println(stop.Name)
-	// 	fmt.Println(node.String())
-	// 	if node.Previous == nil {
-	// 		break
-	// 	}
-
-	// 	node = node.Previous.Node
-	// }
-
-	planner := travel.NewFixedPlanner(&travel.FixedPlannerConfig{
+	fmt.Println("ranked:", len(stops))
+	
+	scheduler := travel.NewScheduler(&travel.SchedulerConfig{
 		StopIndex:         database.Stops,
 		StopTimesFromTrip: database.StopTimesFromTrip,
 		ScheduleIndex:     database.ScheduleIndex,
 	})
 
-	t1 := time.Now()
-	legs, _ := planner.Depart(departure, []*travel.FixedLeg{
-		// arch/pleasant park -> hurdman b
-		{
-			Origin:      "AK151",
-			Destination: "AF920",
-			RouteId:     "49-340",
-			Walk:        false,
-		},
-
-		// hurdman b to o train west
-		{
-			Origin:      "AF920",
-			Destination: "AF990",
-			Walk:        true,
-		},
-
-		// o train west to uottawa
-		{
-			Origin:      "AF990",
-			Destination: "CD998",
-			RouteId:     "1-340",
-			Walk:        false,
-		},
-	})
-
-	fmt.Println(time.Since(t1), "depart at", departure)
-	for _, leg := range legs {
-		fmt.Println(leg.String())
+	route := travel.Plan{
+		{Origin: "AK151", Destination: "AF920", RouteId: "49-340", Walk: false}, // arch/pleasant park -> hurdman b
+		{Origin: "AF920", Destination: "AF990", Walk: true},                     // hurdman b to o train west
+		{Origin: "AF990", Destination: "CD998", RouteId: "1-340", Walk: false},  // o train west to uottawa
 	}
 
-	t1 = time.Now()
-	legs, _ = planner.Arrive(before, []*travel.FixedLeg{
-		// arch/pleasant park -> hurdman b
-		{
-			Origin:      "AK151",
-			Destination: "AF920",
-			RouteId:     "49-340",
-			Walk:        false,
-		},
+	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 7:55", dataset.TimeZone)
+	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:30", dataset.TimeZone)
 
-		// hurdman b to o train west
-		{
-			Origin:      "AF920",
-			Destination: "AF990",
-			Walk:        true,
-		},
+	if legs, err := scheduler.Depart(departure, route); err == nil {
+		printLegs(legs)
+	}
 
-		// o train west to uottawa
-		{
-			Origin:      "AF990",
-			Destination: "CD998",
-			RouteId:     "1-340",
-			Walk:        false,
-		},
-	})
+	fmt.Println("---")
 
-	fmt.Println(time.Since(t1), "arrive by", before)
-	for _, leg := range legs {
-		fmt.Println(leg.String())
+	if legs, err := scheduler.Arrive(before, route); err == nil {
+		printLegs(legs)
 	}
 }
