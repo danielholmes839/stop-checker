@@ -58,11 +58,11 @@ func (st StopTime) ID() string {
 }
 
 type Stop struct {
-	Id       string
-	Code     string
-	Name     string
-	Type     string
-	Location Location
+	Location
+	Id   string
+	Code string
+	Name string
+	Type string
 }
 
 func (s Stop) ID() string {

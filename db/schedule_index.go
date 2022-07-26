@@ -200,7 +200,7 @@ func after(a, b time.Time) bool {
 func before(a, b time.Time) bool {
 	if a.Hour() < b.Hour() {
 		return true
-	} else if a.Hour() == b.Hour() && a.Minute() >= b.Minute() { // minutes can be equal
+	} else if a.Hour() == b.Hour() && a.Minute() <= b.Minute() { // minutes can be equal
 		return true
 	}
 	return false
