@@ -29,12 +29,12 @@ func NewScheduler(config *SchedulerConfig) *Scheduler {
 	}
 }
 
-func (p *Scheduler) Depart(at time.Time, plan Plan) (Schedule, error) {
+func (s *Scheduler) Depart(at time.Time, plan Plan) (Schedule, error) {
 	planned := []*Leg{}
 	acc := at
 
 	for _, leg := range plan {
-		plan, err := p.planDepart(acc, leg)
+		plan, err := s.planDepart(acc, leg)
 		if err != nil {
 			return nil, err
 		}
@@ -45,15 +45,15 @@ func (p *Scheduler) Depart(at time.Time, plan Plan) (Schedule, error) {
 	return planned, nil
 }
 
-func (p *Scheduler) Arrive(by time.Time, plan Plan) (Schedule, error) {
-	schedule, err := p.arrive(by, plan)
+func (s *Scheduler) Arrive(by time.Time, plan Plan) (Schedule, error) {
+	schedule, err := s.arrive(by, plan)
 	if err != nil {
 		return nil, err
 	}
 
 	first := schedule[0]
 
-	optimized, err := p.Depart(first.Departure, plan)
+	optimized, err := s.Depart(first.Departure, plan)
 	if err != nil {
 		return nil, err
 	}
@@ -61,14 +61,14 @@ func (p *Scheduler) Arrive(by time.Time, plan Plan) (Schedule, error) {
 	return optimized, nil
 }
 
-func (p *Scheduler) arrive(by time.Time, fixed []*FixedLeg) ([]*Leg, error) {
+func (s *Scheduler) arrive(by time.Time, fixed []*FixedLeg) ([]*Leg, error) {
 	planned := []*Leg{}
 	acc := by
 
 	// iterate over fixed legs in review
 	for i := len(fixed) - 1; i >= 0; i-- {
 		leg := fixed[i]
-		plan, err := p.planArrive(acc, leg)
+		plan, err := s.planArrive(acc, leg)
 
 		if err != nil {
 			return nil, err
@@ -88,9 +88,9 @@ func (p *Scheduler) arrive(by time.Time, fixed []*FixedLeg) ([]*Leg, error) {
 	return order, nil
 }
 
-func (p *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
+func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	// origin and destination stops
-	origin, destination, err := p.stops(fixed)
+	origin, destination, err := s.stops(fixed)
 	if err != nil {
 		return nil, err
 	}
@@ -110,22 +110,22 @@ func (p *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	}
 
 	// planned leg by transit
-	next, err := p.scheduleIndex.Get(fixed.Origin, fixed.RouteId).Next(acc)
+	next, err := s.scheduleIndex.Get(fixed.Origin, fixed.RouteId).Next(acc)
 	if err != nil {
 		return nil, err
 	}
 
 	// all stop times next trip
-	all, _ := p.stopTimesFromTrip.Get(next.TripId)
+	all, _ := s.stopTimesFromTrip.Get(next.TripId)
 
 	// origin stop times
-	originArrival, err := p.stopTime(fixed.Origin, all)
+	originArrival, err := s.stopTime(fixed.Origin, all)
 	if err != nil {
 		return nil, err
 	}
 
 	// destination stop times
-	destinationArrival, err := p.stopTime(fixed.Destination, all)
+	destinationArrival, err := s.stopTime(fixed.Destination, all)
 	if err != nil {
 		return nil, err
 	}
@@ -149,9 +149,9 @@ func (p *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	}, nil
 }
 
-func (p *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
+func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	// get origin and destination stops
-	origin, destination, err := p.stops(fixed)
+	origin, destination, err := s.stops(fixed)
 	if err != nil {
 		return nil, err
 	}
@@ -171,22 +171,22 @@ func (p *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	}
 
 	// planned leg by transit
-	previous, err := p.scheduleIndex.Get(fixed.Destination, fixed.RouteId).Previous(acc)
+	previous, err := s.scheduleIndex.Get(fixed.Destination, fixed.RouteId).Previous(acc)
 	if err != nil {
 		return nil, err
 	}
 
 	// all stop times next trip
-	all, _ := p.stopTimesFromTrip.Get(previous.TripId)
+	all, _ := s.stopTimesFromTrip.Get(previous.TripId)
 
 	// origin stop times
-	originArrival, err := p.stopTime(fixed.Origin, all)
+	originArrival, err := s.stopTime(fixed.Origin, all)
 	if err != nil {
 		return nil, err
 	}
 
 	// destination stop times
-	destinationArrival, err := p.stopTime(fixed.Destination, all)
+	destinationArrival, err := s.stopTime(fixed.Destination, all)
 	if err != nil {
 		return nil, err
 	}
@@ -210,14 +210,14 @@ func (p *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 }
 
 // helper to get origin and destination stops
-func (p *Scheduler) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
+func (s *Scheduler) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
 	empty := model.Stop{}
-	origin, ok := p.stopIndex.Get(fixed.Origin)
+	origin, ok := s.stopIndex.Get(fixed.Origin)
 	if !ok {
 		return empty, empty, fmt.Errorf("origin stop %s not found", fixed.Origin)
 	}
 
-	destination, ok := p.stopIndex.Get(fixed.Destination)
+	destination, ok := s.stopIndex.Get(fixed.Destination)
 	if !ok {
 		return empty, empty, fmt.Errorf("destination stop %s not found", fixed.Destination)
 	}
@@ -225,7 +225,7 @@ func (p *Scheduler) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
 }
 
 // helper to get stop time from a trip
-func (p *Scheduler) stopTime(stopId string, all []model.StopTime) (model.StopTime, error) {
+func (s *Scheduler) stopTime(stopId string, all []model.StopTime) (model.StopTime, error) {
 	for _, stopTime := range all {
 		if stopTime.StopId == stopId {
 			return stopTime, nil
