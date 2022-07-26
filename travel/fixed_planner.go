@@ -1,7 +1,6 @@
 package travel
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -68,35 +67,44 @@ func (p *FixedPlanner) Depart(at time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 	return planned, nil
 }
 
-func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
+func (p *FixedPlanner) arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
+	planned := []*PlannedLeg{}
 	acc := by
-	first := fixed[0] // first leg
-	schedule := p.ScheduleIndex.Get(first.Origin, first.RouteId)
 
-	for i := 0; i < 100; i++ {
-		prev, err := schedule.Previous(acc)
+	for i := len(fixed) - 1; i >= 0; i-- {
+		leg := fixed[i]
+		plan, err := p.planArrive(acc, leg)
+
 		if err != nil {
 			return nil, err
 		}
 
-		duration := stopTimeDiffDuration(prev.Time, acc)
-		acc = acc.Add(-duration)
-
-		plan, err := p.Depart(acc, fixed)
-		if err != nil {
-			continue
-		}
-
-		last := plan[len(plan)-1]
-
-		if last.Departure.Add(last.Duration).Before(by) {
-			return plan, nil
-		}
-
-		acc = acc.Add(-time.Minute)
+		acc = plan.Departure
+		planned = append(planned, plan)
 	}
 
-	return nil, errors.New("not found")
+	order := []*PlannedLeg{}
+	for i := 0; i < len(planned); i++ {
+		order = append(order, planned[len(planned)-(i+1)])
+	}
+
+	return order, nil
+}
+func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
+	plan, err := p.arrive(by, fixed)
+	if err != nil {
+		return nil, err
+	}
+
+	first := plan[0]
+
+	optimized, err := p.Depart(first.Departure.Add(-time.Minute), fixed)
+	if err != nil {
+		return nil, err
+	}
+
+	return optimized, nil
+
 }
 
 func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, error) {
@@ -181,7 +189,6 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 
 	// planned leg by transit
 	previous, err := p.ScheduleIndex.Get(fixed.Destination, fixed.RouteId).Previous(acc)
-	fmt.Println("previous:", previous.Time, "acc:", acc)
 	if err != nil {
 		return nil, err
 	}
@@ -201,6 +208,7 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 		return nil, err
 	}
 
+	excess := stopTimeDiffDuration(destinationArrival.Time, acc)
 	transitDuration := stopTimeDiffDuration(originArrival.Time, destinationArrival.Time)
 
 	// planned leg
@@ -209,7 +217,7 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 		Destination: fixed.Destination,
 		Walk:        false,
 		TripId:      previous.TripId,
-		Departure:   acc.Add(-transitDuration),
+		Departure:   acc.Add(-(transitDuration + excess)),
 		Duration:    transitDuration,
 	}, nil
 }

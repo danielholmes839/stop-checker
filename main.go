@@ -63,7 +63,6 @@ func main() {
 	}
 
 	t1 := time.Now()
-	fmt.Println("-------------------------------")
 	legs, err := planner.Depart(departure, []*travel.FixedLeg{
 		// arch/pleasant park -> hurdman b
 		{
@@ -94,7 +93,6 @@ func main() {
 		fmt.Println(leg.String())
 	}
 
-	fmt.Println("-------------------------------")
 	t1 = time.Now()
 	legs, _ = planner.Arrive(before, []*travel.FixedLeg{
 		// arch/pleasant park -> hurdman b
