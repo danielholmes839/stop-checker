@@ -24,7 +24,7 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Plan, error)
 		Expand: p.expand,
 	}
 
-	solution, err := dijkstra.Algorithm[*node](config)
+	solution, err := dijkstra.Algorithm(config)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Plan, error)
 }
 
 func (p *Planner) expand(n *node) []*dijkstra.Path[*node] {
-
+	return nil
 }
 
 func (p *Planner) plan(solution *dijkstra.Path[*node]) Plan {

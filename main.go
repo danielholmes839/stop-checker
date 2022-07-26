@@ -8,7 +8,6 @@ import (
 	"stop-checker.com/db/gtfs"
 	"stop-checker.com/db/model"
 	"stop-checker.com/travel"
-	"stop-checker.com/travel/dijkstra"
 )
 
 func printLegs(legs []*travel.Leg) {
@@ -61,8 +60,4 @@ func main() {
 	if legs, err := scheduler.Arrive(before, route); err == nil {
 		printLegs(legs)
 	}
-
-	planner := travel.NewPlanner()
-
-	fmt.Println(end, err)
 }
