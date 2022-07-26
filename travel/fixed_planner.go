@@ -1,6 +1,7 @@
 package travel
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -45,9 +46,6 @@ func (fl *FixedLeg) String() string {
 	return fmt.Sprintf("transit{origin:%s, destination:%s}", fl.Origin, fl.Destination)
 }
 
-const ARRIVE_BY = 0
-const DEPART_AT = false
-
 type FixedPlanner struct {
 	StopIndex         *db.Index[model.Stop]
 	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
@@ -71,26 +69,34 @@ func (p *FixedPlanner) Depart(at time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 }
 
 func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
-	planned := []*PlannedLeg{}
 	acc := by
+	first := fixed[0] // first leg
+	schedule := p.ScheduleIndex.Get(first.Origin, first.RouteId)
 
-	for i := len(fixed) - 1; i >= 0; i-- {
-		leg := fixed[i]
-		plan, err := p.planArrive(acc, leg)
+	for i := 0; i < 100; i++ {
+		prev, err := schedule.Previous(acc)
 		if err != nil {
 			return nil, err
 		}
 
-		acc = plan.Departure
-		planned = append(planned, plan)
+		duration := stopTimeDiffDuration(prev.Time, acc)
+		acc = acc.Add(-duration)
+
+		plan, err := p.Depart(acc, fixed)
+		if err != nil {
+			continue
+		}
+
+		last := plan[len(plan)-1]
+
+		if last.Departure.Add(last.Duration).Before(by) {
+			return plan, nil
+		}
+
+		acc = acc.Add(-time.Minute)
 	}
 
-	order := []*PlannedLeg{}
-	for i := 0; i < len(planned); i++ {
-		order = append(order, planned[len(planned)-(i+1)])
-	}
-
-	return order, nil
+	return nil, errors.New("not found")
 }
 
 func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, error) {
