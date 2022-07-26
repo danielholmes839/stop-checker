@@ -8,6 +8,7 @@ import (
 	"stop-checker.com/db/gtfs"
 	"stop-checker.com/db/model"
 	"stop-checker.com/travel"
+	"stop-checker.com/travel/dijkstra"
 )
 
 func printLegs(legs []*travel.Leg) {
@@ -35,7 +36,7 @@ func main() {
 	)
 
 	fmt.Println("ranked:", len(stops))
-	
+
 	scheduler := travel.NewScheduler(&travel.SchedulerConfig{
 		StopIndex:         database.Stops,
 		StopTimesFromTrip: database.StopTimesFromTrip,
@@ -60,4 +61,25 @@ func main() {
 	if legs, err := scheduler.Arrive(before, route); err == nil {
 		printLegs(legs)
 	}
+
+	pq := dijkstra.NewPriorityQueue[IntNode]()
+	pq.Push(IntNode(5))
+	pq.Push(IntNode(10))
+	pq.Push(IntNode(15))
+	pq.Push(IntNode(1))
+
+	for !pq.Empty() {
+		fmt.Println(pq.Pop())
+	}
+	fmt.Println(pq.Empty())
+}
+
+type IntNode int
+
+func (i IntNode) ID() string {
+	return fmt.Sprintf("%d", i)
+}
+
+func (i IntNode) Weight() int {
+	return int(i)
 }
