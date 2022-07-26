@@ -12,5 +12,5 @@ type RouteScheduler interface {
 }
 
 type RoutePlanner interface {
-	Depart(at time.Time) (Plan error)
+	Depart(at time.Time, origin, destination string) (Plan error)
 }

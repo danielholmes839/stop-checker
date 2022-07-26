@@ -62,26 +62,7 @@ func main() {
 		printLegs(legs)
 	}
 
-	config := &dijkstra.Config[*Node]{}
-	end, err := dijkstra.Algorithm[*Node](config)
+	planner := travel.NewPlanner()
 
-	fmt.Println(pq.Empty())
-}
-
-type Node struct {
-	prev   *Node
-	id     string
-	weight int
-}
-
-func (n *Node) ID() string {
-	return n.id
-}
-
-func (n *Node) Weight() int {
-	return n.weight
-}
-
-func (n *Node) Previous() *Node {
-	return n.prev
+	fmt.Println(end, err)
 }
