@@ -9,11 +9,17 @@ import (
 	"stop-checker.com/db/model"
 )
 
+type Transit struct {
+	TripId                string
+	OriginStopTimeId      string
+	DestinationStopTimeId string
+}
+
 type PlannedLeg struct {
 	Origin      string // origin stop id
 	Destination string // destination stop id
 	Walk        bool   // if we walk between the two stops
-	TripId      string // trip id
+	*Transit           // transit info
 
 	Departure time.Time     // when do we depart from the origin
 	Duration  time.Duration // duration between arriving at the destination and leaving the origin
@@ -81,7 +87,6 @@ func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 	}
 
 	return optimized, nil
-
 }
 
 func (p *FixedPlanner) arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
@@ -127,7 +132,6 @@ func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 			Origin:      fixed.Origin,
 			Destination: fixed.Destination,
 			Walk:        true,
-			TripId:      "",
 			Departure:   acc,
 			Duration:    duration,
 		}, nil
@@ -163,9 +167,13 @@ func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
-		TripId:      next.TripId,
-		Departure:   departure,
-		Duration:    transitDuration,
+		Transit: &Transit{
+			TripId:                next.TripId,
+			OriginStopTimeId:      originArrival.ID(),
+			DestinationStopTimeId: destinationArrival.ID(),
+		},
+		Departure: departure,
+		Duration:  transitDuration,
 	}, nil
 }
 
@@ -185,7 +193,6 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 			Origin:      fixed.Origin,
 			Destination: fixed.Destination,
 			Walk:        true,
-			TripId:      "",
 			Departure:   acc.Add(-duration),
 			Duration:    duration,
 		}, nil
@@ -220,9 +227,13 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
-		TripId:      previous.TripId,
-		Departure:   acc.Add(-(transitDuration + excess)),
-		Duration:    transitDuration,
+		Transit: &Transit{
+			TripId:                previous.TripId,
+			OriginStopTimeId:      originArrival.ID(),
+			DestinationStopTimeId: destinationArrival.ID(),
+		},
+		Departure: acc.Add(-(transitDuration + excess)),
+		Duration:  transitDuration,
 	}, nil
 }
 
