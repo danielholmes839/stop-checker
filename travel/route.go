@@ -45,7 +45,3 @@ func (fl *FixedLeg) String() string {
 	}
 	return fmt.Sprintf("transit{origin:%s, destination:%s}", fl.Origin, fl.Destination)
 }
-
-type Plan []*FixedLeg
-
-type Schedule []*Leg
