@@ -67,29 +67,6 @@ func (p *FixedPlanner) Depart(at time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 	return planned, nil
 }
 
-func (p *FixedPlanner) arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
-	planned := []*PlannedLeg{}
-	acc := by
-
-	for i := len(fixed) - 1; i >= 0; i-- {
-		leg := fixed[i]
-		plan, err := p.planArrive(acc, leg)
-
-		if err != nil {
-			return nil, err
-		}
-
-		acc = plan.Departure
-		planned = append(planned, plan)
-	}
-
-	order := []*PlannedLeg{}
-	for i := 0; i < len(planned); i++ {
-		order = append(order, planned[len(planned)-(i+1)])
-	}
-
-	return order, nil
-}
 func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
 	plan, err := p.arrive(by, fixed)
 	if err != nil {
@@ -107,8 +84,35 @@ func (p *FixedPlanner) Arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, e
 
 }
 
+func (p *FixedPlanner) arrive(by time.Time, fixed []*FixedLeg) ([]*PlannedLeg, error) {
+	planned := []*PlannedLeg{}
+	acc := by
+
+	// iterate over fixed legs in review
+	for i := len(fixed) - 1; i >= 0; i-- {
+		leg := fixed[i]
+		plan, err := p.planArrive(acc, leg)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// adjust the accumulator time
+		acc = plan.Departure
+		planned = append(planned, plan)
+	}
+
+	// reverse the list of planned legs
+	order := []*PlannedLeg{}
+	for i := 0; i < len(planned); i++ {
+		order = append(order, planned[len(planned)-(i+1)])
+	}
+
+	return order, nil
+}
+
 func (p *FixedPlanner) planDepart(acc time.Time, fixed *FixedLeg) (*PlannedLeg, error) {
-	// get origin and destination stops
+	// origin and destination stops
 	origin, destination, err := p.stops(fixed)
 	if err != nil {
 		return nil, err
@@ -222,6 +226,7 @@ func (p *FixedPlanner) planArrive(acc time.Time, fixed *FixedLeg) (*PlannedLeg, 
 	}, nil
 }
 
+// helper to get origin and destination stops
 func (p *FixedPlanner) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
 	empty := model.Stop{}
 	origin, ok := p.StopIndex.Get(fixed.Origin)
@@ -236,12 +241,12 @@ func (p *FixedPlanner) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
 	return origin, destination, nil
 }
 
+// helper to get stop time from a trip
 func (p *FixedPlanner) stopTime(stopId string, all []model.StopTime) (model.StopTime, error) {
 	for _, stopTime := range all {
 		if stopTime.StopId == stopId {
 			return stopTime, nil
 		}
 	}
-
 	return model.StopTime{}, fmt.Errorf("stoptime not found stop:%s", stopId)
 }

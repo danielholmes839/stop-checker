@@ -63,7 +63,7 @@ func main() {
 	}
 
 	t1 := time.Now()
-	legs, err := planner.Depart(departure, []*travel.FixedLeg{
+	legs, _ := planner.Depart(departure, []*travel.FixedLeg{
 		// arch/pleasant park -> hurdman b
 		{
 			Origin:      "AK151",
@@ -88,7 +88,7 @@ func main() {
 		},
 	})
 
-	fmt.Println(time.Since(t1), "depart at", err)
+	fmt.Println(time.Since(t1), "depart at", departure)
 	for _, leg := range legs {
 		fmt.Println(leg.String())
 	}
@@ -119,7 +119,7 @@ func main() {
 		},
 	})
 
-	fmt.Println(time.Since(t1), "arrive by")
+	fmt.Println(time.Since(t1), "arrive by", before)
 	for _, leg := range legs {
 		fmt.Println(leg.String())
 	}
