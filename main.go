@@ -62,24 +62,26 @@ func main() {
 		printLegs(legs)
 	}
 
-	pq := dijkstra.NewPriorityQueue[IntNode]()
-	pq.Push(IntNode(5))
-	pq.Push(IntNode(10))
-	pq.Push(IntNode(15))
-	pq.Push(IntNode(1))
+	config := &dijkstra.Config[*Node]{}
+	end, err := dijkstra.Algorithm[*Node](config)
 
-	for !pq.Empty() {
-		fmt.Println(pq.Pop())
-	}
 	fmt.Println(pq.Empty())
 }
 
-type IntNode int
-
-func (i IntNode) ID() string {
-	return fmt.Sprintf("%d", i)
+type Node struct {
+	prev   *Node
+	id     string
+	weight int
 }
 
-func (i IntNode) Weight() int {
-	return int(i)
+func (n *Node) ID() string {
+	return n.id
+}
+
+func (n *Node) Weight() int {
+	return n.weight
+}
+
+func (n *Node) Previous() *Node {
+	return n.prev
 }

@@ -26,24 +26,29 @@ func (h *nHeap) Pop() any {
 	return x
 }
 
-type PriorityQueue[N Node] struct {
+
+type Weighted interface {
+	Weight() int
+}
+
+type PriorityQueue[W Weighted] struct {
 	heap *nHeap
 }
 
-func NewPriorityQueue[N Node]() *PriorityQueue[N] {
-	return &PriorityQueue[N]{
+func NewPriorityQueue[W Weighted]() *PriorityQueue[W] {
+	return &PriorityQueue[W]{
 		heap: &nHeap{},
 	}
 }
 
-func (pq *PriorityQueue[N]) Push(node N) {
-	heap.Push(pq.heap, node)
+func (pq *PriorityQueue[W]) Push(w W) {
+	heap.Push(pq.heap, w)
 }
 
-func (pq *PriorityQueue[N]) Pop() N {
-	return heap.Pop(pq.heap).(N)
+func (pq *PriorityQueue[W]) Pop() W {
+	return heap.Pop(pq.heap).(W)
 }
 
-func (pq *PriorityQueue[N]) Empty() bool {
+func (pq *PriorityQueue[W]) Empty() bool {
 	return len(*pq.heap) == 0
 }
