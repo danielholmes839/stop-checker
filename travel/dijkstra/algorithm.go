@@ -24,20 +24,20 @@ func (p *Path[N]) Weight() int {
 	return p.Node.Weight()
 }
 
-type Input[N Node] struct {
+type Config[N Node] struct {
 	Destination string
 	Initial     N
 	Expand      Expand[N]
 }
 
-func Algorithm[N Node](input *Input[N]) (*Path[N], error) {
+func Algorithm[N Node](config *Config[N]) (*Path[N], error) {
 	seen := Set{}
 	pq := NewPriorityQueue[*Path[N]]()
 
 	// push initial path
 	pq.Push(&Path[N]{
 		Prev: nil,
-		Node: input.Initial,
+		Node: config.Initial,
 	})
 
 	for !pq.Empty() {
@@ -45,7 +45,7 @@ func Algorithm[N Node](input *Input[N]) (*Path[N], error) {
 		node := path.Node
 
 		// destination
-		if node.ID() == input.Destination {
+		if node.ID() == config.Destination {
 			return path, nil
 		}
 
@@ -56,7 +56,7 @@ func Algorithm[N Node](input *Input[N]) (*Path[N], error) {
 		seen.Add(node.ID())
 
 		// expand
-		for _, neighbor := range input.Expand(path) {
+		for _, neighbor := range config.Expand(path) {
 			pq.Push(neighbor)
 		}
 	}

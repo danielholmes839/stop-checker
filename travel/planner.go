@@ -25,13 +25,12 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Plan, error)
 		duration: time.Duration(0),
 	}
 
-	input := &dijkstra.Input[*node]{
+	solution, err := dijkstra.Algorithm(&dijkstra.Config[*node]{
 		Destination: destination,
 		Initial:     initial,
 		Expand:      p.expand,
-	}
+	})
 
-	solution, err := dijkstra.Algorithm(input)
 	if err != nil {
 		return nil, err
 	}
