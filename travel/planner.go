@@ -1,7 +1,6 @@
 package travel
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -38,30 +37,25 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Plan, error)
 	}
 
 	return p.plan(solution, origin), nil
-	// neighbors, seen := p.expandTransit(initial)
-	// for _, neighbor := range neighbors {
-	// 	fmt.Printf("%+v\n", neighbor)
-	// }
-
-	// fmt.Println("walkable")
-	// walkable := p.expandWalkAll(neighbors, seen)
-	// for _, neighbor := range walkable {
-	// 	fmt.Println("----------")
-	// 	stop, _ := p.StopIndex.Get(neighbor.ID())
-	// 	fmt.Println(stop.Name)
-	// 	fmt.Printf("%#v\n", neighbor)
-	// }
-
-	// return nil, nil
 }
 
 func (p *Planner) plan(solution *dijkstra.Path[*node], origin string) Plan {
 	plan := Plan{}
 
-	for solution != nil {
-		fmt.Printf("node:%s, route:%s, arrival:%s, transit:%s\n",
-			solution.ID(), solution.Node.routeId, solution.Node.arrival, solution.Node.duration)
+	for solution.Prev != nil {
+		plan = append(plan, &FixedLeg{
+			Origin:      solution.Prev.ID(),
+			Destination: solution.ID(),
+			RouteId:     solution.Node.routeId,
+			Walk:        solution.Node.walk,
+		})
+
 		solution = solution.Prev
+	}
+
+	// reverse
+	for i, j := 0, len(plan)-1; i < j; i, j = i+1, j-1 {
+		plan[i], plan[j] = plan[j], plan[i]
 	}
 
 	return plan

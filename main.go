@@ -69,12 +69,7 @@ func main() {
 		TripIndex:         database.Trips,
 		StopTimesFromTrip: database.StopTimesFromTrip,
 	}
-
+	
 	plan, err := planner.Depart(departure, "AK151", "CD998")
-
-	for _, leg := range plan {
-		fmt.Println(leg)
-	}
-
 	fmt.Println(plan, err)
 }
