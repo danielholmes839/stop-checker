@@ -90,7 +90,7 @@ func main() {
 	printPlan(plan)
 
 	t0 = time.Now()
-	plan, _ = planner.Depart(departure, "AE650", "CD998")
+	plan, _ = planner.Depart(departure, "AE640", "CD999")
 	fmt.Println(time.Since(t0))
 	printPlan(plan)
 }

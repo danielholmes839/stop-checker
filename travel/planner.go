@@ -60,9 +60,72 @@ func (p *Planner) plan(solution *dijkstra.Path[*node], origin string) Plan {
 	return plan
 }
 
+type temp struct {
+	distance float64
+	stopId   string
+	duration time.Duration
+}
+
+func (p *Planner) expandWalkFirst(origin *node) []*node {
+	stop, _ := p.StopIndex.Get(origin.ID())
+
+	originRoutesIndex := dijkstra.Set{}
+	originRoutes := p.StopRouteIndex.Get(origin.ID())
+
+	for _, originRoute := range originRoutes {
+		originRoutesIndex.Add(originRoute.ID())
+	}
+
+	closest := map[string]temp{}
+
+	// for all stops within a 250m radius
+	for _, neighbor := range p.StopLocationIndex.Query(stop.Location, 200) {
+		neighborRoutes := p.StopRouteIndex.Get(neighbor.ID())
+
+		for _, route := range neighborRoutes {
+			directedRouteId := route.ID()
+			if origin.Blocked(directedRouteId) {
+				continue
+			}
+
+			if originRoutesIndex.Contains(directedRouteId) {
+				continue
+			}
+
+			distance := neighbor.Location.Distance(stop.Location)
+			duration := walkingDuration(distance)
+
+			current, seen := closest[directedRouteId]
+			if !seen || current.distance > distance {
+				closest[directedRouteId] = temp{
+					distance: distance,
+					stopId:   neighbor.ID(),
+					duration: duration,
+				}
+			}
+		}
+	}
+
+	// calculate walking distance and duration
+
+	connections := []*node{}
+
+	for _, c := range closest {
+		connections = append(connections, &node{
+			walk:     true,
+			routeId:  "",
+			stopId:   c.stopId,
+			arrival:  origin.arrival.Add(c.duration),
+			blockers: origin.blockers,
+		})
+	}
+
+	return connections
+}
+
 func (p *Planner) expand(path *dijkstra.Path[*node]) []*dijkstra.Path[*node] {
-	transit, seen := p.expandTransit(path.Node)
-	walking := p.expandWalkAll(transit, seen)
+	transit, _ := p.expandTransit(path.Node)
+	walking := p.expandWalkFirst(path.Node)
 
 	paths := []*dijkstra.Path[*node]{}
 	for _, transitNode := range transit {
@@ -74,11 +137,8 @@ func (p *Planner) expand(path *dijkstra.Path[*node]) []*dijkstra.Path[*node] {
 
 	for _, walkingNode := range walking {
 		paths = append(paths, &dijkstra.Path[*node]{
-			Prev: &dijkstra.Path[*node]{
-				Prev: path,
-				Node: walkingNode.prev,
-			},
-			Node: walkingNode.node,
+			Prev: path,
+			Node: walkingNode,
 		})
 	}
 	return append(paths)
