@@ -63,14 +63,13 @@ func main() {
 		printLegs(legs)
 	}
 
-	planner := travel.Planner{
+	planner := travel.NewPlanner(&travel.PlannerConfig{
 		ScheduleIndex:     database.ScheduleIndex,
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,
-		TripIndex:         database.Trips,
 		StopTimesFromTrip: database.StopTimesFromTrip,
-	}
+	})
 
 	printPlan := func(route travel.Route) {
 		fmt.Println("------- NEW PLAN -------")

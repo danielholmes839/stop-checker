@@ -9,13 +9,30 @@ import (
 	"stop-checker.com/travel/dijkstra"
 )
 
-type Planner struct {
+type PlannerConfig struct {
 	ScheduleIndex     *db.ScheduleIndex
 	StopLocationIndex *db.StopLocationIndex
 	StopRouteIndex    *db.StopRouteIndex
 	StopIndex         *db.Index[model.Stop]
-	TripIndex         *db.Index[model.Trip]
 	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
+}
+
+type Planner struct {
+	scheduleIndex     *db.ScheduleIndex
+	stopLocationIndex *db.StopLocationIndex
+	stopRouteIndex    *db.StopRouteIndex
+	stopIndex         *db.Index[model.Stop]
+	stopTimesFromTrip *db.InvertedIndex[model.StopTime]
+}
+
+func NewPlanner(config *PlannerConfig) *Planner {
+	return &Planner{
+		scheduleIndex:     config.ScheduleIndex,
+		stopLocationIndex: config.StopLocationIndex,
+		stopRouteIndex:    config.StopRouteIndex,
+		stopIndex:         config.StopIndex,
+		stopTimesFromTrip: config.StopTimesFromTrip,
+	}
 }
 
 func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error) {
@@ -67,10 +84,10 @@ func (p *Planner) expand(n *node) []*node {
 }
 
 func (p *Planner) expandWalk(origin *node) []*node {
-	stop, _ := p.StopIndex.Get(origin.ID())
+	stop, _ := p.stopIndex.Get(origin.ID())
 
 	originRoutesIndex := dijkstra.Set{}
-	originRoutes := p.StopRouteIndex.Get(origin.ID())
+	originRoutes := p.stopRouteIndex.Get(origin.ID())
 
 	for _, originRoute := range originRoutes {
 		originRoutesIndex.Add(originRoute.ID())
@@ -80,8 +97,8 @@ func (p *Planner) expandWalk(origin *node) []*node {
 	closest := map[string]closestWalk{}
 
 	// for all stops within a 250m radius
-	for _, neighbor := range p.StopLocationIndex.Query(stop.Location, 200) {
-		neighborRoutes := p.StopRouteIndex.Get(neighbor.ID())
+	for _, neighbor := range p.stopLocationIndex.Query(stop.Location, 200) {
+		neighborRoutes := p.stopRouteIndex.Get(neighbor.ID())
 
 		for _, route := range neighborRoutes {
 			directedRouteId := route.ID()
@@ -134,13 +151,13 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 	fastest := map[string]fastestTransit{}
 
 	// expand on routes
-	for _, route := range p.StopRouteIndex.Get(n.ID()) {
+	for _, route := range p.stopRouteIndex.Get(n.ID()) {
 		if n.Blocked(route.ID()) {
 			continue
 		}
 
 		// lookup the trip and "tripOrigin" stop time
-		tripOrigin, _ := p.ScheduleIndex.Get(origin, route.Route.Id).Next(originArrival)
+		tripOrigin, _ := p.scheduleIndex.Get(origin, route.Route.Id).Next(originArrival)
 
 		// calculate the time spent waiting for the trip
 		waitDuration := stopTimeDiffDuration(originArrival, tripOrigin.Time)
@@ -196,7 +213,7 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 
 func (p *Planner) expandTrip(origin model.StopTime) []model.StopTime {
 	// all stop times after the origin stop time
-	all, _ := p.StopTimesFromTrip.Get(origin.TripId)
+	all, _ := p.stopTimesFromTrip.Get(origin.TripId)
 	connections := []model.StopTime{}
 
 	for _, stopTime := range all {
