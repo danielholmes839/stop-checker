@@ -69,7 +69,28 @@ func main() {
 		TripIndex:         database.Trips,
 		StopTimesFromTrip: database.StopTimesFromTrip,
 	}
-	
-	plan, err := planner.Depart(departure, "AK151", "CD998")
-	fmt.Println(plan, err)
+
+	printPlan := func(plan travel.Plan) {
+		fmt.Println("------- NEW PLAN -------")
+		for _, leg := range plan {
+			origin, _ := database.Stops.Get(leg.Origin)
+			destination, _ := database.Stops.Get(leg.Destination)
+			fmt.Println("route:", leg.RouteId, origin.Name, "->", destination.Name, "walk =", leg.Walk)
+		}
+	}
+
+	t0 := time.Now()
+	plan, _ := planner.Depart(departure, "AK151", "CD998")
+	fmt.Println(time.Since(t0))
+	printPlan(plan)
+
+	t0 = time.Now()
+	plan, _ = planner.Depart(departure, "AL050", "CD998")
+	fmt.Println(time.Since(t0))
+	printPlan(plan)
+
+	t0 = time.Now()
+	plan, _ = planner.Depart(departure, "AE650", "CD998")
+	fmt.Println(time.Since(t0))
+	printPlan(plan)
 }

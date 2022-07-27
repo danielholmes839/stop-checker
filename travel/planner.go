@@ -95,7 +95,7 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 
 	// expand on routes
 	for _, route := range p.StopRouteIndex.Get(n.ID()) {
-		if n.Blocked(route.Id) {
+		if n.Blocked(route.ID()) {
 			continue
 		}
 
@@ -129,7 +129,7 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 			}
 
 			stopBlockers := blockers[tripDestination.StopId]
-			stopBlockers.Add(route.Id)
+			stopBlockers.Add(route.ID())
 			stops.Add(tripDestination.StopId)
 		}
 	}
