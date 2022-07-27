@@ -48,7 +48,7 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 		}
 
 		for _, stopRoute := range stopRoutes {
-			id := stopRoute.ID()
+			id := stopRoute.DirectedID()
 
 			// first time seeing this route
 			if _, seen := closest[id]; !seen {
@@ -57,7 +57,7 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 					position: 0,
 				}
 				rank.BestRouteRank = 0
-				rank.BestRoute = stopRoute.Route.ID()
+				rank.BestRoute = stopRoute.RouteId
 				break
 			}
 
@@ -68,7 +68,7 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 
 			if current.position < rank.BestRouteRank {
 				rank.BestRouteRank = 0
-				rank.BestRoute = stopRoute.Route.ID()
+				rank.BestRoute = stopRoute.RouteId
 			}
 		}
 

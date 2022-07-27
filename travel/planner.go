@@ -90,7 +90,7 @@ func (p *Planner) expandWalk(origin *node) []*node {
 	originRoutes := p.stopRouteIndex.Get(origin.ID())
 
 	for _, originRoute := range originRoutes {
-		originRoutesIndex.Add(originRoute.ID())
+		originRoutesIndex.Add(originRoute.DirectedID())
 	}
 
 	// closest walk for each route
@@ -101,7 +101,7 @@ func (p *Planner) expandWalk(origin *node) []*node {
 		neighborRoutes := p.stopRouteIndex.Get(neighbor.ID())
 
 		for _, route := range neighborRoutes {
-			directedRouteId := route.ID()
+			directedRouteId := route.DirectedID()
 			if origin.Blocked(directedRouteId) {
 				continue
 			}
@@ -152,12 +152,12 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 
 	// expand on routes
 	for _, route := range p.stopRouteIndex.Get(n.ID()) {
-		if n.Blocked(route.ID()) {
+		if n.Blocked(route.DirectedID()) {
 			continue
 		}
 
 		// lookup the trip and "tripOrigin" stop time
-		tripOrigin, _ := p.scheduleIndex.Get(origin, route.Route.Id).Next(originArrival)
+		tripOrigin, _ := p.scheduleIndex.Get(origin, route.RouteId).Next(originArrival)
 
 		// calculate the time spent waiting for the trip
 		waitDuration := stopTimeDiffDuration(originArrival, tripOrigin.Time)
@@ -176,7 +176,7 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 					arrival: tripDestinationArrival,
 					wait:    waitDuration,
 					transit: transitDuration,
-					routeId: route.Id,
+					routeId: route.RouteId,
 				}
 			}
 
@@ -186,7 +186,7 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 			}
 
 			stopBlockers := blockers[tripDestination.StopId]
-			stopBlockers.Add(route.ID())
+			stopBlockers.Add(route.DirectedID())
 			stops.Add(tripDestination.StopId)
 		}
 	}

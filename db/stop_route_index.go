@@ -1,26 +1,19 @@
 package db
 
 import (
-	"fmt"
-
 	"stop-checker.com/db/model"
 )
 
-type StopRoute struct {
-	model.Route
-	DirectionId string
-}
-
-func (r StopRoute) ID() string {
-	return fmt.Sprintf("%s:%s", r.Id, r.DirectionId)
-}
-
 type StopRouteIndex struct {
-	index *InvertedIndex[StopRoute]
+	index *InvertedIndex[model.StopRoute]
+}
+
+type stopRouteInfo struct {
+	directionId, headsign string
 }
 
 func NewStopRouteIndex(indexes *BaseIndex, base *model.Base) *StopRouteIndex {
-	routes := make(map[string]map[string]string)
+	routes := make(map[string]map[string]stopRouteInfo)
 
 	// create a map of unique route ids for each stop id
 	for _, stopTime := range base.StopTimes {
@@ -29,23 +22,27 @@ func NewStopRouteIndex(indexes *BaseIndex, base *model.Base) *StopRouteIndex {
 		routeId := trip.RouteId
 
 		if _, ok := routes[stopId]; !ok {
-			routes[stopId] = map[string]string{}
+			routes[stopId] = map[string]stopRouteInfo{}
 		}
-		routes[stopId][routeId] = trip.DirectionId
+		routes[stopId][routeId] = stopRouteInfo{
+			directionId: trip.DirectionId,
+			headsign:    trip.Headsign,
+		}
 	}
 
-	index := &InvertedIndex[StopRoute]{
-		data: map[string][]StopRoute{},
+	index := &InvertedIndex[model.StopRoute]{
+		data: map[string][]model.StopRoute{},
 	}
 
 	// add data to the index
 	for stopId, routes := range routes {
-		index.data[stopId] = []StopRoute{}
-		for routeId, directionId := range routes {
-			route, _ := indexes.Routes.Get(routeId)
-			index.data[stopId] = append(index.data[stopId], StopRoute{
-				Route:       route,
-				DirectionId: directionId,
+		index.data[stopId] = []model.StopRoute{}
+		for routeId, info := range routes {
+			index.data[stopId] = append(index.data[stopId], model.StopRoute{
+				RouteId:     routeId,
+				StopId:      stopId,
+				DirectionId: info.directionId,
+				Headsign:    info.headsign,
 			})
 		}
 	}
@@ -55,7 +52,7 @@ func NewStopRouteIndex(indexes *BaseIndex, base *model.Base) *StopRouteIndex {
 	}
 }
 
-func (s *StopRouteIndex) Get(stopId string) []StopRoute {
+func (s *StopRouteIndex) Get(stopId string) []model.StopRoute {
 	results, _ := s.index.Get(stopId)
 	return results
 }
