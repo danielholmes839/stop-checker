@@ -56,12 +56,18 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  Location:
+    model: "stop-checker.com/db/model.Location"
   Stop:
     model: "stop-checker.com/db/model.Stop"
   StopTime:
     model: "stop-checker.com/db/model.StopTime"
   StopRoute:
     model: "stop-checker.com/db/model.StopRoute"
+  StopRouteSchedule:
+    model: "stop-checker.com/db.ScheduleResults"
+  StopLocationResult:
+    model: "stop-checker.com/db.StopLocationResult"
   Route:
     model: "stop-checker.com/db/model.Route"
   Trip:
@@ -70,5 +76,3 @@ models:
     model: "stop-checker.com/db/model.Service"
   ServiceException:
     model: "stop-checker.com/db/model.ServiceException"
-  Location:
-    model: "stop-checker.com/db/model.Location"

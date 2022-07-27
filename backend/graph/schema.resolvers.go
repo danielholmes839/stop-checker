@@ -14,21 +14,20 @@ import (
 	"stop-checker.com/db/model"
 )
 
-// SearchText is the resolver for the searchText field.
-func (r *queryResolver) SearchText(ctx context.Context, text string) ([]*model.Stop, error) {
+// SearchStopText is the resolver for the searchStopText field.
+func (r *queryResolver) SearchStopText(ctx context.Context, text string) ([]*model.Stop, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-// SearchLocation is the resolver for the searchLocation field.
-func (r *queryResolver) SearchLocation(ctx context.Context, latitude float64, longitude float64, radius float64) ([]*model.Stop, error) {
+// SearchStopLocation is the resolver for the searchStopLocation field.
+func (r *queryResolver) SearchStopLocation(ctx context.Context, latitude float64, longitude float64, radius float64) ([]*db.StopLocationResult, error) {
 	stops := r.StopLocationIndex.Query(model.Location{
 		Latitude:  latitude,
 		Longitude: longitude,
 	}, radius)
 
 	// return the stops
-	results := ref(apply(stops, func(t db.StopLocationResult) model.Stop { return t.Stop }))
-	return results, nil
+	return ref(stops), nil
 }
 
 // ID is the resolver for the id field.
@@ -135,8 +134,15 @@ func (r *stopRouteResolver) Direction(ctx context.Context, obj *model.StopRoute)
 }
 
 // Schedule is the resolver for the schedule field.
-func (r *stopRouteResolver) Schedule(ctx context.Context, obj *model.StopRoute) (*types.StopRouteSchedule, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *stopRouteResolver) Schedule(ctx context.Context, obj *model.StopRoute) (*db.ScheduleResults, error) {
+	return r.ScheduleIndex.Get(obj.StopId, obj.RouteId), nil
+}
+
+// Next is the resolver for the next field.
+func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *db.ScheduleResults) ([]*model.StopTime, error) {
+	now := time.Now().In(r.Timezone)
+	stopTimes := obj.After(now, 3)
+	return ref(stopTimes), nil
 }
 
 // Trip is the resolver for the trip field.
@@ -198,6 +204,11 @@ func (r *Resolver) Stop() generated.StopResolver { return &stopResolver{r} }
 // StopRoute returns generated.StopRouteResolver implementation.
 func (r *Resolver) StopRoute() generated.StopRouteResolver { return &stopRouteResolver{r} }
 
+// StopRouteSchedule returns generated.StopRouteScheduleResolver implementation.
+func (r *Resolver) StopRouteSchedule() generated.StopRouteScheduleResolver {
+	return &stopRouteScheduleResolver{r}
+}
+
 // StopTime returns generated.StopTimeResolver implementation.
 func (r *Resolver) StopTime() generated.StopTimeResolver { return &stopTimeResolver{r} }
 
@@ -210,27 +221,6 @@ type serviceResolver struct{ *Resolver }
 type serviceExceptionResolver struct{ *Resolver }
 type stopResolver struct{ *Resolver }
 type stopRouteResolver struct{ *Resolver }
+type stopRouteScheduleResolver struct{ *Resolver }
 type stopTimeResolver struct{ *Resolver }
 type tripResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func ref[T any](t []T) []*T {
-	results := make([]*T, len(t))
-	for i, result := range t {
-		ref := result
-		results[i] = &ref
-	}
-	return results
-}
-func apply[T any, U any](t []T, f func(T) U) []U {
-	results := make([]U, len(t))
-	for i, result := range t {
-		results[i] = f(result)
-	}
-	return results
-}

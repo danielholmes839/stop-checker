@@ -17,6 +17,7 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"stop-checker.com/backend/graph/types"
+	"stop-checker.com/db"
 	"stop-checker.com/db/model"
 )
 
@@ -44,6 +45,7 @@ type ResolverRoot interface {
 	ServiceException() ServiceExceptionResolver
 	Stop() StopResolver
 	StopRoute() StopRouteResolver
+	StopRouteSchedule() StopRouteScheduleResolver
 	StopTime() StopTimeResolver
 	Trip() TripResolver
 }
@@ -58,8 +60,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		SearchLocation func(childComplexity int, latitude float64, longitude float64, radius float64) int
-		SearchText     func(childComplexity int, text string) int
+		SearchStopLocation func(childComplexity int, latitude float64, longitude float64, radius float64) int
+		SearchStopText     func(childComplexity int, text string) int
 	}
 
 	Route struct {
@@ -96,6 +98,11 @@ type ComplexityRoot struct {
 		Routes   func(childComplexity int) int
 	}
 
+	StopLocationResult struct {
+		Distance func(childComplexity int) int
+		Stop     func(childComplexity int) int
+	}
+
 	StopRoute struct {
 		Direction func(childComplexity int) int
 		Headsign  func(childComplexity int) int
@@ -105,7 +112,7 @@ type ComplexityRoot struct {
 	}
 
 	StopRouteSchedule struct {
-		Temp func(childComplexity int) int
+		Next func(childComplexity int) int
 	}
 
 	StopTime struct {
@@ -126,8 +133,8 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	SearchText(ctx context.Context, text string) ([]*model.Stop, error)
-	SearchLocation(ctx context.Context, latitude float64, longitude float64, radius float64) ([]*model.Stop, error)
+	SearchStopText(ctx context.Context, text string) ([]*model.Stop, error)
+	SearchStopLocation(ctx context.Context, latitude float64, longitude float64, radius float64) ([]*db.StopLocationResult, error)
 }
 type RouteResolver interface {
 	ID(ctx context.Context, obj *model.Route) (string, error)
@@ -161,7 +168,10 @@ type StopRouteResolver interface {
 	Route(ctx context.Context, obj *model.StopRoute) (*model.Route, error)
 	Direction(ctx context.Context, obj *model.StopRoute) (string, error)
 
-	Schedule(ctx context.Context, obj *model.StopRoute) (*types.StopRouteSchedule, error)
+	Schedule(ctx context.Context, obj *model.StopRoute) (*db.ScheduleResults, error)
+}
+type StopRouteScheduleResolver interface {
+	Next(ctx context.Context, obj *db.ScheduleResults) ([]*model.StopTime, error)
 }
 type StopTimeResolver interface {
 	Trip(ctx context.Context, obj *model.StopTime) (*model.Trip, error)
@@ -205,29 +215,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Location.Longitude(childComplexity), true
 
-	case "Query.searchLocation":
-		if e.complexity.Query.SearchLocation == nil {
+	case "Query.searchStopLocation":
+		if e.complexity.Query.SearchStopLocation == nil {
 			break
 		}
 
-		args, err := ec.field_Query_searchLocation_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_searchStopLocation_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.SearchLocation(childComplexity, args["latitude"].(float64), args["longitude"].(float64), args["radius"].(float64)), true
+		return e.complexity.Query.SearchStopLocation(childComplexity, args["latitude"].(float64), args["longitude"].(float64), args["radius"].(float64)), true
 
-	case "Query.searchText":
-		if e.complexity.Query.SearchText == nil {
+	case "Query.searchStopText":
+		if e.complexity.Query.SearchStopText == nil {
 			break
 		}
 
-		args, err := ec.field_Query_searchText_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_searchStopText_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.SearchText(childComplexity, args["text"].(string)), true
+		return e.complexity.Query.SearchStopText(childComplexity, args["text"].(string)), true
 
 	case "Route.background":
 		if e.complexity.Route.Background == nil {
@@ -383,6 +393,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stop.Routes(childComplexity), true
 
+	case "StopLocationResult.distance":
+		if e.complexity.StopLocationResult.Distance == nil {
+			break
+		}
+
+		return e.complexity.StopLocationResult.Distance(childComplexity), true
+
+	case "StopLocationResult.stop":
+		if e.complexity.StopLocationResult.Stop == nil {
+			break
+		}
+
+		return e.complexity.StopLocationResult.Stop(childComplexity), true
+
 	case "StopRoute.direction":
 		if e.complexity.StopRoute.Direction == nil {
 			break
@@ -418,12 +442,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.StopRoute.Stop(childComplexity), true
 
-	case "StopRouteSchedule.temp":
-		if e.complexity.StopRouteSchedule.Temp == nil {
+	case "StopRouteSchedule.next":
+		if e.complexity.StopRouteSchedule.Next == nil {
 			break
 		}
 
-		return e.complexity.StopRouteSchedule.Temp(childComplexity), true
+		return e.complexity.StopRouteSchedule.Next(childComplexity), true
 
 	case "StopTime.id":
 		if e.complexity.StopTime.ID == nil {
@@ -579,7 +603,7 @@ type StopRoute {
 }
 
 type StopRouteSchedule {
-    temp: String!
+    next: [StopTime!]!
 }
 
 type Route {
@@ -625,15 +649,15 @@ type ServiceException {
     date: Date!
 }
 
-# type Leg {
-#     Origin: Stop!
-#     Destination: Stop!
-# }
+type StopLocationResult {
+    stop: Stop!
+    distance: Float!
+}
 
 type Query {
     # should work with route numbers, stop codes, stop name, location
-    searchText(text: String!): [Stop!]! 
-    searchLocation(latitude: Float!, longitude: Float!, radius: Float!): [Stop!]! 
+    searchStopText(text: String!): [Stop!]! 
+    searchStopLocation(latitude: Float!, longitude: Float!, radius: Float!): [StopLocationResult!]! 
     
 
     # travelRoutePlanner(departure: Datetime, origin: ID!, destination: ID!) 
@@ -661,7 +685,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_searchLocation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_searchStopLocation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 float64
@@ -694,7 +718,7 @@ func (ec *executionContext) field_Query_searchLocation_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_searchText_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_searchStopText_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -829,8 +853,8 @@ func (ec *executionContext) fieldContext_Location_longitude(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_searchText(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_searchText(ctx, field)
+func (ec *executionContext) _Query_searchStopText(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchStopText(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -843,7 +867,7 @@ func (ec *executionContext) _Query_searchText(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SearchText(rctx, fc.Args["text"].(string))
+		return ec.resolvers.Query().SearchStopText(rctx, fc.Args["text"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -860,7 +884,7 @@ func (ec *executionContext) _Query_searchText(ctx context.Context, field graphql
 	return ec.marshalNStop2ᚕᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStopᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_searchText(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_searchStopText(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -889,15 +913,15 @@ func (ec *executionContext) fieldContext_Query_searchText(ctx context.Context, f
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_searchText_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_searchStopText_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_searchLocation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_searchLocation(ctx, field)
+func (ec *executionContext) _Query_searchStopLocation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchStopLocation(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -910,7 +934,7 @@ func (ec *executionContext) _Query_searchLocation(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SearchLocation(rctx, fc.Args["latitude"].(float64), fc.Args["longitude"].(float64), fc.Args["radius"].(float64))
+		return ec.resolvers.Query().SearchStopLocation(rctx, fc.Args["latitude"].(float64), fc.Args["longitude"].(float64), fc.Args["radius"].(float64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -922,12 +946,12 @@ func (ec *executionContext) _Query_searchLocation(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Stop)
+	res := resTmp.([]*db.StopLocationResult)
 	fc.Result = res
-	return ec.marshalNStop2ᚕᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStopᚄ(ctx, field.Selections, res)
+	return ec.marshalNStopLocationResult2ᚕᚖstopᚑcheckerᚗcomᚋdbᚐStopLocationResultᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_searchLocation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_searchStopLocation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -935,18 +959,12 @@ func (ec *executionContext) fieldContext_Query_searchLocation(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Stop_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Stop_name(ctx, field)
-			case "code":
-				return ec.fieldContext_Stop_code(ctx, field)
-			case "location":
-				return ec.fieldContext_Stop_location(ctx, field)
-			case "routes":
-				return ec.fieldContext_Stop_routes(ctx, field)
+			case "stop":
+				return ec.fieldContext_StopLocationResult_stop(ctx, field)
+			case "distance":
+				return ec.fieldContext_StopLocationResult_distance(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Stop", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type StopLocationResult", field.Name)
 		},
 	}
 	defer func() {
@@ -956,7 +974,7 @@ func (ec *executionContext) fieldContext_Query_searchLocation(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_searchLocation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_searchStopLocation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -2084,6 +2102,106 @@ func (ec *executionContext) fieldContext_Stop_routes(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _StopLocationResult_stop(ctx context.Context, field graphql.CollectedField, obj *db.StopLocationResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StopLocationResult_stop(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Stop, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Stop)
+	fc.Result = res
+	return ec.marshalNStop2stopᚑcheckerᚗcomᚋdbᚋmodelᚐStop(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StopLocationResult_stop(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StopLocationResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Stop_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Stop_name(ctx, field)
+			case "code":
+				return ec.fieldContext_Stop_code(ctx, field)
+			case "location":
+				return ec.fieldContext_Stop_location(ctx, field)
+			case "routes":
+				return ec.fieldContext_Stop_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Stop", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StopLocationResult_distance(ctx context.Context, field graphql.CollectedField, obj *db.StopLocationResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StopLocationResult_distance(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Distance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StopLocationResult_distance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StopLocationResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StopRoute_stop(ctx context.Context, field graphql.CollectedField, obj *model.StopRoute) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StopRoute_stop(ctx, field)
 	if err != nil {
@@ -2310,9 +2428,9 @@ func (ec *executionContext) _StopRoute_schedule(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.StopRouteSchedule)
+	res := resTmp.(*db.ScheduleResults)
 	fc.Result = res
-	return ec.marshalNStopRouteSchedule2ᚖstopᚑcheckerᚗcomᚋbackendᚋgraphᚋtypesᚐStopRouteSchedule(ctx, field.Selections, res)
+	return ec.marshalNStopRouteSchedule2ᚖstopᚑcheckerᚗcomᚋdbᚐScheduleResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_StopRoute_schedule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2323,8 +2441,8 @@ func (ec *executionContext) fieldContext_StopRoute_schedule(ctx context.Context,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "temp":
-				return ec.fieldContext_StopRouteSchedule_temp(ctx, field)
+			case "next":
+				return ec.fieldContext_StopRouteSchedule_next(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StopRouteSchedule", field.Name)
 		},
@@ -2332,8 +2450,8 @@ func (ec *executionContext) fieldContext_StopRoute_schedule(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _StopRouteSchedule_temp(ctx context.Context, field graphql.CollectedField, obj *types.StopRouteSchedule) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_StopRouteSchedule_temp(ctx, field)
+func (ec *executionContext) _StopRouteSchedule_next(ctx context.Context, field graphql.CollectedField, obj *db.ScheduleResults) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StopRouteSchedule_next(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2346,7 +2464,7 @@ func (ec *executionContext) _StopRouteSchedule_temp(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Temp, nil
+		return ec.resolvers.StopRouteSchedule().Next(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2358,19 +2476,29 @@ func (ec *executionContext) _StopRouteSchedule_temp(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]*model.StopTime)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNStopTime2ᚕᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStopTimeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_StopRouteSchedule_temp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_StopRouteSchedule_next(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "StopRouteSchedule",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_StopTime_id(ctx, field)
+			case "trip":
+				return ec.fieldContext_StopTime_trip(ctx, field)
+			case "time":
+				return ec.fieldContext_StopTime_time(ctx, field)
+			case "sequence":
+				return ec.fieldContext_StopTime_sequence(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StopTime", field.Name)
 		},
 	}
 	return fc, nil
@@ -4703,7 +4831,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "searchText":
+		case "searchStopText":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -4712,7 +4840,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_searchText(ctx, field)
+				res = ec._Query_searchStopText(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4726,7 +4854,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "searchLocation":
+		case "searchStopLocation":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -4735,7 +4863,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_searchLocation(ctx, field)
+				res = ec._Query_searchStopLocation(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5231,6 +5359,41 @@ func (ec *executionContext) _Stop(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
+var stopLocationResultImplementors = []string{"StopLocationResult"}
+
+func (ec *executionContext) _StopLocationResult(ctx context.Context, sel ast.SelectionSet, obj *db.StopLocationResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, stopLocationResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StopLocationResult")
+		case "stop":
+
+			out.Values[i] = ec._StopLocationResult_stop(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "distance":
+
+			out.Values[i] = ec._StopLocationResult_distance(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var stopRouteImplementors = []string{"StopRoute"}
 
 func (ec *executionContext) _StopRoute(ctx context.Context, sel ast.SelectionSet, obj *model.StopRoute) graphql.Marshaler {
@@ -5341,7 +5504,7 @@ func (ec *executionContext) _StopRoute(ctx context.Context, sel ast.SelectionSet
 
 var stopRouteScheduleImplementors = []string{"StopRouteSchedule"}
 
-func (ec *executionContext) _StopRouteSchedule(ctx context.Context, sel ast.SelectionSet, obj *types.StopRouteSchedule) graphql.Marshaler {
+func (ec *executionContext) _StopRouteSchedule(ctx context.Context, sel ast.SelectionSet, obj *db.ScheduleResults) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, stopRouteScheduleImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -5349,13 +5512,26 @@ func (ec *executionContext) _StopRouteSchedule(ctx context.Context, sel ast.Sele
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("StopRouteSchedule")
-		case "temp":
+		case "next":
+			field := field
 
-			out.Values[i] = ec._StopRouteSchedule_temp(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StopRouteSchedule_next(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6132,6 +6308,60 @@ func (ec *executionContext) marshalNStop2ᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐ
 	return ec._Stop(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNStopLocationResult2ᚕᚖstopᚑcheckerᚗcomᚋdbᚐStopLocationResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*db.StopLocationResult) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStopLocationResult2ᚖstopᚑcheckerᚗcomᚋdbᚐStopLocationResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNStopLocationResult2ᚖstopᚑcheckerᚗcomᚋdbᚐStopLocationResult(ctx context.Context, sel ast.SelectionSet, v *db.StopLocationResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StopLocationResult(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNStopRoute2ᚕᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStopRouteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StopRoute) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -6186,11 +6416,11 @@ func (ec *executionContext) marshalNStopRoute2ᚖstopᚑcheckerᚗcomᚋdbᚋmod
 	return ec._StopRoute(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStopRouteSchedule2stopᚑcheckerᚗcomᚋbackendᚋgraphᚋtypesᚐStopRouteSchedule(ctx context.Context, sel ast.SelectionSet, v types.StopRouteSchedule) graphql.Marshaler {
+func (ec *executionContext) marshalNStopRouteSchedule2stopᚑcheckerᚗcomᚋdbᚐScheduleResults(ctx context.Context, sel ast.SelectionSet, v db.ScheduleResults) graphql.Marshaler {
 	return ec._StopRouteSchedule(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStopRouteSchedule2ᚖstopᚑcheckerᚗcomᚋbackendᚋgraphᚋtypesᚐStopRouteSchedule(ctx context.Context, sel ast.SelectionSet, v *types.StopRouteSchedule) graphql.Marshaler {
+func (ec *executionContext) marshalNStopRouteSchedule2ᚖstopᚑcheckerᚗcomᚋdbᚐScheduleResults(ctx context.Context, sel ast.SelectionSet, v *db.ScheduleResults) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

@@ -1,6 +1,10 @@
 package graph
 
-import "stop-checker.com/db"
+import (
+	"time"
+
+	"stop-checker.com/db"
+)
 
 // This file will not be regenerated automatically.
 //
@@ -8,4 +12,5 @@ import "stop-checker.com/db"
 
 type Resolver struct {
 	*db.Database
+	Timezone *time.Location
 }

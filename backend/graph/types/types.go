@@ -8,10 +8,6 @@ import (
 	"strconv"
 )
 
-type StopRouteSchedule struct {
-	Temp string `json:"temp"`
-}
-
 type RouteType string
 
 const (

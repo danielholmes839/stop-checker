@@ -35,6 +35,7 @@ func (s *Server) HandleGraphQL() {
 		generated.Config{
 			Resolvers: &graph.Resolver{
 				Database: database,
+				Timezone: dataset.TimeZone,
 			},
 		},
 	))

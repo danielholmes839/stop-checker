@@ -30,7 +30,7 @@ type StopRoute {
 }
 
 type StopRouteSchedule {
-    temp: String!
+    next: [StopTime!]!
 }
 
 type Route {
@@ -76,15 +76,15 @@ type ServiceException {
     date: Date!
 }
 
-# type Leg {
-#     Origin: Stop!
-#     Destination: Stop!
-# }
+type StopLocationResult {
+    stop: Stop!
+    distance: Float!
+}
 
 type Query {
     # should work with route numbers, stop codes, stop name, location
-    searchText(text: String!): [Stop!]! 
-    searchLocation(latitude: Float!, longitude: Float!, radius: Float!): [Stop!]! 
+    searchStopText(text: String!): [Stop!]! 
+    searchStopLocation(latitude: Float!, longitude: Float!, radius: Float!): [StopLocationResult!]! 
     
 
     # travelRoutePlanner(departure: Datetime, origin: ID!, destination: ID!) 
