@@ -60,13 +60,13 @@ func (p *Planner) plan(solution *dijkstra.Path[*node], origin string) Plan {
 	return plan
 }
 
-type temp struct {
-	distance float64
-	stopId   string
-	duration time.Duration
+func (p *Planner) expand(n *node) []*node {
+	transit, _ := p.expandTransit(n)
+	walking := p.expandWalk(n)
+	return append(transit, walking...)
 }
 
-func (p *Planner) expandWalkFirst(origin *node) []*node {
+func (p *Planner) expandWalk(origin *node) []*node {
 	stop, _ := p.StopIndex.Get(origin.ID())
 
 	originRoutesIndex := dijkstra.Set{}
@@ -76,7 +76,8 @@ func (p *Planner) expandWalkFirst(origin *node) []*node {
 		originRoutesIndex.Add(originRoute.ID())
 	}
 
-	closest := map[string]temp{}
+	// closest walk for each route
+	closest := map[string]closestWalk{}
 
 	// for all stops within a 250m radius
 	for _, neighbor := range p.StopLocationIndex.Query(stop.Location, 200) {
@@ -97,7 +98,7 @@ func (p *Planner) expandWalkFirst(origin *node) []*node {
 
 			current, seen := closest[directedRouteId]
 			if !seen || current.distance > distance {
-				closest[directedRouteId] = temp{
+				closest[directedRouteId] = closestWalk{
 					distance: distance,
 					stopId:   neighbor.ID(),
 					duration: duration,
@@ -121,27 +122,6 @@ func (p *Planner) expandWalkFirst(origin *node) []*node {
 	}
 
 	return connections
-}
-
-func (p *Planner) expand(path *dijkstra.Path[*node]) []*dijkstra.Path[*node] {
-	transit, _ := p.expandTransit(path.Node)
-	walking := p.expandWalkFirst(path.Node)
-
-	paths := []*dijkstra.Path[*node]{}
-	for _, transitNode := range transit {
-		paths = append(paths, &dijkstra.Path[*node]{
-			Prev: path,
-			Node: transitNode,
-		})
-	}
-
-	for _, walkingNode := range walking {
-		paths = append(paths, &dijkstra.Path[*node]{
-			Prev: path,
-			Node: walkingNode,
-		})
-	}
-	return append(paths)
 }
 
 func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
@@ -226,86 +206,6 @@ func (p *Planner) expandTrip(origin model.StopTime) []model.StopTime {
 	}
 
 	return connections
-}
-
-func (p *Planner) expandWalk(origin *node, visited dijkstra.Set) []*walk {
-	stop, _ := p.StopIndex.Get(origin.ID())
-	connections := []*walk{}
-
-	// for all stops within a 250m radius
-	for _, neighbor := range p.StopLocationIndex.Query(stop.Location, 250) {
-
-		// check the transit hasn't directly visited the stop
-		if visited.Contains(neighbor.ID()) {
-			continue
-		}
-
-		// get the routes this stop has
-		neighborRoutes := p.StopRouteIndex.Get(neighbor.ID())
-
-		// make sure it has a new route
-		if len(neighborRoutes) <= len(origin.blockers) {
-			neighborNewRoutes := false
-
-			for _, route := range neighborRoutes {
-				if !origin.Blocked(route.ID()) {
-					neighborNewRoutes = true
-					break
-				}
-			}
-
-			if !neighborNewRoutes {
-				continue
-			}
-		}
-
-		// calculate walking distance and duration
-		distance := neighbor.Location.Distance(stop.Location)
-		duration := walkingDuration(distance)
-
-		connections = append(connections, &walk{
-			node: &node{
-				stopId:   neighbor.ID(),
-				arrival:  origin.arrival.Add(duration),
-				duration: duration,
-				walk:     true,
-				routeId:  "",
-				blockers: origin.blockers,
-			},
-			prev:     origin,
-			distance: distance,
-		})
-	}
-	return connections
-}
-
-func (p *Planner) expandWalkAll(transitNodes []*node, visited dijkstra.Set) []*walk {
-	walkingNodes := map[string]*walk{}
-
-	for _, transitNode := range transitNodes {
-		for _, walkingNode := range p.expandWalk(transitNode, visited) {
-			stopId := walkingNode.stopId
-
-			// no existing walking node
-			existing, ok := walkingNodes[stopId]
-			if !ok {
-				walkingNodes[stopId] = walkingNode
-				continue
-			}
-
-			// closer than existing walking node
-			if existing.distance > walkingNode.distance {
-				walkingNodes[stopId] = walkingNode
-			}
-		}
-	}
-
-	// add the walking nodes
-	walkingNodesArray := []*walk{}
-	for _, walkingNode := range walkingNodes {
-		walkingNodesArray = append(walkingNodesArray, walkingNode)
-	}
-	return walkingNodesArray
 }
 
 func stopTimeDiffDuration(from, to time.Time) time.Duration {

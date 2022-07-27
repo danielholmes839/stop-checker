@@ -9,7 +9,7 @@ type Node interface {
 	Weighted
 }
 
-type Expand[N Node] func(n *Path[N]) []*Path[N]
+type Expand[N Node] func(n N) []N
 
 type Path[N Node] struct {
 	Prev *Path[N]
@@ -56,8 +56,11 @@ func Algorithm[N Node](config *Config[N]) (*Path[N], error) {
 		seen.Add(node.ID())
 
 		// expand
-		for _, neighbor := range config.Expand(path) {
-			pq.Push(neighbor)
+		for _, neighbor := range config.Expand(node) {
+			pq.Push(&Path[N]{
+				Prev: path,
+				Node: neighbor,
+			})
 		}
 	}
 

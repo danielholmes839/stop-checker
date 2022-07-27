@@ -6,10 +6,10 @@ import (
 	"stop-checker.com/travel/dijkstra"
 )
 
-type walk struct {
-	*node
-	prev     *node
+type closestWalk struct {
 	distance float64
+	stopId   string
+	duration time.Duration
 }
 
 type fastestTransit struct {
