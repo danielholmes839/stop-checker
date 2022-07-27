@@ -1,16 +1,92 @@
-type Stop {
+scalar Datetime
+scalar Date
+scalar Time
+scalar Color
 
+enum RouteType {
+    BUS
+    TRAIN
+}
+
+type Location {
+    latitude: Float
+    longitude: Float
+}
+
+type Stop {
+    id: ID!
+    name: String!
+    code: String!
+    location: Location!
+    routes: [StopRoute!]!
+}
+
+type StopRoute { 
+    stop: Stop!
+    route: Route!
+    direction: ID!
+    headsign: String!
+    schedule: StopRouteSchedule!
+}
+
+type StopRouteSchedule {
+    temp: String!
 }
 
 type Route {
+    id: ID!
+    name: String!
+    text: Color!
+    background: Color!
+    type: RouteType!
+}
 
+type Trip {
+    id: ID!
+    route: Route!
+    stopTimes: [StopTime!]!
+    service: Service!
+    direction: ID!
+    headsign: String!
 }
 
 type StopTime {
-
+    id: ID!
+    trip: Trip!
+    time: Time!
+    sequence: Int!
 }
+
+type Service {
+    sunday: Boolean!
+    monday: Boolean!
+    tuesday: Boolean!
+    wednesday: Boolean!
+    thursday: Boolean!
+    friday: Boolean!
+    saturday: Boolean!
+
+    start: Date!
+    end: Date!
+    exceptions: [ServiceException!]!
+}
+
+type ServiceException {
+    added: Boolean!
+    date: Date!
+}
+
+# type Leg {
+#     Origin: Stop!
+#     Destination: Stop!
+# }
 
 type Query {
     # should work with route numbers, stop codes, stop name, location
-    search(text: String!): [Stop!]! 
+    searchText(text: String!): [Stop!]! 
+    searchLocation(latitude: Float!, longitude: Float!, radius: Float!): [Stop!]! 
+    
+
+    # travelRoutePlanner(departure: Datetime, origin: ID!, destination: ID!) 
+    # travelSchedulePlanner(departure: Datetime, origin: ID!, destination: ID!) 
 }
