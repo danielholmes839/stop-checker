@@ -28,31 +28,31 @@ func NewScheduler(config *SchedulerConfig) *Scheduler {
 	}
 }
 
-func (s *Scheduler) Depart(at time.Time, plan Plan) (Schedule, error) {
-	planned := []*Leg{}
+func (s *Scheduler) Depart(at time.Time, route Route) (Schedule, error) {
+	schedule := Schedule{}
 	acc := at
 
-	for _, leg := range plan {
-		plan, err := s.planDepart(acc, leg)
+	for _, fixedLeg := range route {
+		leg, err := s.planDepart(acc, fixedLeg)
 		if err != nil {
 			return nil, err
 		}
-		acc = plan.Departure.Add(plan.Duration)
-		planned = append(planned, plan)
+		acc = leg.Departure.Add(leg.Duration)
+		schedule = append(schedule, leg)
 	}
 
-	return planned, nil
+	return schedule, nil
 }
 
-func (s *Scheduler) Arrive(by time.Time, plan Plan) (Schedule, error) {
-	schedule, err := s.arrive(by, plan)
+func (s *Scheduler) Arrive(by time.Time, route Route) (Schedule, error) {
+	schedule, err := s.arrive(by, route)
 	if err != nil {
 		return nil, err
 	}
 
 	first := schedule[0]
 
-	optimized, err := s.Depart(first.Departure, plan)
+	optimized, err := s.Depart(first.Departure, route)
 	if err != nil {
 		return nil, err
 	}

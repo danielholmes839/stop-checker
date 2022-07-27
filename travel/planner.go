@@ -18,7 +18,7 @@ type Planner struct {
 	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
 }
 
-func (p *Planner) Depart(at time.Time, origin, destination string) (Plan, error) {
+func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error) {
 	initial := &node{
 		stopId:   origin,
 		arrival:  at,
@@ -35,14 +35,14 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Plan, error)
 		return nil, err
 	}
 
-	return p.plan(solution, origin), nil
+	return p.route(solution), nil
 }
 
-func (p *Planner) plan(solution *dijkstra.Path[*node], origin string) Plan {
-	plan := Plan{}
+func (p *Planner) route(solution *dijkstra.Path[*node]) Route {
+	route := Route{}
 
 	for solution.Prev != nil {
-		plan = append(plan, &FixedLeg{
+		route = append(route, &FixedLeg{
 			Origin:      solution.Prev.ID(),
 			Destination: solution.ID(),
 			RouteId:     solution.Node.routeId,
@@ -53,11 +53,11 @@ func (p *Planner) plan(solution *dijkstra.Path[*node], origin string) Plan {
 	}
 
 	// reverse
-	for i, j := 0, len(plan)-1; i < j; i, j = i+1, j-1 {
-		plan[i], plan[j] = plan[j], plan[i]
+	for i, j := 0, len(route)-1; i < j; i, j = i+1, j-1 {
+		route[i], route[j] = route[j], route[i]
 	}
 
-	return plan
+	return route
 }
 
 func (p *Planner) expand(n *node) []*node {

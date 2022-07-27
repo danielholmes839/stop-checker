@@ -42,7 +42,8 @@ func main() {
 		ScheduleIndex:     database.ScheduleIndex,
 	})
 
-	route := travel.Plan{
+	t0 := time.Now()
+	route := travel.Route{
 		{Origin: "AK151", Destination: "AF920", RouteId: "49-340", Walk: false}, // arch/pleasant park -> hurdman b
 		{Origin: "AF920", Destination: "AF990", Walk: true},                     // hurdman b to o train west
 		{Origin: "AF990", Destination: "CD998", RouteId: "1-340", Walk: false},  // o train west to uottawa
@@ -52,6 +53,7 @@ func main() {
 	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:30", dataset.TimeZone)
 
 	if legs, err := scheduler.Depart(departure, route); err == nil {
+		fmt.Println(time.Since(t0))
 		printLegs(legs)
 	}
 
@@ -70,16 +72,16 @@ func main() {
 		StopTimesFromTrip: database.StopTimesFromTrip,
 	}
 
-	printPlan := func(plan travel.Plan) {
+	printPlan := func(route travel.Route) {
 		fmt.Println("------- NEW PLAN -------")
-		for _, leg := range plan {
+		for _, leg := range route {
 			origin, _ := database.Stops.Get(leg.Origin)
 			destination, _ := database.Stops.Get(leg.Destination)
 			fmt.Println("route:", leg.RouteId, origin.Name, "->", destination.Name, "walk =", leg.Walk)
 		}
 	}
 
-	t0 := time.Now()
+	t0 = time.Now()
 	plan, _ := planner.Depart(departure, "AK151", "CD998")
 	fmt.Println(time.Since(t0))
 	printPlan(plan)
