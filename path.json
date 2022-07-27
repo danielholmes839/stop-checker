@@ -1,0 +1,30 @@
+[
+    {
+        "prev": "",
+        "node": {
+            "stop": "a",
+            "route": ""
+        }
+    },
+    {
+        "prev": "a",
+        "node": {
+            "stop": "b",
+            "route": "49"
+        }
+    },
+    {
+        "prev": "b",
+        "node": {
+            "stop": "c",
+            "route": "walk"
+        }
+    },
+    {
+        "prev": "c",
+        "node": {
+            "stop": "d",
+            "route": "1"
+        }
+    }
+]

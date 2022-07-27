@@ -43,5 +43,5 @@ func (fl *FixedLeg) String() string {
 	if fl.Walk {
 		return fmt.Sprintf("walk{origin:%s, destination:%s}", fl.Origin, fl.Destination)
 	}
-	return fmt.Sprintf("transit{origin:%s, destination:%s}", fl.Origin, fl.Destination)
+	return fmt.Sprintf("transit{origin:%s, destination:%s, route:%s}", fl.Origin, fl.Destination, fl.RouteId)
 }

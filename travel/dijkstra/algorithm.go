@@ -1,37 +1,43 @@
 package dijkstra
 
-import "errors"
+import (
+	"errors"
+)
 
 type Node interface {
 	ID() string
 	Weighted
 }
 
-type Expand[N Node] func(n N) []*Path[N]
+type Expand[N Node] func(n *Path[N]) []*Path[N]
 
 type Path[N Node] struct {
 	Prev *Path[N]
 	Node N
 }
 
+func (p *Path[N]) ID() string {
+	return p.Node.ID()
+}
+
 func (p *Path[N]) Weight() int {
 	return p.Node.Weight()
 }
 
-type Config[N Node] struct {
-	Destination   string
-	Initial       N
-	Expand        Expand[N]
+type Input[N Node] struct {
+	Destination string
+	Initial     N
+	Expand      Expand[N]
 }
 
-func Algorithm[N Node](config *Config[N]) (*Path[N], error) {
+func Algorithm[N Node](input *Input[N]) (*Path[N], error) {
 	seen := Set{}
 	pq := NewPriorityQueue[*Path[N]]()
 
 	// push initial path
 	pq.Push(&Path[N]{
 		Prev: nil,
-		Node: config.Initial,
+		Node: input.Initial,
 	})
 
 	for !pq.Empty() {
@@ -39,7 +45,7 @@ func Algorithm[N Node](config *Config[N]) (*Path[N], error) {
 		node := path.Node
 
 		// destination
-		if node.ID() == config.Destination {
+		if node.ID() == input.Destination {
 			return path, nil
 		}
 
@@ -50,8 +56,8 @@ func Algorithm[N Node](config *Config[N]) (*Path[N], error) {
 		seen.Add(node.ID())
 
 		// expand
-		for _, path := range config.Expand(node) {
-			pq.Push(path)
+		for _, neighbor := range input.Expand(path) {
+			pq.Push(neighbor)
 		}
 	}
 

@@ -2,7 +2,6 @@ package travel
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"stop-checker.com/db"
@@ -98,7 +97,7 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	if fixed.Walk {
 		// planned leg by walking
 		distance := origin.Distance(destination.Location)
-		duration := time.Duration(math.Round(distance*1.4/60)) * time.Minute
+		duration := walkingDuration(distance)
 
 		return &Leg{
 			Origin:      fixed.Origin,
@@ -159,7 +158,7 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	if fixed.Walk {
 		// planned leg by walking
 		distance := origin.Distance(destination.Location)
-		duration := time.Duration(math.Round(distance*1.4/60)) * time.Minute
+		duration := walkingDuration(distance)
 
 		return &Leg{
 			Origin:      fixed.Origin,

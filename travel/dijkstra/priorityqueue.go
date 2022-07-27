@@ -26,7 +26,6 @@ func (h *nHeap) Pop() any {
 	return x
 }
 
-
 type Weighted interface {
 	Weight() int
 }
