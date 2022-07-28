@@ -76,3 +76,20 @@ models:
     model: "stop-checker.com/db/model.Service"
   ServiceException:
     model: "stop-checker.com/db/model.ServiceException"
+  Time:
+    model: "stop-checker.com/backend/graph/scalars.Time"
+  Date:
+    model: "stop-checker.com/backend/graph/scalars.Date"
+  DateTime:
+    model: "stop-checker.com/backend/graph/scalars.DateTime"
+
+  TravelRoute:
+    model: "stop-checker.com/travel.Route"
+  TravelRouteLeg:
+    model: "stop-checker.com/travel.FixedLeg"
+  TravelPlan:
+    model: "stop-checker.com/travel.Schedule"
+  TravelPlanLeg:
+    model: "stop-checker.com/travel.Leg"
+  Transit:
+    model: "stop-checker.com/db/model.Transit"

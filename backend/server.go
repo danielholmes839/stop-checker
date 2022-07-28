@@ -10,6 +10,7 @@ import (
 	"stop-checker.com/db"
 	"stop-checker.com/db/gtfs"
 	"stop-checker.com/db/model"
+	"stop-checker.com/travel"
 )
 
 type Server struct {
@@ -36,6 +37,18 @@ func (s *Server) HandleGraphQL() {
 			Resolvers: &graph.Resolver{
 				Database: database,
 				Timezone: dataset.TimeZone,
+				Planner: travel.NewPlanner(&travel.PlannerConfig{
+					ScheduleIndex: database.ScheduleIndex,
+					StopLocationIndex: database.StopLocationIndex,
+					StopRouteIndex: database.StopRouteIndex,
+					StopIndex: database.Stops,
+					StopTimesFromTrip: database.StopTimesFromTrip,
+				}),
+				Scheduler: travel.NewScheduler(&travel.SchedulerConfig{
+					StopIndex: database.Stops,
+					StopTimesFromTrip: database.StopTimesFromTrip,
+					ScheduleIndex: database.ScheduleIndex,
+				}),
 			},
 		},
 	))

@@ -1,7 +1,7 @@
-scalar Datetime
-scalar Date
-scalar Time
-scalar Color
+scalar DateTime     # Input/Output: "2022-07-28T06:30:00Z"
+scalar Date         # Input/Output: "2022-07-28"
+scalar Time         # Output: 6:30pm, 8:30am...
+scalar Color 
 
 enum RouteType {
     BUS
@@ -31,6 +31,7 @@ type StopRoute {
 
 type StopRouteSchedule {
     next: [StopTime!]!
+    on(date: Date!): [StopTime!]!
 }
 
 type Route {
@@ -65,7 +66,6 @@ type Service {
     thursday: Boolean!
     friday: Boolean!
     saturday: Boolean!
-
     start: Date!
     end: Date!
     exceptions: [ServiceException!]!
@@ -81,12 +81,50 @@ type StopLocationResult {
     distance: Float!
 }
 
+type TravelRoute {
+    legs: [TravelRouteLeg!]!
+    depart(at: DateTime!): TravelPlan!
+    arrive(by: DateTime!): TravelPlan!
+}
+
+type TravelRouteLeg {
+    origin: Stop!
+    destination: Stop!
+    route: Route
+    walk: Boolean!
+}
+
+type TravelPlan {
+    legs: [TravelPlanLeg!]!
+    departure: DateTime!
+    arrival: DateTime!
+    duration: Int! 
+}
+
+type TravelPlanLeg {
+    origin: Stop!
+    destination: Stop!
+    transit: Transit
+
+    walk: Boolean!
+    distance: Float!
+    duration: Int! # minutes
+    departure: DateTime!
+    arrival: DateTime!
+}
+
+type Transit {
+    route: Route
+    trip: Trip
+}
+
+
 type Query {
-    # should work with route numbers, stop codes, stop name, location
+    # search
     searchStopText(text: String!): [Stop!]! 
     searchStopLocation(latitude: Float!, longitude: Float!, radius: Float!): [StopLocationResult!]! 
     
-
-    # travelRoutePlanner(departure: Datetime, origin: ID!, destination: ID!) 
-    # travelSchedulePlanner(departure: Datetime, origin: ID!, destination: ID!) 
+    # travel planner
+    travelRoutePlanner(origin: ID!, destination: ID!): TravelRoute
+    # travelSchedulePlanner(departure: Datetime, origin: ID!, destination: ID!): TravelPlan 
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"stop-checker.com/db"
+	"stop-checker.com/travel"
 )
 
 // This file will not be regenerated automatically.
@@ -12,5 +13,7 @@ import (
 
 type Resolver struct {
 	*db.Database
-	Timezone *time.Location
+	Planner   travel.RoutePlanner
+	Scheduler travel.SchedulePlanner
+	Timezone  *time.Location
 }
