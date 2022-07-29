@@ -22,11 +22,11 @@ func TestIndex(t *testing.T) {
 
 	r, err := index.Get("a")
 	assert.NoError(t, err)
-	assert.Equal(t, 1, r.value)
+	assert.Equal(t, "1", r.value)
 }
 
 func TestInvertedIndex(t *testing.T) {
-	index := NewInvertedIndex([]record{
+	index := NewInvertedIndex("test_index", []record{
 		{id: "a", value: "1"},
 		{id: "b", value: "1"},
 		{id: "c", value: "1"},
@@ -39,5 +39,10 @@ func TestInvertedIndex(t *testing.T) {
 	assert.Equal(t, "a", results[0].id)
 	assert.Equal(t, "b", results[1].id)
 	assert.Equal(t, "c", results[2].id)
+	assert.NoError(t, err)
+
+	results, err = index.Get("2")
+	assert.Empty(t, results)
+	assert.Error(t, err)
 	
 }
