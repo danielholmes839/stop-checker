@@ -23,7 +23,7 @@ type StopTextIndex struct {
 func NewStopTextIndex(stops []model.Stop) *StopTextIndex {
 	re, _ := regexp.Compile(`[^\w]`)
 
-	stopsByCode := NewInvertedIndex(stops, func(stop model.Stop) (key string) {
+	stopsByCode := NewInvertedIndex("stop code", stops, func(stop model.Stop) (key string) {
 		return stop.Code
 	})
 
@@ -51,7 +51,7 @@ func (s *StopTextIndex) Search(text string) []*StopTextResult {
 	resultsMap := map[string]*StopTextResult{}
 
 	for _, token := range tokens {
-		if stops, ok := s.stopsByCode.Get(token); ok {
+		if stops, err := s.stopsByCode.Get(token); err == nil {
 			for _, stop := range stops {
 				if result, tracked := resultsMap[stop.ID()]; !tracked {
 					resultsMap[stop.ID()] = &StopTextResult{

@@ -22,7 +22,7 @@ type ScheduleIndex struct {
 
 func NewScheduleIndex(indexes *BaseIndex, base *model.Base) *ScheduleIndex {
 	// create the schedule index
-	index := NewInvertedIndex(base.StopTimes, func(stopTime model.StopTime) (key string) {
+	index := NewInvertedIndex("schedule", base.StopTimes, func(stopTime model.StopTime) (key string) {
 		trip, _ := indexes.Trips.Get(stopTime.TripId)
 		return fmt.Sprintf("%s:%s", stopTime.StopId, trip.RouteId)
 	})
@@ -179,7 +179,7 @@ func (s *ScheduleResults) valid(t time.Time, stopTime model.StopTime) bool {
 	}
 
 	// results must not have execpetions
-	if exception, exists := s.serviceExceptions.Get(service.Id, t); exists && !exception.Added {
+	if exception, err := s.serviceExceptions.Get(service.Id, t); err == nil && !exception.Added {
 		return false
 	}
 

@@ -12,11 +12,11 @@ type ServiceExceptionIndex struct {
 
 func NewServiceExceptionIndex(data []model.ServiceException) *ServiceExceptionIndex {
 	return &ServiceExceptionIndex{
-		index: NewIndex(data),
+		index: NewIndex("service exception", data),
 	}
 }
 
-func (s *ServiceExceptionIndex) Get(serviceId string, t time.Time) (model.ServiceException, bool) {
+func (s *ServiceExceptionIndex) Get(serviceId string, t time.Time) (model.ServiceException, error) {
 	id := model.ServiceException{ServiceId: serviceId, Date: t}.ID()
 	return s.index.Get(id)
 }

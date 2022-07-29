@@ -1,5 +1,9 @@
 package db
 
+import (
+	"fmt"
+)
+
 type WithID interface {
 	ID() string
 }
@@ -7,12 +11,13 @@ type WithID interface {
 type KeyFunc[R any] func(record R) (key string)
 
 type Index[R any] struct {
-	key  KeyFunc[R]
+	name string
 	data map[string]R
 }
 
-func NewIndex[R WithID](data []R) *Index[R] {
+func NewIndex[R WithID](name string, data []R) *Index[R] {
 	index := &Index[R]{
+		name: name,
 		data: map[string]R{},
 	}
 
@@ -23,17 +28,22 @@ func NewIndex[R WithID](data []R) *Index[R] {
 	return index
 }
 
-func (index *Index[R]) Get(key string) (R, bool) {
+func (index *Index[R]) Get(key string) (R, error) {
 	record, ok := index.data[key]
-	return record, ok
+	if !ok {
+		return record, fmt.Errorf("%s not found in %s index", key, index.name)
+	}
+	return record, nil
 }
 
 type InvertedIndex[R any] struct {
+	name string
 	data map[string][]R
 }
 
-func NewInvertedIndex[R any](data []R, key KeyFunc[R]) *InvertedIndex[R] {
+func NewInvertedIndex[R any](name string, data []R, key KeyFunc[R]) *InvertedIndex[R] {
 	index := &InvertedIndex[R]{
+		name: name,
 		data: map[string][]R{},
 	}
 
@@ -46,7 +56,10 @@ func NewInvertedIndex[R any](data []R, key KeyFunc[R]) *InvertedIndex[R] {
 	return index
 }
 
-func (index *InvertedIndex[R]) Get(key string) ([]R, bool) {
+func (index *InvertedIndex[R]) Get(key string) ([]R, error) {
 	records, ok := index.data[key]
-	return records, ok
+	if !ok {
+		return nil, fmt.Errorf("%s not found in %s inverted index", key, index.name)
+	}
+	return records, nil
 }

@@ -26,7 +26,7 @@ type StopLocationIndex struct {
 func NewStopLocationIndex(indexes *BaseIndex, base *model.Base, resolution ResolutionConfig) *StopLocationIndex {
 	return &StopLocationIndex{
 		resolution: resolution,
-		index: NewInvertedIndex(base.Stops, func(stop model.Stop) string {
+		index: NewInvertedIndex("location", base.Stops, func(stop model.Stop) string {
 			key := h3.FromGeo(h3.GeoCoord(stop.Location), resolution.Level)
 			return fmt.Sprintf("%#x", key)
 		}),

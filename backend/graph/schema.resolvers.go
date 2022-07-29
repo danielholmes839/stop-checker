@@ -242,11 +242,8 @@ func (r *travelRouteLegResolver) Distance(ctx context.Context, obj *travel.Fixed
 
 // Route is the resolver for the route field.
 func (r *travelRouteLegResolver) Route(ctx context.Context, obj *travel.FixedLeg) (*model.Route, error) {
-	route, ok := r.Routes.Get(obj.RouteId)
-	if !ok {
-		return nil, nil
-	}
-	return &route, nil
+	route, err := r.Routes.Get(obj.RouteId)
+	return &route, err
 }
 
 // Legs is the resolver for the legs field.

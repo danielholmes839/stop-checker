@@ -211,13 +211,13 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 // helper to get origin and destination stops
 func (s *Scheduler) stops(fixed *FixedLeg) (model.Stop, model.Stop, error) {
 	empty := model.Stop{}
-	origin, ok := s.stopIndex.Get(fixed.Origin)
-	if !ok {
+	origin, err := s.stopIndex.Get(fixed.Origin)
+	if err != nil {
 		return empty, empty, fmt.Errorf("origin stop %s not found", fixed.Origin)
 	}
 
-	destination, ok := s.stopIndex.Get(fixed.Destination)
-	if !ok {
+	destination, err := s.stopIndex.Get(fixed.Destination)
+	if err != nil {
 		return empty, empty, fmt.Errorf("destination stop %s not found", fixed.Destination)
 	}
 	return origin, destination, nil

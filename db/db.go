@@ -39,17 +39,17 @@ func NewDatabase(base *model.Base) *Database {
 
 	baseIndex := &BaseIndex{
 		// basic indexes
-		Routes:             NewIndex(base.Routes),
+		Routes:             NewIndex("route", base.Routes),
 		ServiceExeceptions: NewServiceExceptionIndex(base.ServiceExceptions),
-		Services:           NewIndex(base.Services),
-		Stops:              NewIndex(base.Stops),
-		StopTimes:          NewIndex(base.StopTimes),
-		Trips:              NewIndex(base.Trips),
+		Services:           NewIndex("service", base.Services),
+		Stops:              NewIndex("stop", base.Stops),
+		StopTimes:          NewIndex("stop time", base.StopTimes),
+		Trips:              NewIndex("trip", base.Trips),
 	}
 
 	return &Database{
 		// inverted indexes
-		StopTimesFromTrip: NewInvertedIndex(base.StopTimes, func(record model.StopTime) (key string) {
+		StopTimesFromTrip: NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
 			return record.TripId
 		}),
 
