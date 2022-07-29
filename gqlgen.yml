@@ -58,6 +58,8 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Location:
     model: "stop-checker.com/db/model.Location"
+  LocationInput:
+    model: "stop-checker.com/db/model.Location"
   Stop:
     model: "stop-checker.com/db/model.Stop"
   StopTime:
@@ -68,6 +70,8 @@ models:
     model: "stop-checker.com/db.ScheduleResults"
   StopLocationResult:
     model: "stop-checker.com/db.StopLocationResult"
+  StopTextResult:
+    model: "stop-checker.com/db.StopTextResult"
   Route:
     model: "stop-checker.com/db/model.Route"
   Trip:
@@ -85,11 +89,11 @@ models:
 
   TravelRoute:
     model: "stop-checker.com/travel.Route"
+  TravelSchedule:
+    model: "stop-checker.com/travel.Schedule"
   TravelRouteLeg:
     model: "stop-checker.com/travel.FixedLeg"
-  TravelPlan:
-    model: "stop-checker.com/travel.Schedule"
-  TravelPlanLeg:
+  TravelScheduleLeg:
     model: "stop-checker.com/travel.Leg"
   Transit:
     model: "stop-checker.com/db/model.Transit"

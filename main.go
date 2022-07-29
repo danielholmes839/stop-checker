@@ -94,4 +94,10 @@ func main() {
 	plan, _ = planner.Depart(departure, "AE640", "CD999")
 	fmt.Println(time.Since(t0))
 	printPlan(plan)
+
+	index := db.NewStopTextIndex(base.Stops)
+
+	for _, stop := range index.Search("pleasant park arch 3000") {
+		fmt.Printf("%#v\n", stop)
+	}
 }

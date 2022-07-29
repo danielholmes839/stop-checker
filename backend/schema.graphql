@@ -83,48 +83,94 @@ type StopLocationResult {
 
 type TravelRoute {
     legs: [TravelRouteLeg!]!
-    depart(at: DateTime!): TravelPlan!
-    arrive(by: DateTime!): TravelPlan!
 }
 
+# Travel route leg
 type TravelRouteLeg {
     origin: Stop!
     destination: Stop!
-    route: Route
     walk: Boolean!
+    distance: Float!
+    route: Route                # if null then walking
 }
 
-type TravelPlan {
-    legs: [TravelPlanLeg!]!
+type TravelSchedule {
+    legs: [TravelScheduleLeg!]!
     departure: DateTime!
     arrival: DateTime!
     duration: Int! 
 }
 
-type TravelPlanLeg {
+# Travel schedule leg
+type TravelScheduleLeg {
     origin: Stop!
     destination: Stop!
-    transit: Transit
-
     walk: Boolean!
     distance: Float!
-    duration: Int! # minutes
+    transit: Transit            # if null then walking
+    duration: Int!
     departure: DateTime!
     arrival: DateTime!
 }
 
+# Transit taken by a scheduled leg
 type Transit {
     route: Route
     trip: Trip
 }
 
+input TravelSchedulePlannerInput {
+    legs: [TravelLegInput!]!
+    # if departure and arrival are null then the current time is used and it's a departure
+    departure: DateTime
+    arrival: DateTime
+}
+
+input TravelLegInput {
+    origin: ID!
+    destination: ID!
+    route: ID
+}
+
+input TravelRoutePlannerInput {
+    origin: ID!
+    destination: ID!
+    departure: DateTime # if null the departure time is now
+}
+
+type TravelRoutePayload {
+    route: TravelRoute
+    errors: [Error!]!
+}
+
+type TravelSchedulePayload {
+    schedule: TravelSchedule
+    errors: [Error!]!
+}
+
+type Error {
+    field: String!
+    message: String!
+}
+
+input LocationInput {
+    latitude: Float!
+    longitude: Float!
+}
+
+input PageInput {
+    skip: Int!
+    limit: Int!
+}
 
 type Query {
     # search
     searchStopText(text: String!): [Stop!]! 
     searchStopLocation(latitude: Float!, longitude: Float!, radius: Float!): [StopLocationResult!]! 
     
-    # travel planner
-    travelRoutePlanner(origin: ID!, destination: ID!): TravelRoute
-    # travelSchedulePlanner(departure: Datetime, origin: ID!, destination: ID!): TravelPlan 
+    # travel planner (rotue between two stops)
+    travelRoutePlanner(input: TravelRoutePlannerInput!): TravelRoutePayload
+
+    # travel scheduler (arrive by / depart at)
+    travelSchedulePlanner(input: TravelSchedulePlannerInput!): TravelSchedulePayload
 }

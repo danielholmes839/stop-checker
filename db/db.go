@@ -27,6 +27,7 @@ type Database struct {
 	*StopRouteIndex    // get routes by stop id
 	*ScheduleIndex     // get schedule by stop and route id
 	*StopLocationIndex // get stops by location
+	*StopTextIndex     // get stops by text
 }
 
 func NewDatabase(base *model.Base) *Database {
@@ -60,5 +61,6 @@ func NewDatabase(base *model.Base) *Database {
 			Level:      9,
 			EdgeLength: 174.375668,
 		}),
+		StopTextIndex: NewStopTextIndex(base.Stops),
 	}
 }

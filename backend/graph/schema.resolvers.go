@@ -17,7 +17,13 @@ import (
 
 // SearchStopText is the resolver for the searchStopText field.
 func (r *queryResolver) SearchStopText(ctx context.Context, text string) ([]*model.Stop, error) {
-	panic(fmt.Errorf("not implemented"))
+	results := r.StopTextIndex.Search(text)
+	stops := make([]*model.Stop, len(results))
+
+	for i, result := range results {
+		stops[i] = &result.Stop
+	}
+	return stops, nil
 }
 
 // SearchStopLocation is the resolver for the searchStopLocation field.
@@ -32,12 +38,51 @@ func (r *queryResolver) SearchStopLocation(ctx context.Context, latitude float64
 }
 
 // TravelRoutePlanner is the resolver for the travelRoutePlanner field.
-func (r *queryResolver) TravelRoutePlanner(ctx context.Context, origin string, destination string) (travel.Route, error) {
-	route, err := r.Planner.Depart(time.Now(), origin, destination)
+func (r *queryResolver) TravelRoutePlanner(ctx context.Context, input types.TravelRoutePlannerInput) (*types.TravelRoutePayload, error) {
+	route, err := r.Planner.Depart(time.Now(), input.Origin, input.Destination)
 	if err != nil {
 		return nil, err
 	}
-	return route, nil
+	return &types.TravelRoutePayload{
+		Route:  route,
+		Errors: []*types.Error{},
+	}, nil
+}
+
+// TravelSchedulePlanner is the resolver for the travelSchedulePlanner field.
+func (r *queryResolver) TravelSchedulePlanner(ctx context.Context, input types.TravelSchedulePlannerInput) (*types.TravelSchedulePayload, error) {
+	legs := travel.Route{}
+
+	for _, leg := range input.Legs {
+		legs = append(legs, &travel.FixedLeg{
+			Origin:      leg.Origin,
+			Destination: leg.Destination,
+			RouteId:     *leg.Route,
+			Walk:        leg.Route == nil,
+		})
+	}
+
+	if input.Arrival != nil {
+		schedule, err := r.Scheduler.Arrive(*input.Arrival, legs)
+		if err != nil {
+			return nil, err
+		}
+
+		return &types.TravelSchedulePayload{Schedule: schedule, Errors: []*types.Error{}}, nil
+	}
+
+	departure := time.Now().In(r.Timezone)
+
+	if input.Departure != nil {
+		departure = *input.Departure
+	}
+
+	schedule, err := r.Scheduler.Depart(departure, legs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.TravelSchedulePayload{Schedule: schedule, Errors: []*types.Error{}}, nil
 }
 
 // ID is the resolver for the id field.
@@ -174,93 +219,8 @@ func (r *transitResolver) Trip(ctx context.Context, obj *model.Transit) (*model.
 }
 
 // Legs is the resolver for the legs field.
-func (r *travelPlanResolver) Legs(ctx context.Context, obj travel.Schedule) ([]*travel.Leg, error) {
-	return obj, nil
-}
-
-// Departure is the resolver for the departure field.
-func (r *travelPlanResolver) Departure(ctx context.Context, obj travel.Schedule) (*time.Time, error) {
-	return &obj[0].Departure, nil
-}
-
-// Arrival is the resolver for the arrival field.
-func (r *travelPlanResolver) Arrival(ctx context.Context, obj travel.Schedule) (*time.Time, error) {
-	i := len(obj) - 1
-	arrival := obj[i].Departure.Add(obj[i].Duration)
-	return &arrival, nil
-}
-
-// Duration is the resolver for the duration field.
-func (r *travelPlanResolver) Duration(ctx context.Context, obj travel.Schedule) (int, error) {
-	i := len(obj) - 1
-	arrival := obj[i].Departure.Add(obj[i].Duration)
-	minutes := arrival.Sub(obj[0].Departure).Minutes()
-	return int(minutes), nil
-}
-
-// Origin is the resolver for the origin field.
-func (r *travelPlanLegResolver) Origin(ctx context.Context, obj *travel.Leg) (*model.Stop, error) {
-	stop, _ := r.Stops.Get(obj.Origin)
-	return &stop, nil
-}
-
-// Destination is the resolver for the destination field.
-func (r *travelPlanLegResolver) Destination(ctx context.Context, obj *travel.Leg) (*model.Stop, error) {
-	stop, _ := r.Stops.Get(obj.Destination)
-	return &stop, nil
-}
-
-// Transit is the resolver for the transit field.
-func (r *travelPlanLegResolver) Transit(ctx context.Context, obj *travel.Leg) (*model.Transit, error) {
-	if obj.Walk {
-		return nil, nil
-	}
-
-	trip, _ := r.Trips.Get(obj.TripId)
-
-	return &model.Transit{
-		RouteId: trip.RouteId,
-		TripId:  trip.Id,
-	}, nil
-}
-
-// Distance is the resolver for the distance field.
-func (r *travelPlanLegResolver) Distance(ctx context.Context, obj *travel.Leg) (float64, error) {
-	origin, _ := r.Stops.Get(obj.Origin)
-	destination, _ := r.Stops.Get(obj.Destination)
-
-	return origin.Distance(destination.Location), nil
-}
-
-// Duration is the resolver for the duration field.
-func (r *travelPlanLegResolver) Duration(ctx context.Context, obj *travel.Leg) (int, error) {
-	return int(obj.Duration.Minutes()), nil
-}
-
-// Arrival is the resolver for the arrival field.
-func (r *travelPlanLegResolver) Arrival(ctx context.Context, obj *travel.Leg) (*time.Time, error) {
-	arrival := obj.Departure.Add(obj.Duration)
-	return &arrival, nil
-}
-
-// Legs is the resolver for the legs field.
 func (r *travelRouteResolver) Legs(ctx context.Context, obj travel.Route) ([]*travel.FixedLeg, error) {
 	return obj, nil
-}
-
-// Depart is the resolver for the depart field.
-func (r *travelRouteResolver) Depart(ctx context.Context, obj travel.Route, at time.Time) (travel.Schedule, error) {
-	return r.Scheduler.Depart(at, obj)
-}
-
-// Arrive is the resolver for the arrive field.
-func (r *travelRouteResolver) Arrive(ctx context.Context, obj travel.Route, by time.Time) (travel.Schedule, error) {
-	schedule, err := r.Scheduler.Arrive(by, obj)
-	if err != nil {
-		return nil, err
-	}
-
-	return schedule, err
 }
 
 // Origin is the resolver for the origin field.
@@ -275,6 +235,11 @@ func (r *travelRouteLegResolver) Destination(ctx context.Context, obj *travel.Fi
 	return &destination, nil
 }
 
+// Distance is the resolver for the distance field.
+func (r *travelRouteLegResolver) Distance(ctx context.Context, obj *travel.FixedLeg) (float64, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 // Route is the resolver for the route field.
 func (r *travelRouteLegResolver) Route(ctx context.Context, obj *travel.FixedLeg) (*model.Route, error) {
 	route, ok := r.Routes.Get(obj.RouteId)
@@ -282,6 +247,56 @@ func (r *travelRouteLegResolver) Route(ctx context.Context, obj *travel.FixedLeg
 		return nil, nil
 	}
 	return &route, nil
+}
+
+// Legs is the resolver for the legs field.
+func (r *travelScheduleResolver) Legs(ctx context.Context, obj travel.Schedule) ([]*travel.Leg, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Departure is the resolver for the departure field.
+func (r *travelScheduleResolver) Departure(ctx context.Context, obj travel.Schedule) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Arrival is the resolver for the arrival field.
+func (r *travelScheduleResolver) Arrival(ctx context.Context, obj travel.Schedule) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Duration is the resolver for the duration field.
+func (r *travelScheduleResolver) Duration(ctx context.Context, obj travel.Schedule) (int, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Origin is the resolver for the origin field.
+func (r *travelScheduleLegResolver) Origin(ctx context.Context, obj *travel.Leg) (*model.Stop, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Destination is the resolver for the destination field.
+func (r *travelScheduleLegResolver) Destination(ctx context.Context, obj *travel.Leg) (*model.Stop, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Distance is the resolver for the distance field.
+func (r *travelScheduleLegResolver) Distance(ctx context.Context, obj *travel.Leg) (float64, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Transit is the resolver for the transit field.
+func (r *travelScheduleLegResolver) Transit(ctx context.Context, obj *travel.Leg) (*model.Transit, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Duration is the resolver for the duration field.
+func (r *travelScheduleLegResolver) Duration(ctx context.Context, obj *travel.Leg) (int, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Arrival is the resolver for the arrival field.
+func (r *travelScheduleLegResolver) Arrival(ctx context.Context, obj *travel.Leg) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // ID is the resolver for the id field.
@@ -339,18 +354,22 @@ func (r *Resolver) StopTime() generated.StopTimeResolver { return &stopTimeResol
 // Transit returns generated.TransitResolver implementation.
 func (r *Resolver) Transit() generated.TransitResolver { return &transitResolver{r} }
 
-// TravelPlan returns generated.TravelPlanResolver implementation.
-func (r *Resolver) TravelPlan() generated.TravelPlanResolver { return &travelPlanResolver{r} }
-
-// TravelPlanLeg returns generated.TravelPlanLegResolver implementation.
-func (r *Resolver) TravelPlanLeg() generated.TravelPlanLegResolver { return &travelPlanLegResolver{r} }
-
 // TravelRoute returns generated.TravelRouteResolver implementation.
 func (r *Resolver) TravelRoute() generated.TravelRouteResolver { return &travelRouteResolver{r} }
 
 // TravelRouteLeg returns generated.TravelRouteLegResolver implementation.
 func (r *Resolver) TravelRouteLeg() generated.TravelRouteLegResolver {
 	return &travelRouteLegResolver{r}
+}
+
+// TravelSchedule returns generated.TravelScheduleResolver implementation.
+func (r *Resolver) TravelSchedule() generated.TravelScheduleResolver {
+	return &travelScheduleResolver{r}
+}
+
+// TravelScheduleLeg returns generated.TravelScheduleLegResolver implementation.
+func (r *Resolver) TravelScheduleLeg() generated.TravelScheduleLegResolver {
+	return &travelScheduleLegResolver{r}
 }
 
 // Trip returns generated.TripResolver implementation.
@@ -364,8 +383,8 @@ type stopRouteResolver struct{ *Resolver }
 type stopRouteScheduleResolver struct{ *Resolver }
 type stopTimeResolver struct{ *Resolver }
 type transitResolver struct{ *Resolver }
-type travelPlanResolver struct{ *Resolver }
-type travelPlanLegResolver struct{ *Resolver }
 type travelRouteResolver struct{ *Resolver }
 type travelRouteLegResolver struct{ *Resolver }
+type travelScheduleResolver struct{ *Resolver }
+type travelScheduleLegResolver struct{ *Resolver }
 type tripResolver struct{ *Resolver }
