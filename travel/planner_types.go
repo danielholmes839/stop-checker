@@ -20,12 +20,13 @@ type fastestTransit struct {
 }
 
 type node struct {
-	walk     bool
-	routeId  string
-	stopId   string
-	arrival  time.Time
-	duration time.Duration
-	blockers dijkstra.Set
+	walk      bool
+	routeId   string
+	stopId    string
+	transfers int
+	arrival   time.Time
+	duration  time.Duration
+	blockers  dijkstra.Set
 }
 
 func (n *node) ID() string {
@@ -33,7 +34,7 @@ func (n *node) ID() string {
 }
 
 func (n *node) Weight() int {
-	return int(n.arrival.Unix())
+	return int(n.arrival.Unix()) + n.transfers*60*5 // 5 minute penalty per transfer
 }
 
 func (n *node) Arrival() time.Time {

@@ -37,9 +37,13 @@ func NewPlanner(config *PlannerConfig) *Planner {
 
 func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error) {
 	initial := &node{
-		stopId:   origin,
-		arrival:  at,
-		duration: time.Duration(0),
+		stopId:    origin,
+		arrival:   at,
+		duration:  time.Duration(0),
+		walk:      false,
+		routeId:   "",
+		transfers: 0,
+		blockers:  dijkstra.Set{},
 	}
 
 	solution, err := dijkstra.Algorithm(&dijkstra.Config[*node]{
@@ -130,11 +134,12 @@ func (p *Planner) expandWalk(origin *node) []*node {
 
 	for _, c := range closest {
 		connections = append(connections, &node{
-			walk:     true,
-			routeId:  "",
-			stopId:   c.stopId,
-			arrival:  origin.arrival.Add(c.duration),
-			blockers: origin.blockers,
+			walk:      true,
+			routeId:   "",
+			stopId:    c.stopId,
+			transfers: origin.transfers,
+			arrival:   origin.arrival.Add(c.duration),
+			blockers:  origin.blockers,
 		})
 	}
 
@@ -197,12 +202,13 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 	for stopId, trip := range fastest {
 		// stop, _ := p.StopIndex.Get(stopId)
 		connection := &node{
-			stopId:   stopId,
-			arrival:  trip.arrival,
-			duration: trip.transit,
-			blockers: blockers[stopId],
-			routeId:  trip.routeId,
-			walk:     false,
+			stopId:    stopId,
+			arrival:   trip.arrival,
+			duration:  trip.transit,
+			transfers: n.transfers + 1,
+			blockers:  blockers[stopId],
+			routeId:   trip.routeId,
+			walk:      false,
 		}
 
 		connections = append(connections, connection)
