@@ -140,7 +140,7 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		Walk:        false,
 		Departure:   departure,
 		Duration:    transitDuration,
-		transit: &transit{
+		Transit: &transit{
 			TripId:                next.TripId,
 			OriginStopTimeId:      originArrival.ID(),
 			DestinationStopTimeId: destinationArrival.ID(),
@@ -200,7 +200,7 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		Walk:        false,
 		Departure:   acc.Add(-(transitDuration + excess)),
 		Duration:    transitDuration,
-		transit: &transit{
+		Transit: &transit{
 			TripId:                previous.TripId,
 			OriginStopTimeId:      originArrival.ID(),
 			DestinationStopTimeId: destinationArrival.ID(),

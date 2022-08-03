@@ -17,10 +17,11 @@ type StopTextResult struct {
 type StopTextIndex struct {
 	stopsByToken      map[string][]model.Stop
 	stopsByCode       *InvertedIndex[model.Stop]
+	stopRoutes        *StopRouteIndex
 	removePunctuation *regexp.Regexp
 }
 
-func NewStopTextIndex(stops []model.Stop) *StopTextIndex {
+func NewStopTextIndex(stops []model.Stop, stopRoutes *StopRouteIndex) *StopTextIndex {
 	re, _ := regexp.Compile(`[^\w]`)
 
 	stopsByCode := NewInvertedIndex("stop code", stops, func(stop model.Stop) (key string) {
@@ -30,6 +31,7 @@ func NewStopTextIndex(stops []model.Stop) *StopTextIndex {
 	index := &StopTextIndex{
 		stopsByCode:       stopsByCode,
 		stopsByToken:      map[string][]model.Stop{},
+		stopRoutes:        stopRoutes,
 		removePunctuation: re,
 	}
 
@@ -98,6 +100,12 @@ func (s *StopTextIndex) Search(text string) []*StopTextResult {
 
 		if !ri.MatchingCode && rj.MatchingCode {
 			return false
+		}
+
+		if ri.MatchingTokens == rj.MatchingTokens {
+			riRoutes := s.stopRoutes.Get(ri.ID())
+			rjRoutes := s.stopRoutes.Get(rj.ID())
+			return len(riRoutes) > len(rjRoutes)
 		}
 
 		return ri.MatchingTokens > rj.MatchingTokens

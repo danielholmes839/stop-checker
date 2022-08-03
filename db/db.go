@@ -47,6 +47,8 @@ func NewDatabase(base *model.Base) *Database {
 		Trips:              NewIndex("trip", base.Trips),
 	}
 
+	stopRoutesIndex := NewStopRouteIndex(baseIndex, base)
+
 	return &Database{
 		// inverted indexes
 		StopTimesFromTrip: NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
@@ -55,12 +57,12 @@ func NewDatabase(base *model.Base) *Database {
 
 		// specialized indexes
 		BaseIndex:      baseIndex,
-		StopRouteIndex: NewStopRouteIndex(baseIndex, base),
+		StopRouteIndex: stopRoutesIndex,
 		ScheduleIndex:  NewScheduleIndex(baseIndex, base),
 		StopLocationIndex: NewStopLocationIndex(baseIndex, base, ResolutionConfig{
 			Level:      9,
 			EdgeLength: 174.375668,
 		}),
-		StopTextIndex: NewStopTextIndex(base.Stops),
+		StopTextIndex: NewStopTextIndex(base.Stops, stopRoutesIndex),
 	}
 }

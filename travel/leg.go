@@ -12,7 +12,7 @@ type transit struct {
 }
 
 type Leg struct {
-	*transit                  // transit info
+	Transit     *transit      // transit info
 	Origin      string        // origin stop id
 	Destination string        // destination stop id
 	Walk        bool          // if we walk between the two stops
@@ -26,7 +26,7 @@ func (leg *Leg) String() string {
 			leg.Origin, leg.Destination, leg.Walk, leg.Departure, leg.Duration)
 	}
 	return fmt.Sprintf("{origin:%s, destination:%s, walk:%t, departure:%s, duration:%s, trip:%s}",
-		leg.Origin, leg.Destination, leg.Walk, leg.Departure, leg.Duration, leg.TripId)
+		leg.Origin, leg.Destination, leg.Walk, leg.Departure, leg.Duration, leg.Transit.TripId)
 }
 
 /* FixedLeg

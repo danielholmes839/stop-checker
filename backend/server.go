@@ -38,22 +38,26 @@ func (s *Server) HandleGraphQL() {
 				Database: database,
 				Timezone: dataset.TimeZone,
 				Planner: travel.NewPlanner(&travel.PlannerConfig{
-					ScheduleIndex: database.ScheduleIndex,
+					ScheduleIndex:     database.ScheduleIndex,
 					StopLocationIndex: database.StopLocationIndex,
-					StopRouteIndex: database.StopRouteIndex,
-					StopIndex: database.Stops,
+					StopRouteIndex:    database.StopRouteIndex,
+					StopIndex:         database.Stops,
 					StopTimesFromTrip: database.StopTimesFromTrip,
 				}),
 				Scheduler: travel.NewScheduler(&travel.SchedulerConfig{
-					StopIndex: database.Stops,
+					StopIndex:         database.Stops,
 					StopTimesFromTrip: database.StopTimesFromTrip,
-					ScheduleIndex: database.ScheduleIndex,
+					ScheduleIndex:     database.ScheduleIndex,
 				}),
 			},
 		},
 	))
 
-	http.Handle("/graphql", resolvers)
+	http.Handle("/graphql", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		resolvers.ServeHTTP(w, r)
+	}))
 
 	http.Handle("/graphql-playground", playground.Handler("stop-checker", "/graphql"))
 }

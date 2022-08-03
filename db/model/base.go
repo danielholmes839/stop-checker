@@ -104,8 +104,8 @@ func (b *BaseParser) NewRouteFromGTFS(data gtfs.Route) Route {
 		Id:        data.ID,
 		Name:      data.ShortName,
 		Type:      data.Type,
-		Color:     data.Color,
-		TextColor: data.TextColor,
+		Color:     "#" + data.Color,
+		TextColor: "#" + data.TextColor,
 	}
 }
 

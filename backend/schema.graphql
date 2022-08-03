@@ -9,8 +9,9 @@ enum RouteType {
 }
 
 type Location {
-    latitude: Float
-    longitude: Float
+    latitude: Float!
+    longitude: Float!
+    distance(location: LocationInput!): Float!
 }
 
 type Stop {
@@ -115,8 +116,8 @@ type TravelScheduleLeg {
 
 # Transit taken by a scheduled leg
 type Transit {
-    route: Route
-    trip: Trip
+    route: Route!
+    trip: Trip!
 }
 
 input TravelSchedulePlannerInput {
@@ -129,6 +130,7 @@ input TravelSchedulePlannerInput {
 input TravelLegInput {
     origin: ID!
     destination: ID!
+    # if the route id is null then walk
     route: ID
 }
 
@@ -166,11 +168,11 @@ input PageInput {
 type Query {
     # search
     searchStopText(text: String!): [Stop!]! 
-    searchStopLocation(latitude: Float!, longitude: Float!, radius: Float!): [StopLocationResult!]! 
+    searchStopLocation(location: LocationInput!, radius: Float!): [StopLocationResult!]! 
     
-    # travel planner (rotue between two stops)
-    travelRoutePlanner(input: TravelRoutePlannerInput!): TravelRoutePayload
+    # travel planner (route between two stops)
+    travelRoutePlanner(input: TravelRoutePlannerInput!): TravelRoutePayload!
 
     # travel scheduler (arrive by / depart at)
-    travelSchedulePlanner(input: TravelSchedulePlannerInput!): TravelSchedulePayload
+    travelSchedulePlanner(input: TravelSchedulePlannerInput!): TravelSchedulePayload!
 }

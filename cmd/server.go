@@ -11,5 +11,5 @@ func main() {
 
 	s.HandleGraphQL()
 
-	http.ListenAndServe(":3000", nil)
+	http.ListenAndServe(":5000", nil)
 }

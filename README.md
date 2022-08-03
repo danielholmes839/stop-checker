@@ -2,6 +2,9 @@
 
 Hello World
 
+go get github.com/99designs/gqlgen
+go run github.com/99designs/gqlgen generate
+
 models:
   Stop:
     model: "stop-checker.com/db/model.Stop"
