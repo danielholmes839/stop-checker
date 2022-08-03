@@ -1,0 +1,12 @@
+overwrite: true
+documents: "src/**/*.graphql"
+schema:
+  "../backend/schema.graphql"
+generates:
+  src/client/types.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-urql
+    config:
+      withHooks: true

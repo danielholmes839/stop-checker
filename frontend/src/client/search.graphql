@@ -1,0 +1,16 @@
+query TextSearch($text: String!) {
+  searchStopText(text: $text) {
+    id
+    name
+    code
+    routes {
+      direction
+      headsign
+      route {
+        name
+        background
+        text
+      }
+    }
+  }
+}
