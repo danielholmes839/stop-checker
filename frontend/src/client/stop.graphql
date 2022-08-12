@@ -1,0 +1,21 @@
+query StopPage($id: ID!) {
+  stop(id: $id) {
+    id
+    name
+    code
+    routes {
+      headsign
+      route {
+        name
+        text
+        background
+      }
+      schedule {
+        next(limit: 3) {
+          id
+          time
+        }
+      }
+    }
+  }
+}

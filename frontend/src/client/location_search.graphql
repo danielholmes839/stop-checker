@@ -1,0 +1,22 @@
+query LocationSearch($location: LocationInput!) {
+  searchStopLocation(location: $location, radius: 1500) {
+    distance
+    stop {
+      id
+      name
+      code
+      location {
+        latitude
+        longitude
+      }
+      routes {
+        headsign
+        route {
+          name
+          text
+          background
+        }
+      }
+    }
+  }
+}

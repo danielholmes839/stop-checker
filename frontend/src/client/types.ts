@@ -51,6 +51,7 @@ export type Query = {
   __typename?: 'Query';
   searchStopLocation: Array<StopLocationResult>;
   searchStopText: Array<Stop>;
+  stop?: Maybe<Stop>;
   travelRoutePlanner: TravelRoutePayload;
   travelSchedulePlanner: TravelSchedulePayload;
 };
@@ -64,6 +65,11 @@ export type QuerySearchStopLocationArgs = {
 
 export type QuerySearchStopTextArgs = {
   text: Scalars['String'];
+};
+
+
+export type QueryStopArgs = {
+  id: Scalars['ID'];
 };
 
 
@@ -138,6 +144,11 @@ export type StopRouteSchedule = {
   __typename?: 'StopRouteSchedule';
   next: Array<StopTime>;
   on: Array<StopTime>;
+};
+
+
+export type StopRouteScheduleNextArgs = {
+  limit: Scalars['Int'];
 };
 
 
@@ -233,6 +244,20 @@ export type Trip = {
   stopTimes: Array<StopTime>;
 };
 
+export type LocationSearchQueryVariables = Exact<{
+  location: LocationInput;
+}>;
+
+
+export type LocationSearchQuery = { __typename?: 'Query', searchStopLocation: Array<{ __typename?: 'StopLocationResult', distance: number, stop: { __typename?: 'Stop', id: string, name: string, code: string, location: { __typename?: 'Location', latitude: number, longitude: number }, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', name: string, text: any, background: any } }> } }> };
+
+export type StopPageQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type StopPageQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> } }> } | null };
+
 export type TextSearchQueryVariables = Exact<{
   text: Scalars['String'];
 }>;
@@ -241,6 +266,61 @@ export type TextSearchQueryVariables = Exact<{
 export type TextSearchQuery = { __typename?: 'Query', searchStopText: Array<{ __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', direction: string, headsign: string, route: { __typename?: 'Route', name: string, background: any, text: any } }> }> };
 
 
+export const LocationSearchDocument = gql`
+    query LocationSearch($location: LocationInput!) {
+  searchStopLocation(location: $location, radius: 1500) {
+    distance
+    stop {
+      id
+      name
+      code
+      location {
+        latitude
+        longitude
+      }
+      routes {
+        headsign
+        route {
+          name
+          text
+          background
+        }
+      }
+    }
+  }
+}
+    `;
+
+export function useLocationSearchQuery(options: Omit<Urql.UseQueryArgs<LocationSearchQueryVariables>, 'query'>) {
+  return Urql.useQuery<LocationSearchQuery, LocationSearchQueryVariables>({ query: LocationSearchDocument, ...options });
+};
+export const StopPageDocument = gql`
+    query StopPage($id: ID!) {
+  stop(id: $id) {
+    id
+    name
+    code
+    routes {
+      headsign
+      route {
+        name
+        text
+        background
+      }
+      schedule {
+        next(limit: 3) {
+          id
+          time
+        }
+      }
+    }
+  }
+}
+    `;
+
+export function useStopPageQuery(options: Omit<Urql.UseQueryArgs<StopPageQueryVariables>, 'query'>) {
+  return Urql.useQuery<StopPageQuery, StopPageQueryVariables>({ query: StopPageDocument, ...options });
+};
 export const TextSearchDocument = gql`
     query TextSearch($text: String!) {
   searchStopText(text: $text) {
