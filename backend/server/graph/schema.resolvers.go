@@ -12,7 +12,7 @@ import (
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
 	"stop-checker.com/server/graph/generated"
-	"stop-checker.com/server/graph/types"
+	"stop-checker.com/server/graph/sdl"
 	"stop-checker.com/travel"
 )
 
@@ -31,44 +31,54 @@ func (r *queryResolver) Stop(ctx context.Context, id string) (*model.Stop, error
 }
 
 // SearchStopText is the resolver for the searchStopText field.
-func (r *queryResolver) SearchStopText(ctx context.Context, text string) ([]*model.Stop, error) {
-	results := r.StopTextIndex.Search(text)
-	stops := make([]*model.Stop, len(results))
+func (r *queryResolver) SearchStopText(ctx context.Context, text string, page sdl.PageInput) (*sdl.SearchStopPayload, error) {
+	results := r.StopTextIndex.Query(text)
+	stops := apply(results, func(result *db.StopTextResult) *model.Stop {
+		return &result.Stop
+	})
 
-	for i, result := range results {
-		stops[i] = &result.Stop
+	paged := Paginate(stops, page)
+
+	payload := &sdl.SearchStopPayload{
+		Page:    paged.Info(),
+		Results: paged.Results(),
 	}
-	return stops, nil
+
+	return payload, nil
 }
 
 // SearchStopLocation is the resolver for the searchStopLocation field.
-func (r *queryResolver) SearchStopLocation(ctx context.Context, location model.Location, radius float64) ([]*db.StopLocationResult, error) {
-	stops := r.StopLocationIndex.Query(location, radius)
+func (r *queryResolver) SearchStopLocation(ctx context.Context, location model.Location, radius float64, page sdl.PageInput) (*sdl.SearchStopPayload, error) {
 	ranker := db.NewStopRanker(r.StopRouteIndex)
-	ranked := ranker.Rank(stops)
+	results := r.StopLocationIndex.Query(location, radius)
+	resultsRanked := ranker.Rank(results)
 
-	stopsRanked := make([]model.Stop, len(ranked))
-	for i, stopRank := range ranked {
-		stopsRanked[i] = stopRank.Stop
-	}
+	stops := apply(resultsRanked, func(result db.StopRank) *model.Stop {
+		return &result.Stop
+	})
 
-	return ref(stops), nil
+	paged := Paginate(stops, page)
+
+	return &sdl.SearchStopPayload{
+		Page:    paged.Info(),
+		Results: paged.Results(),
+	}, nil
 }
 
 // TravelRoutePlanner is the resolver for the travelRoutePlanner field.
-func (r *queryResolver) TravelRoutePlanner(ctx context.Context, input types.TravelRoutePlannerInput) (*types.TravelRoutePayload, error) {
+func (r *queryResolver) TravelRoutePlanner(ctx context.Context, input sdl.TravelRoutePlannerInput) (*sdl.TravelRoutePayload, error) {
 	route, err := r.Planner.Depart(time.Now(), input.Origin, input.Destination)
 	if err != nil {
 		return nil, err
 	}
-	return &types.TravelRoutePayload{
+	return &sdl.TravelRoutePayload{
 		Route:  route,
-		Errors: []*types.Error{},
+		Errors: []*sdl.UserError{},
 	}, nil
 }
 
 // TravelSchedulePlanner is the resolver for the travelSchedulePlanner field.
-func (r *queryResolver) TravelSchedulePlanner(ctx context.Context, input types.TravelSchedulePlannerInput) (*types.TravelSchedulePayload, error) {
+func (r *queryResolver) TravelSchedulePlanner(ctx context.Context, input sdl.TravelSchedulePlannerInput) (*sdl.TravelSchedulePayload, error) {
 	legs := travel.Route{}
 
 	for _, leg := range input.Legs {
@@ -86,7 +96,7 @@ func (r *queryResolver) TravelSchedulePlanner(ctx context.Context, input types.T
 			return nil, err
 		}
 
-		return &types.TravelSchedulePayload{Schedule: schedule, Errors: []*types.Error{}}, nil
+		return &sdl.TravelSchedulePayload{Schedule: schedule, Errors: []*sdl.UserError{}}, nil
 	}
 
 	departure := time.Now().In(r.Timezone)
@@ -100,7 +110,7 @@ func (r *queryResolver) TravelSchedulePlanner(ctx context.Context, input types.T
 		return nil, err
 	}
 
-	return &types.TravelSchedulePayload{Schedule: schedule, Errors: []*types.Error{}}, nil
+	return &sdl.TravelSchedulePayload{Schedule: schedule, Errors: []*sdl.UserError{}}, nil
 }
 
 // ID is the resolver for the id field.
@@ -119,12 +129,12 @@ func (r *routeResolver) Background(ctx context.Context, obj *model.Route) (strin
 }
 
 // Type is the resolver for the type field.
-func (r *routeResolver) Type(ctx context.Context, obj *model.Route) (types.RouteType, error) {
+func (r *routeResolver) Type(ctx context.Context, obj *model.Route) (sdl.RouteType, error) {
 	if obj.Type == 0 {
-		return types.RouteTypeTrain, nil
+		return sdl.RouteTypeTrain, nil
 	}
 
-	return types.RouteTypeBus, nil
+	return sdl.RouteTypeBus, nil
 }
 
 // Sunday is the resolver for the sunday field.

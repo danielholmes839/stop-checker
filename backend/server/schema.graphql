@@ -77,11 +77,6 @@ type ServiceException {
     date: Date!
 }
 
-type StopLocationResult {
-    stop: Stop!
-    distance: Float!
-}
-
 type TravelRoute {
     legs: [TravelRouteLeg!]!
 }
@@ -142,15 +137,15 @@ input TravelRoutePlannerInput {
 
 type TravelRoutePayload {
     route: TravelRoute
-    errors: [Error!]!
+    errors: [UserError!]!
 }
 
 type TravelSchedulePayload {
     schedule: TravelSchedule
-    errors: [Error!]!
+    errors: [UserError!]!
 }
 
-type Error {
+type UserError {
     field: String!
     message: String!
 }
@@ -162,7 +157,17 @@ input LocationInput {
 
 input PageInput {
     skip: Int!
-    limit: Int!
+    limit: Int! # use a negative number to disable the limit
+}
+
+type PageInfo {
+    cursor: Int!   # how many to skip next time
+    remaining: Int!
+}
+
+type StopSearchPayload {
+    page: PageInfo!
+    results: [Stop!]!
 }
 
 type Query {
@@ -170,8 +175,8 @@ type Query {
     stop(id: ID!): Stop
 
     # search
-    searchStopText(text: String!): [Stop!]! 
-    searchStopLocation(location: LocationInput!, radius: Float!): [StopLocationResult!]! 
+    searchStopText(text: String!, page: PageInput!): StopSearchPayload! 
+    searchStopLocation(location: LocationInput!, radius: Float!, page: PageInput!): StopSearchPayload! 
     
     # travel planner (route between two stops)
     travelRoutePlanner(input: TravelRoutePlannerInput!): TravelRoutePayload!

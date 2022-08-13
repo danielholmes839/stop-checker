@@ -1,10 +1,10 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
-  - backend/schema.graphql
+  - server/schema.graphql
 
 # Where should the generated server code go?
 exec:
-  filename: backend/graph/generated/generated.go
+  filename: server/graph/generated/generated.go
   package: generated
 
 # Uncomment to enable federation
@@ -14,13 +14,13 @@ exec:
 
 # Where should any generated models go?
 model:
-  filename: backend/graph/types/types.go
-  package: types
+  filename: server/graph/sdl/sdl.go
+  package: sdl
 
 # Where should the resolver implementations go?
 resolver:
   layout: follow-schema
-  dir: backend/graph
+  dir: server/graph
   package: graph
 
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
@@ -81,11 +81,11 @@ models:
   ServiceException:
     model: "stop-checker.com/db/model.ServiceException"
   Time:
-    model: "stop-checker.com/backend/graph/scalars.Time"
+    model: "stop-checker.com/server/graph/scalars.Time"
   Date:
-    model: "stop-checker.com/backend/graph/scalars.Date"
+    model: "stop-checker.com/server/graph/scalars.Date"
   DateTime:
-    model: "stop-checker.com/backend/graph/scalars.DateTime"
+    model: "stop-checker.com/server/graph/scalars.DateTime"
 
   TravelRoute:
     model: "stop-checker.com/travel.Route"

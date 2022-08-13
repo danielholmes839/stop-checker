@@ -97,7 +97,7 @@ func main() {
 
 	index := db.NewStopTextIndex(base.Stops, database.StopRouteIndex)
 
-	for _, stop := range index.Search("pleasant park arch 3000") {
+	for _, stop := range index.Query("pleasant park arch 3000") {
 		fmt.Printf("%#v\n", stop)
 	}
 }

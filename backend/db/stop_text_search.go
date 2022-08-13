@@ -48,7 +48,7 @@ func NewStopTextIndex(stops []model.Stop, stopRoutes *StopRouteIndex) *StopTextI
 	return index
 }
 
-func (s *StopTextIndex) Search(text string) []*StopTextResult {
+func (s *StopTextIndex) Query(text string) []*StopTextResult {
 	tokens := s.tokenize(text)
 	resultsMap := map[string]*StopTextResult{}
 
