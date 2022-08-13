@@ -6,7 +6,7 @@ export const QueryResponseWrapper: React.FC<{ response: UseQueryState }> = ({
 }) => {
   const { data, fetching, error } = response;
   if (fetching) {
-    return <div>loading</div>;
+    return <></>;
   }
 
   if (error) {
