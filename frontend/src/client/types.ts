@@ -249,7 +249,7 @@ export type LocationSearchQueryVariables = Exact<{
 }>;
 
 
-export type LocationSearchQuery = { __typename?: 'Query', searchStopLocation: Array<{ __typename?: 'StopLocationResult', distance: number, stop: { __typename?: 'Stop', id: string, name: string, code: string, location: { __typename?: 'Location', latitude: number, longitude: number } } }> };
+export type LocationSearchQuery = { __typename?: 'Query', searchStopLocation: Array<{ __typename?: 'StopLocationResult', stop: { __typename?: 'Stop', id: string, name: string, code: string, location: { __typename?: 'Location', latitude: number, longitude: number } } }> };
 
 export type StopPageQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -257,6 +257,13 @@ export type StopPageQueryVariables = Exact<{
 
 
 export type StopPageQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> } }> } | null };
+
+export type StopPreviewQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type StopPreviewQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', name: string, text: any, background: any } }> } | null };
 
 export type TextSearchQueryVariables = Exact<{
   text: Scalars['String'];
@@ -269,7 +276,6 @@ export type TextSearchQuery = { __typename?: 'Query', searchStopText: Array<{ __
 export const LocationSearchDocument = gql`
     query LocationSearch($location: LocationInput!) {
   searchStopLocation(location: $location, radius: 1000) {
-    distance
     stop {
       id
       name
@@ -312,6 +318,27 @@ export const StopPageDocument = gql`
 
 export function useStopPageQuery(options: Omit<Urql.UseQueryArgs<StopPageQueryVariables>, 'query'>) {
   return Urql.useQuery<StopPageQuery, StopPageQueryVariables>({ query: StopPageDocument, ...options });
+};
+export const StopPreviewDocument = gql`
+    query StopPreview($id: ID!) {
+  stop(id: $id) {
+    id
+    name
+    code
+    routes {
+      headsign
+      route {
+        name
+        text
+        background
+      }
+    }
+  }
+}
+    `;
+
+export function useStopPreviewQuery(options: Omit<Urql.UseQueryArgs<StopPreviewQueryVariables>, 'query'>) {
+  return Urql.useQuery<StopPreviewQuery, StopPreviewQueryVariables>({ query: StopPreviewDocument, ...options });
 };
 export const TextSearchDocument = gql`
     query TextSearch($text: String!) {

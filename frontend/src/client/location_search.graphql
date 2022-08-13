@@ -1,6 +1,5 @@
 query LocationSearch($location: LocationInput!) {
   searchStopLocation(location: $location, radius: 1000) {
-    distance
     stop {
       id
       name

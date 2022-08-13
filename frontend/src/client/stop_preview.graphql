@@ -1,0 +1,15 @@
+query StopPreview($id: ID!) {
+  stop(id: $id) {
+    id
+    name
+    code
+    routes {
+      headsign
+      route {
+        name
+        text
+        background
+      }
+    }
+  }
+}

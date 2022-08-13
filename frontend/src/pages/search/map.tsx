@@ -40,7 +40,11 @@ const initialLocation = {
   longitude: -75.6903,
 };
 
-export const SearchMap: React.FC<{ config: SearchConfig }> = ({ config }) => {
+export const SearchMap: React.FC<{
+  config: SearchConfig;
+  selected: Stop | null;
+  setSelected: React.Dispatch<React.SetStateAction<Stop | null>>;
+}> = ({ config, selected, setSelected }) => {
   // load google maps
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyAvCHchRFUDqVPHSs5jpR74ehIY7A5WBIY",
@@ -49,8 +53,6 @@ export const SearchMap: React.FC<{ config: SearchConfig }> = ({ config }) => {
 
   // with the initial location / center  as downtown ottawa
   const [location, setLocation] = useState<LocationInput>(initialLocation);
-
-  const [selected, setSelected] = useState<Stop | null>(null);
 
   // map element ref
   const mapRef = useRef<google.maps.Map>();
@@ -79,6 +81,10 @@ export const SearchMap: React.FC<{ config: SearchConfig }> = ({ config }) => {
       longitude: center.lng(),
     });
   }, []);
+
+  const resetSelected = useCallback(() => {
+    setSelected(null);
+  }, [setSelected]);
 
   const [{ data }, _] = useLocationSearchQuery({
     variables: {
@@ -132,6 +138,7 @@ export const SearchMap: React.FC<{ config: SearchConfig }> = ({ config }) => {
         <GoogleMap
           onDragEnd={onMapDragEnd}
           onLoad={onMapLoad}
+          onClick={resetSelected}
           mapContainerStyle={{
             width: "100%",
             height: "450px",
@@ -155,6 +162,7 @@ export const SearchMap: React.FC<{ config: SearchConfig }> = ({ config }) => {
               strokeWeight: 0.75,
               radius: 1000,
             }}
+            onClick={resetSelected}
           />
           {data &&
             data.searchStopLocation.map(({ stop }) => (
