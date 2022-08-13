@@ -249,7 +249,7 @@ export type LocationSearchQueryVariables = Exact<{
 }>;
 
 
-export type LocationSearchQuery = { __typename?: 'Query', searchStopLocation: Array<{ __typename?: 'StopLocationResult', distance: number, stop: { __typename?: 'Stop', id: string, name: string, code: string, location: { __typename?: 'Location', latitude: number, longitude: number }, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', name: string, text: any, background: any } }> } }> };
+export type LocationSearchQuery = { __typename?: 'Query', searchStopLocation: Array<{ __typename?: 'StopLocationResult', distance: number, stop: { __typename?: 'Stop', id: string, name: string, code: string, location: { __typename?: 'Location', latitude: number, longitude: number } } }> };
 
 export type StopPageQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -268,7 +268,7 @@ export type TextSearchQuery = { __typename?: 'Query', searchStopText: Array<{ __
 
 export const LocationSearchDocument = gql`
     query LocationSearch($location: LocationInput!) {
-  searchStopLocation(location: $location, radius: 1500) {
+  searchStopLocation(location: $location, radius: 1000) {
     distance
     stop {
       id
@@ -277,14 +277,6 @@ export const LocationSearchDocument = gql`
       location {
         latitude
         longitude
-      }
-      routes {
-        headsign
-        route {
-          name
-          text
-          background
-        }
       }
     }
   }

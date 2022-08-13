@@ -6,97 +6,16 @@ import {
   useStopPageQuery,
   useTextSearchQuery,
 } from "client/types";
-import { Sign, Container, Card, QueryResponseWrapper } from "components";
-import React, { useState } from "react";
+import {
+  Sign,
+  Container,
+  Card,
+  QueryResponseWrapper,
+  SearchMap,
+} from "components";
+import React, { useCallback, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDebounce } from "use-debounce";
-
-import {
-  Circle,
-  withGoogleMap,
-  withScriptjs,
-  GoogleMap,
-  Marker,
-  InfoWindow,
-} from "react-google-maps";
-
-const Map: React.FC = () => {
-  const [location, setLocation] = useState<LocationInput>({
-    latitude: 45.4211,
-    longitude: -75.6903,
-  });
-
-  const [locationDebounced, __] = useDebounce(location, 10);
-
-  const [{ data }, _] = useLocationSearchQuery({
-    variables: {
-      location: locationDebounced,
-    },
-  });
-
-  return (
-    <>
-      <GoogleMap
-        defaultZoom={10}
-        defaultCenter={{ lat: 45.4211, lng: -75.6903 }}
-        options={{
-          maxZoom: 18,
-          minZoom: 9,
-          streetViewControl: false,
-          mapTypeControl: false,
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
-          scrollwheel: true,
-        }}
-        onClick={(e) => {
-          setLocation({
-            latitude: e.latLng.lat(),
-            longitude: e.latLng.lng(),
-          });
-        }}
-      >
-        <Circle
-          key={1}
-          options={{
-            center: {
-              lat: location.latitude,
-              lng: location.longitude,
-            },
-            radius: 1500,
-            fillColor: "#c7d2fe",
-            fillOpacity: 0.2,
-            strokeWeight: 1,
-            strokeColor: "#6366f1",
-          }}
-        />
-        {data &&
-          data.searchStopLocation.map(({ stop }) => (
-            <Marker
-              position={{
-                lat: stop.location.latitude,
-                lng: stop.location.longitude,
-              }}
-              key={stop.id}
-            ></Marker>
-          ))}
-      </GoogleMap>
-    </>
-  );
-};
-
-const MapWrapped = withScriptjs(withGoogleMap(Map));
-
-const SearchMap: React.FC = () => {
-  return (
-    <div style={{ width: "100%", height: "400px" }}>
-      <MapWrapped
-        googleMapURL={`https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry,drawing,places&key=AIzaSyAvCHchRFUDqVPHSs5jpR74ehIY7A5WBIY`}
-        loadingElement={<div style={{ height: `100%` }} />}
-        containerElement={<div style={{ height: `100%` }} />}
-        mapElement={<div style={{ height: `100%` }} />}
-      />
-    </div>
-  );
-};
 
 const TextSearchQueryResponse: React.FC<{ data: TextSearchQuery }> = ({
   data,
@@ -144,7 +63,7 @@ export const SearchPage: React.FC = () => {
   return (
     <Container>
       <input
-        className="bg-gray-50 border-gray-100 w-full mb-3 mt-1 p-3 rounded-sm focus:outline-none border-b-2 focus:border-indigo-500"
+        className="bg-gray-50 border-gray-100 w-full mb-3 mt-1 p-3 rounded-sm focus:outline-none border-b-2 focus:border-indigo-500 text-sm"
         value={search}
         type="text"
         placeholder="Search by stop name or code Ex. Rideau A, O-Train, 3000"

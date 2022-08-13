@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Container } from "./page";
+import { Container } from "./helper";
 
 export const Nav: React.FC = () => {
   const linkClassName = "text-indigo-600";
