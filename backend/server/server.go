@@ -5,11 +5,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"stop-checker.com/backend/graph"
-	"stop-checker.com/backend/graph/generated"
 	"stop-checker.com/db"
 	"stop-checker.com/db/gtfs"
 	"stop-checker.com/db/model"
+	"stop-checker.com/server/graph"
+	"stop-checker.com/server/graph/generated"
 	"stop-checker.com/travel"
 )
 

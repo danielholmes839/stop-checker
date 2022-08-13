@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"stop-checker.com/backend"
+	"stop-checker.com/server"
 )
 
 func main() {
-	s := backend.Server{}
+	s := server.Server{}
 
 	s.HandleGraphQL()
 

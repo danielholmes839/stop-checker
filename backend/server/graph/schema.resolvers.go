@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	"stop-checker.com/backend/graph/generated"
-	"stop-checker.com/backend/graph/types"
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
+	"stop-checker.com/server/graph/generated"
+	"stop-checker.com/server/graph/types"
 	"stop-checker.com/travel"
 )
 
