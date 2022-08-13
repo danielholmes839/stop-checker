@@ -21,6 +21,15 @@ func (r *locationResolver) Distance(ctx context.Context, obj *model.Location, lo
 	return obj.Distance(location), nil
 }
 
+// Stop is the resolver for the stop field.
+func (r *queryResolver) Stop(ctx context.Context, id string) (*model.Stop, error) {
+	stop, err := r.Stops.Get(id)
+	if err != nil {
+		return nil, err
+	}
+	return &stop, nil
+}
+
 // SearchStopText is the resolver for the searchStopText field.
 func (r *queryResolver) SearchStopText(ctx context.Context, text string) ([]*model.Stop, error) {
 	results := r.StopTextIndex.Search(text)
@@ -192,9 +201,9 @@ func (r *stopRouteResolver) Schedule(ctx context.Context, obj *model.StopRoute) 
 }
 
 // Next is the resolver for the next field.
-func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *db.ScheduleResults) ([]*model.StopTime, error) {
+func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *db.ScheduleResults, limit int) ([]*model.StopTime, error) {
 	now := time.Now().In(r.Timezone)
-	stopTimes := obj.After(now, 3)
+	stopTimes := obj.After(now, limit)
 	return ref(stopTimes), nil
 }
 

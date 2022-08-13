@@ -31,7 +31,7 @@ type StopRoute {
 }
 
 type StopRouteSchedule {
-    next: [StopTime!]!
+    next(limit: Int!): [StopTime!]!
     on(date: Date!): [StopTime!]!
 }
 
@@ -166,6 +166,9 @@ input PageInput {
 }
 
 type Query {
+    # simple
+    stop(id: ID!): Stop
+
     # search
     searchStopText(text: String!): [Stop!]! 
     searchStopLocation(location: LocationInput!, radius: Float!): [StopLocationResult!]! 

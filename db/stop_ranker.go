@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -86,18 +85,11 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 		}
 
 		if a.BestRouteRank == b.BestRouteRank {
-
-			// aDist := a.Distance - ((float64(a.RouteCount) - 1) * 150)
-			// bDist := b.Distance - ((float64(b.RouteCount) - 1) * 150)
 			return a.RouteCount > b.RouteCount
 		}
 
 		return false
 	})
-
-	for _, rank := range ranked {
-		fmt.Printf("%#v\n", rank)
-	}
 
 	return ranked
 }

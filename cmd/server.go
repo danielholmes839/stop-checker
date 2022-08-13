@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"stop-checker.com/backend"
@@ -11,5 +12,7 @@ func main() {
 
 	s.HandleGraphQL()
 
-	http.ListenAndServe(":5000", nil)
+	fmt.Println("Listening...")
+	err := http.ListenAndServe(":3001", nil)
+	fmt.Println(err)
 }
