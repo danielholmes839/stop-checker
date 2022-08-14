@@ -19,12 +19,6 @@ export type Scalars = {
   Time: any;
 };
 
-export type Error = {
-  __typename?: 'Error';
-  field: Scalars['String'];
-  message: Scalars['String'];
-};
-
 export type Location = {
   __typename?: 'Location';
   distance: Scalars['Float'];
@@ -42,6 +36,12 @@ export type LocationInput = {
   longitude: Scalars['Float'];
 };
 
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  cursor: Scalars['Int'];
+  remaining: Scalars['Int'];
+};
+
 export type PageInput = {
   limit: Scalars['Int'];
   skip: Scalars['Int'];
@@ -49,8 +49,8 @@ export type PageInput = {
 
 export type Query = {
   __typename?: 'Query';
-  searchStopLocation: Array<StopLocationResult>;
-  searchStopText: Array<Stop>;
+  searchStopLocation: StopSearchPayload;
+  searchStopText: StopSearchPayload;
   stop?: Maybe<Stop>;
   travelRoutePlanner: TravelRoutePayload;
   travelSchedulePlanner: TravelSchedulePayload;
@@ -59,11 +59,13 @@ export type Query = {
 
 export type QuerySearchStopLocationArgs = {
   location: LocationInput;
+  page: PageInput;
   radius: Scalars['Float'];
 };
 
 
 export type QuerySearchStopTextArgs = {
+  page: PageInput;
   text: Scalars['String'];
 };
 
@@ -125,12 +127,6 @@ export type Stop = {
   routes: Array<StopRoute>;
 };
 
-export type StopLocationResult = {
-  __typename?: 'StopLocationResult';
-  distance: Scalars['Float'];
-  stop: Stop;
-};
-
 export type StopRoute = {
   __typename?: 'StopRoute';
   direction: Scalars['ID'];
@@ -154,6 +150,12 @@ export type StopRouteScheduleNextArgs = {
 
 export type StopRouteScheduleOnArgs = {
   date: Scalars['Date'];
+};
+
+export type StopSearchPayload = {
+  __typename?: 'StopSearchPayload';
+  page: PageInfo;
+  results: Array<Stop>;
 };
 
 export type StopTime = {
@@ -192,7 +194,7 @@ export type TravelRouteLeg = {
 
 export type TravelRoutePayload = {
   __typename?: 'TravelRoutePayload';
-  errors: Array<Error>;
+  errors: Array<UserError>;
   route?: Maybe<TravelRoute>;
 };
 
@@ -224,7 +226,7 @@ export type TravelScheduleLeg = {
 
 export type TravelSchedulePayload = {
   __typename?: 'TravelSchedulePayload';
-  errors: Array<Error>;
+  errors: Array<UserError>;
   schedule?: Maybe<TravelSchedule>;
 };
 
@@ -244,12 +246,19 @@ export type Trip = {
   stopTimes: Array<StopTime>;
 };
 
+export type UserError = {
+  __typename?: 'UserError';
+  field: Scalars['String'];
+  message: Scalars['String'];
+};
+
 export type LocationSearchQueryVariables = Exact<{
   location: LocationInput;
+  page: PageInput;
 }>;
 
 
-export type LocationSearchQuery = { __typename?: 'Query', searchStopLocation: Array<{ __typename?: 'StopLocationResult', stop: { __typename?: 'Stop', id: string, name: string, code: string, location: { __typename?: 'Location', latitude: number, longitude: number } } }> };
+export type LocationSearchQuery = { __typename?: 'Query', searchStopLocation: { __typename?: 'StopSearchPayload', results: Array<{ __typename?: 'Stop', id: string, name: string, code: string, location: { __typename?: 'Location', latitude: number, longitude: number } }> } };
 
 export type StopPageQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -267,16 +276,17 @@ export type StopPreviewQuery = { __typename?: 'Query', stop?: { __typename?: 'St
 
 export type TextSearchQueryVariables = Exact<{
   text: Scalars['String'];
+  page: PageInput;
 }>;
 
 
-export type TextSearchQuery = { __typename?: 'Query', searchStopText: Array<{ __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', direction: string, headsign: string, route: { __typename?: 'Route', name: string, background: any, text: any } }> }> };
+export type TextSearchQuery = { __typename?: 'Query', searchStopText: { __typename?: 'StopSearchPayload', results: Array<{ __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', direction: string, headsign: string, route: { __typename?: 'Route', name: string, background: any, text: any } }> }> } };
 
 
 export const LocationSearchDocument = gql`
-    query LocationSearch($location: LocationInput!) {
-  searchStopLocation(location: $location, radius: 1000) {
-    stop {
+    query LocationSearch($location: LocationInput!, $page: PageInput!) {
+  searchStopLocation(location: $location, radius: 1000, page: $page) {
+    results {
       id
       name
       code
@@ -341,18 +351,20 @@ export function useStopPreviewQuery(options: Omit<Urql.UseQueryArgs<StopPreviewQ
   return Urql.useQuery<StopPreviewQuery, StopPreviewQueryVariables>({ query: StopPreviewDocument, ...options });
 };
 export const TextSearchDocument = gql`
-    query TextSearch($text: String!) {
-  searchStopText(text: $text) {
-    id
-    name
-    code
-    routes {
-      direction
-      headsign
-      route {
-        name
-        background
-        text
+    query TextSearch($text: String!, $page: PageInput!) {
+  searchStopText(text: $text, page: $page) {
+    results {
+      id
+      name
+      code
+      routes {
+        direction
+        headsign
+        route {
+          name
+          background
+          text
+        }
       }
     }
   }

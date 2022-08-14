@@ -1,6 +1,6 @@
-query LocationSearch($location: LocationInput!) {
-  searchStopLocation(location: $location, radius: 1000) {
-    stop {
+query LocationSearch($location: LocationInput!, $page: PageInput!) {
+  searchStopLocation(location: $location, radius: 1000, page: $page) {
+    results {
       id
       name
       code

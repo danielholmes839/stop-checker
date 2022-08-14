@@ -7,7 +7,6 @@ import {
   useLoadScript,
 } from "@react-google-maps/api";
 import { LocationInput, Stop, useLocationSearchQuery } from "client/types";
-import { Link } from "react-router-dom";
 import { SearchConfig } from "./config";
 
 const libraries = ["geometry", "drawing"];
@@ -89,6 +88,7 @@ export const SearchMap: React.FC<{
   const [{ data }, _] = useLocationSearchQuery({
     variables: {
       location: location,
+      page: { limit: -1, skip: 0 },
     },
   });
 
@@ -165,7 +165,7 @@ export const SearchMap: React.FC<{
             onClick={resetSelected}
           />
           {data &&
-            data.searchStopLocation.map(({ stop }) => (
+            data.searchStopLocation.results.map((stop) => (
               <Marker
                 key={stop.id}
                 position={{

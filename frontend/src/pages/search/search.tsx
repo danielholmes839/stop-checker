@@ -54,7 +54,7 @@ const TextSearchQueryResponse: React.FC<{
 }> = ({ data, config }) => {
   return (
     <div>
-      {data.searchStopText.map((stop) => {
+      {data.searchStopText.results.map((stop) => {
         return (
           <div className="mb-3">
             <StopPreview stop={stop as Stop} config={config} />
@@ -96,6 +96,10 @@ export const Search: React.FC<{ config: SearchConfig }> = ({ config }) => {
   const [response, _] = useTextSearchQuery({
     variables: {
       text: searchTextDebounced,
+      page: {
+        limit: 15,
+        skip: 0,
+      },
     },
   });
 
