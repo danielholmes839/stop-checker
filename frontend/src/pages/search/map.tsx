@@ -11,6 +11,7 @@ import { SearchConfig } from "./config";
 
 const libraries = ["geometry", "drawing"];
 const mapOptions = {
+  gestureHandling: "greedy",
   mapTypeControl: false,
   streetViewControl: false,
   styles: [
@@ -148,7 +149,7 @@ export const SearchMap: React.FC<{
             lat: mapRef.current?.getCenter()?.lat() as any,
             lng: mapRef.current?.getCenter()?.lng() as any,
           }}
-          options={{ ...mapOptions, gestureHandling: "greedy" }}
+          options={mapOptions}
         >
           <Circle
             center={{

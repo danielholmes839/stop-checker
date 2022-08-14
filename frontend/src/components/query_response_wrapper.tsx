@@ -5,16 +5,8 @@ export const QueryResponseWrapper: React.FC<{ response: UseQueryState }> = ({
   children,
 }) => {
   const { data, fetching, error } = response;
-  if (fetching) {
+  if (fetching || error || !data) {
     return <></>;
-  }
-
-  if (error) {
-    return <div>{error.toString()}</div>;
-  }
-
-  if (data === null || data === undefined) {
-    return <div>no data</div>;
   }
 
   return <>{children}</>;

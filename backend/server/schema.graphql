@@ -125,8 +125,7 @@ input TravelSchedulePlannerInput {
 input TravelLegInput {
     origin: ID!
     destination: ID!
-    # if the route id is null then walk
-    route: ID
+    route: ID # if the route id is null then walk
 }
 
 input TravelRoutePlannerInput {
@@ -145,6 +144,11 @@ type TravelSchedulePayload {
     errors: [UserError!]!
 }
 
+type StopSearchPayload {
+    page: PageInfo!
+    results: [Stop!]!
+}
+
 type UserError {
     field: String!
     message: String!
@@ -155,19 +159,14 @@ input LocationInput {
     longitude: Float!
 }
 
-input PageInput {
-    skip: Int!
-    limit: Int! # use a negative number to disable the limit
-}
-
 type PageInfo {
     cursor: Int!   # how many to skip next time
     remaining: Int!
 }
 
-type StopSearchPayload {
-    page: PageInfo!
-    results: [Stop!]!
+input PageInput {
+    skip: Int!
+    limit: Int! # use a negative number to disable the limit
 }
 
 type Query {
