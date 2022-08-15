@@ -86,14 +86,13 @@ models:
     model: "stop-checker.com/server/graph/scalars.Date"
   DateTime:
     model: "stop-checker.com/server/graph/scalars.DateTime"
-
-  TravelRoute:
-    model: "stop-checker.com/travel.Route"
-  TravelSchedule:
-    model: "stop-checker.com/travel.Schedule"
-  TravelRouteLeg:
-    model: "stop-checker.com/travel.FixedLeg"
-  TravelScheduleLeg:
-    model: "stop-checker.com/travel.Leg"
   Transit:
     model: "stop-checker.com/db/model.Transit"
+  TravelSchedule:
+    model: "stop-checker.com/travel.Schedule"
+  TravelScheduleLeg:
+    model: "stop-checker.com/travel.Leg"
+  TravelRoute:
+    model: "stop-checker.com/travel.Route"
+  TravelRouteLeg:
+    model: "stop-checker.com/travel.FixedLeg"

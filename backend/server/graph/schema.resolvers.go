@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -31,7 +30,7 @@ func (r *queryResolver) Stop(ctx context.Context, id string) (*model.Stop, error
 }
 
 // SearchStopText is the resolver for the searchStopText field.
-func (r *queryResolver) SearchStopText(ctx context.Context, text string, page sdl.PageInput) (*sdl.SearchStopPayload, error) {
+func (r *queryResolver) SearchStopText(ctx context.Context, text string, page sdl.PageInput) (*sdl.StopSearchPayload, error) {
 	results := r.StopTextIndex.Query(text)
 	stops := apply(results, func(result *db.StopTextResult) *model.Stop {
 		return &result.Stop
@@ -39,7 +38,7 @@ func (r *queryResolver) SearchStopText(ctx context.Context, text string, page sd
 
 	paged := Paginate(stops, page)
 
-	payload := &sdl.SearchStopPayload{
+	payload := &sdl.StopSearchPayload{
 		Page:    paged.Info(),
 		Results: paged.Results(),
 	}
@@ -48,7 +47,7 @@ func (r *queryResolver) SearchStopText(ctx context.Context, text string, page sd
 }
 
 // SearchStopLocation is the resolver for the searchStopLocation field.
-func (r *queryResolver) SearchStopLocation(ctx context.Context, location model.Location, radius float64, page sdl.PageInput) (*sdl.SearchStopPayload, error) {
+func (r *queryResolver) SearchStopLocation(ctx context.Context, location model.Location, radius float64, page sdl.PageInput) (*sdl.StopSearchPayload, error) {
 	ranker := db.NewStopRanker(r.StopRouteIndex)
 	results := r.StopLocationIndex.Query(location, radius)
 	resultsRanked := ranker.Rank(results)
@@ -59,58 +58,59 @@ func (r *queryResolver) SearchStopLocation(ctx context.Context, location model.L
 
 	paged := Paginate(stops, page)
 
-	return &sdl.SearchStopPayload{
+	return &sdl.StopSearchPayload{
 		Page:    paged.Info(),
 		Results: paged.Results(),
 	}, nil
 }
 
-// TravelRoutePlanner is the resolver for the travelRoutePlanner field.
-func (r *queryResolver) TravelRoutePlanner(ctx context.Context, input sdl.TravelRoutePlannerInput) (*sdl.TravelRoutePayload, error) {
-	route, err := r.Planner.Depart(time.Now(), input.Origin, input.Destination)
-	if err != nil {
-		return nil, err
+// TravelPlanner is the resolver for the travelPlanner field.
+func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destination string, departure *time.Time) (*sdl.TravelPayload, error) {
+	errs := []*sdl.UserError{}
+
+	if _, err := r.Stops.Get(origin); err != nil {
+		errs = append(errs, &sdl.UserError{Field: "origin", Message: "stop not found"})
 	}
-	return &sdl.TravelRoutePayload{
-		Route:  route,
-		Errors: []*sdl.UserError{},
-	}, nil
+
+	if _, err := r.Stops.Get(destination); err != nil {
+		errs = append(errs, &sdl.UserError{Field: "destination", Message: "stop not found"})
+	}
+
+	if len(errs) > 0 {
+		return &sdl.TravelPayload{TravelRoute: nil, Errors: errs}, nil
+	}
+
+	if departure == nil {
+		t := time.Now().In(r.Timezone)
+		departure = &t
+	}
+
+	// determine the route
+	route, _ := r.Planner.Depart(*departure, origin, destination)
+	return &sdl.TravelPayload{TravelRoute: route, Errors: errs}, nil
 }
 
-// TravelSchedulePlanner is the resolver for the travelSchedulePlanner field.
-func (r *queryResolver) TravelSchedulePlanner(ctx context.Context, input sdl.TravelSchedulePlannerInput) (*sdl.TravelSchedulePayload, error) {
-	legs := travel.Route{}
+// TravelScheduler is the resolver for the travelScheduler field.
+func (r *queryResolver) TravelScheduler(ctx context.Context, route []*sdl.TravelLegInput) (*sdl.TravelPayload, error) {
+	travelRoute := travel.Route{}
+	for _, r := range route {
+		routeId := ""
+		if r.Route != nil {
+			routeId = *r.Route
+		}
 
-	for _, leg := range input.Legs {
-		legs = append(legs, &travel.FixedLeg{
-			Origin:      leg.Origin,
-			Destination: leg.Destination,
-			RouteId:     *leg.Route,
-			Walk:        leg.Route == nil,
+		travelRoute = append(travelRoute, &travel.FixedLeg{
+			Origin:      r.Origin,
+			Destination: r.Destination,
+			RouteId:     routeId,
+			Walk:        r.Route == nil,
 		})
 	}
 
-	if input.Arrival != nil {
-		schedule, err := r.Scheduler.Arrive(*input.Arrival, legs)
-		if err != nil {
-			return nil, err
-		}
-
-		return &sdl.TravelSchedulePayload{Schedule: schedule, Errors: []*sdl.UserError{}}, nil
-	}
-
-	departure := time.Now().In(r.Timezone)
-
-	if input.Departure != nil {
-		departure = *input.Departure
-	}
-
-	schedule, err := r.Scheduler.Depart(departure, legs)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sdl.TravelSchedulePayload{Schedule: schedule, Errors: []*sdl.UserError{}}, nil
+	return &sdl.TravelPayload{
+		TravelRoute: travelRoute,
+		Errors:      []*sdl.UserError{},
+	}, nil
 }
 
 // ID is the resolver for the id field.
@@ -248,7 +248,26 @@ func (r *transitResolver) Trip(ctx context.Context, obj *model.Transit) (*model.
 
 // Legs is the resolver for the legs field.
 func (r *travelRouteResolver) Legs(ctx context.Context, obj travel.Route) ([]*travel.FixedLeg, error) {
-	return obj, nil
+	return []*travel.FixedLeg(obj), nil
+}
+
+// TravelSchedule is the resolver for the travelSchedule field.
+func (r *travelRouteResolver) TravelSchedule(ctx context.Context, obj travel.Route, mode sdl.ScheduleMode, dt *time.Time) (travel.Schedule, error) {
+	t := time.Now().In(r.Timezone)
+
+	if dt != nil {
+		t = *dt
+	}
+
+	// arrive by
+	if mode == sdl.ScheduleModeArriveBy {
+		schedule, _ := r.Scheduler.Arrive(t, obj)
+		return schedule, nil
+	}
+
+	// depart at
+	schedule, _ := r.Scheduler.Depart(t, obj)
+	return schedule, nil
 }
 
 // Origin is the resolver for the origin field.
@@ -273,7 +292,10 @@ func (r *travelRouteLegResolver) Distance(ctx context.Context, obj *travel.Fixed
 // Route is the resolver for the route field.
 func (r *travelRouteLegResolver) Route(ctx context.Context, obj *travel.FixedLeg) (*model.Route, error) {
 	route, err := r.Routes.Get(obj.RouteId)
-	return &route, err
+	if err != nil {
+		return nil, nil
+	}
+	return &route, nil
 }
 
 // Legs is the resolver for the legs field.
@@ -289,14 +311,14 @@ func (r *travelScheduleResolver) Duration(ctx context.Context, obj travel.Schedu
 
 // Origin is the resolver for the origin field.
 func (r *travelScheduleLegResolver) Origin(ctx context.Context, obj *travel.Leg) (*model.Stop, error) {
-	stop, err := r.Stops.Get(obj.Origin)
-	return &stop, err
+	stop, _ := r.Stops.Get(obj.Origin)
+	return &stop, nil
 }
 
 // Destination is the resolver for the destination field.
 func (r *travelScheduleLegResolver) Destination(ctx context.Context, obj *travel.Leg) (*model.Stop, error) {
-	stop, err := r.Stops.Get(obj.Destination)
-	return &stop, err
+	stop, _ := r.Stops.Get(obj.Destination)
+	return &stop, nil
 }
 
 // Distance is the resolver for the distance field.
@@ -309,12 +331,12 @@ func (r *travelScheduleLegResolver) Distance(ctx context.Context, obj *travel.Le
 // Transit is the resolver for the transit field.
 func (r *travelScheduleLegResolver) Transit(ctx context.Context, obj *travel.Leg) (*model.Transit, error) {
 	if obj.Transit == nil {
-		return nil, errors.New("walking leg")
+		return nil, nil // walking
 	}
 
 	trip, err := r.Trips.Get(obj.Transit.TripId)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	return &model.Transit{
@@ -354,7 +376,6 @@ func (r *tripResolver) StopTimes(ctx context.Context, obj *model.Trip) ([]*model
 // Service is the resolver for the service field.
 func (r *tripResolver) Service(ctx context.Context, obj *model.Trip) (*model.Service, error) {
 	service, _ := r.Services.Get(obj.ServiceId)
-	fmt.Println(service, obj)
 	return &service, nil
 }
 
@@ -434,11 +455,3 @@ type tripResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *travelScheduleResolver) Departure(ctx context.Context, obj travel.Schedule) (*time.Time, error) {
-	departure := obj.Departure()
-	return &departure, nil
-}
-func (r *travelScheduleResolver) Arrival(ctx context.Context, obj travel.Schedule) (*time.Time, error) {
-	arrival := obj.Arrival()
-	return &arrival, nil
-}

@@ -8,12 +8,14 @@ export const SearchPage = () => {
   const navigate = useNavigate();
   return (
     <Container>
-      <Search
-        config={{
-          action: ({ id }) => navigate(`/stop/${id}`),
-          actionName: "View",
-        }}
-      />
+      <div className="mt-3">
+        <Search
+          config={{
+            action: ({ id }) => navigate(`/stop/${id}`),
+            actionName: "View",
+          }}
+        />
+      </div>
     </Container>
   );
 };

@@ -19,6 +19,7 @@
     "react-google-maps": "^9.4.5",
     "react-router-dom": "^6.3.0",
     "react-scripts": "4.0.3",
+    "react-use-wizard": "^2.2.1",
     "urql": "^2.2.3",
     "use-debounce": "^8.0.3",
     "web-vitals": "^1.1.1"

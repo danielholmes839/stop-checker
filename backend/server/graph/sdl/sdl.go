@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"time"
 
 	"stop-checker.com/db/model"
 	"stop-checker.com/travel"
@@ -22,7 +21,7 @@ type PageInput struct {
 	Limit int `json:"limit"`
 }
 
-type SearchStopPayload struct {
+type StopSearchPayload struct {
 	Page    *PageInfo     `json:"page"`
 	Results []*model.Stop `json:"results"`
 }
@@ -33,26 +32,9 @@ type TravelLegInput struct {
 	Route       *string `json:"route"`
 }
 
-type TravelRoutePayload struct {
-	Route  travel.Route `json:"route"`
-	Errors []*UserError `json:"errors"`
-}
-
-type TravelRoutePlannerInput struct {
-	Origin      string     `json:"origin"`
-	Destination string     `json:"destination"`
-	Departure   *time.Time `json:"departure"`
-}
-
-type TravelSchedulePayload struct {
-	Schedule travel.Schedule `json:"schedule"`
-	Errors   []*UserError    `json:"errors"`
-}
-
-type TravelSchedulePlannerInput struct {
-	Legs      []*TravelLegInput `json:"legs"`
-	Departure *time.Time        `json:"departure"`
-	Arrival   *time.Time        `json:"arrival"`
+type TravelPayload struct {
+	TravelRoute travel.Route `json:"travelRoute"`
+	Errors      []*UserError `json:"errors"`
 }
 
 type UserError struct {
@@ -98,5 +80,46 @@ func (e *RouteType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e RouteType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type ScheduleMode string
+
+const (
+	ScheduleModeArriveBy ScheduleMode = "ARRIVE_BY"
+	ScheduleModeDepartAt ScheduleMode = "DEPART_AT"
+)
+
+var AllScheduleMode = []ScheduleMode{
+	ScheduleModeArriveBy,
+	ScheduleModeDepartAt,
+}
+
+func (e ScheduleMode) IsValid() bool {
+	switch e {
+	case ScheduleModeArriveBy, ScheduleModeDepartAt:
+		return true
+	}
+	return false
+}
+
+func (e ScheduleMode) String() string {
+	return string(e)
+}
+
+func (e *ScheduleMode) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ScheduleMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ScheduleMode", str)
+	}
+	return nil
+}
+
+func (e ScheduleMode) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

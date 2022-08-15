@@ -106,7 +106,7 @@ export const Search: React.FC<{ config: SearchConfig }> = ({ config }) => {
   return (
     <>
       <input
-        className="bg-gray-50 w-full my-3 p-3 rounded-sm focus:outline-none focus:border border-b-2 focus:border-indigo-500 sm:text-xs md:text-sm"
+        className="bg-gray-50 border-b-2 border-gray-200 w-full mb-1 p-3 rounded-t-sm focus:outline-none focus:border-b-1 focus:border-indigo-500 sm:text-xs md:text-sm"
         value={searchText}
         type="text"
         placeholder="Search by stop name or code Ex. Rideau A, O-Train, 3000"

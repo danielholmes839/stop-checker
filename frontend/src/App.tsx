@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider as UrqlProvider } from "urql";
 import { client } from "client";
-import { PlannerPage, SearchPage, StopPage } from "pages";
+import { TravelPage, SearchPage, StopPage } from "pages";
 import { Nav } from "components";
 
 const App: React.FC = () => {
@@ -13,7 +13,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<SearchPage />} />
           <Route path="/stop/:id" element={<StopPage />} />
-          <Route path="/planner" element={<PlannerPage />} />
+          <Route path="/travel" element={<TravelPage />} />
         </Routes>
       </BrowserRouter>
     </UrqlProvider>
