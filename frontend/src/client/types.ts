@@ -84,14 +84,14 @@ export type QueryStopRouteArgs = {
 
 export type QueryTravelPlannerArgs = {
   destination: Scalars['ID'];
+  options: TravelScheduleOptions;
   origin: Scalars['ID'];
-  scheduleOptions: TravelScheduleInput;
 };
 
 
 export type QueryTravelPlannerFixedRouteArgs = {
+  options: TravelScheduleOptions;
   route: Array<TravelLegInput>;
-  scheduleOptions: TravelScheduleInput;
 };
 
 export type Route = {
@@ -213,11 +213,6 @@ export type TravelSchedule = {
   origin: Stop;
 };
 
-export type TravelScheduleInput = {
-  datetime?: InputMaybe<Scalars['DateTime']>;
-  mode: ScheduleMode;
-};
-
 export type TravelScheduleLeg = {
   __typename?: 'TravelScheduleLeg';
   arrival: Scalars['DateTime'];
@@ -228,6 +223,11 @@ export type TravelScheduleLeg = {
   origin: Stop;
   transit?: Maybe<Transit>;
   walk: Scalars['Boolean'];
+};
+
+export type TravelScheduleOptions = {
+  datetime?: InputMaybe<Scalars['DateTime']>;
+  mode: ScheduleMode;
 };
 
 export type Trip = {
@@ -279,7 +279,7 @@ export type TextSearchQuery = { __typename?: 'Query', searchStopText: { __typena
 export type TravelPlannerQueryVariables = Exact<{
   origin: Scalars['ID'];
   destination: Scalars['ID'];
-  options: TravelScheduleInput;
+  options: TravelScheduleOptions;
 }>;
 
 
@@ -434,12 +434,8 @@ export function useTextSearchQuery(options: Omit<Urql.UseQueryArgs<TextSearchQue
   return Urql.useQuery<TextSearchQuery, TextSearchQueryVariables>({ query: TextSearchDocument, ...options });
 };
 export const TravelPlannerDocument = gql`
-    query TravelPlanner($origin: ID!, $destination: ID!, $options: TravelScheduleInput!) {
-  travelPlanner(
-    origin: $origin
-    destination: $destination
-    scheduleOptions: $options
-  ) {
+    query TravelPlanner($origin: ID!, $destination: ID!, $options: TravelScheduleOptions!) {
+  travelPlanner(origin: $origin, destination: $destination, options: $options) {
     errors {
       field
       message

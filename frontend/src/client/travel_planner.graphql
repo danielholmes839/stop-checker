@@ -1,13 +1,9 @@
 query TravelPlanner(
   $origin: ID!
   $destination: ID!
-  $options: TravelScheduleInput!
+  $options: TravelScheduleOptions!
 ) {
-  travelPlanner(
-    origin: $origin
-    destination: $destination
-    scheduleOptions: $options
-  ) {
+  travelPlanner(origin: $origin, destination: $destination, options: $options) {
     errors {
       field
       message
