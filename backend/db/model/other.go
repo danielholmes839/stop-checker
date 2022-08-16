@@ -18,8 +18,10 @@ func (r StopRoute) DirectedID() string {
 
 // GraphQL related
 type Transit struct {
-	RouteId string
-	TripId  string
+	RouteId       string
+	TripId        string
+	OriginId      string
+	DestinationId string
 }
 
 type Location struct {

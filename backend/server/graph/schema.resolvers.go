@@ -76,6 +76,10 @@ func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destin
 		errs = append(errs, &sdl.UserError{Field: "destination", Message: "stop not found"})
 	}
 
+	if origin == destination {
+		errs = append(errs, &sdl.UserError{Field: "destination", Message: "destination and origin must be different"})
+	}
+
 	if len(errs) > 0 {
 		return &sdl.TravelPayload{TravelRoute: nil, Errors: errs}, nil
 	}
@@ -223,6 +227,12 @@ func (r *stopRouteScheduleResolver) On(ctx context.Context, obj *db.ScheduleResu
 	return ref(stopTimes), nil
 }
 
+// Stop is the resolver for the stop field.
+func (r *stopTimeResolver) Stop(ctx context.Context, obj *model.StopTime) (*model.Stop, error) {
+	stop, _ := r.Stops.Get(obj.StopId)
+	return &stop, nil
+}
+
 // Trip is the resolver for the trip field.
 func (r *stopTimeResolver) Trip(ctx context.Context, obj *model.StopTime) (*model.Trip, error) {
 	trip, _ := r.Trips.Get(obj.TripId)
@@ -244,6 +254,28 @@ func (r *transitResolver) Route(ctx context.Context, obj *model.Transit) (*model
 func (r *transitResolver) Trip(ctx context.Context, obj *model.Transit) (*model.Trip, error) {
 	trip, _ := r.Trips.Get(obj.TripId)
 	return &trip, nil
+}
+
+// Departure is the resolver for the departure field.
+func (r *transitResolver) Departure(ctx context.Context, obj *model.Transit) (*model.StopTime, error) {
+	stopTimes, _ := r.StopTimesFromTrip.Get(obj.TripId)
+	for _, stopTime := range stopTimes {
+		if stopTime.StopId == obj.OriginId {
+			return &stopTime, nil
+		}
+	}
+	return nil, nil
+}
+
+// Arrival is the resolver for the arrival field.
+func (r *transitResolver) Arrival(ctx context.Context, obj *model.Transit) (*model.StopTime, error) {
+	stopTimes, _ := r.StopTimesFromTrip.Get(obj.TripId)
+	for _, stopTime := range stopTimes {
+		if stopTime.StopId == obj.DestinationId {
+			return &stopTime, nil
+		}
+	}
+	return nil, nil
 }
 
 // Legs is the resolver for the legs field.
@@ -303,6 +335,20 @@ func (r *travelScheduleResolver) Legs(ctx context.Context, obj travel.Schedule) 
 	return obj, nil
 }
 
+// Origin is the resolver for the origin field.
+func (r *travelScheduleResolver) Origin(ctx context.Context, obj travel.Schedule) (*model.Stop, error) {
+	originId := obj[0].Origin
+	origin, _ := r.Stops.Get(originId)
+	return &origin, nil
+}
+
+// Destination is the resolver for the destination field.
+func (r *travelScheduleResolver) Destination(ctx context.Context, obj travel.Schedule) (*model.Stop, error) {
+	destinationId := obj[len(obj)-1].Destination
+	destination, _ := r.Stops.Get(destinationId)
+	return &destination, nil
+}
+
 // Duration is the resolver for the duration field.
 func (r *travelScheduleResolver) Duration(ctx context.Context, obj travel.Schedule) (int, error) {
 	duration := obj.Duration()
@@ -340,8 +386,10 @@ func (r *travelScheduleLegResolver) Transit(ctx context.Context, obj *travel.Leg
 	}
 
 	return &model.Transit{
-		RouteId: trip.RouteId,
-		TripId:  trip.Id,
+		RouteId:       trip.RouteId,
+		TripId:        trip.Id,
+		OriginId:      obj.Origin,
+		DestinationId: obj.Destination,
 	}, nil
 }
 
@@ -448,10 +496,3 @@ type travelRouteLegResolver struct{ *Resolver }
 type travelScheduleResolver struct{ *Resolver }
 type travelScheduleLegResolver struct{ *Resolver }
 type tripResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.

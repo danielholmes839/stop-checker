@@ -59,6 +59,7 @@ type Trip {
 
 type StopTime {
     id: ID!
+    stop: Stop!
     trip: Trip!
     time: Time!
     sequence: Int!
@@ -96,9 +97,11 @@ type TravelScheduleLeg {
 
 type TravelSchedule {
     legs: [TravelScheduleLeg!]!
-    departure: DateTime!
-    arrival: DateTime!
+    origin: Stop!
+    destination: Stop!
     duration: Int! 
+    departure: DateTime! # origin departure time
+    arrival: DateTime! # destination arrival
 }
 
 # Travel route leg
@@ -119,6 +122,8 @@ type TravelRoute {
 type Transit {
     route: Route!
     trip: Trip!
+    departure: StopTime!
+    arrival: StopTime!
 }
 
 input TravelLegInput {

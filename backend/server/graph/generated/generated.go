@@ -135,13 +135,16 @@ type ComplexityRoot struct {
 	StopTime struct {
 		ID       func(childComplexity int) int
 		Sequence func(childComplexity int) int
+		Stop     func(childComplexity int) int
 		Time     func(childComplexity int) int
 		Trip     func(childComplexity int) int
 	}
 
 	Transit struct {
-		Route func(childComplexity int) int
-		Trip  func(childComplexity int) int
+		Arrival   func(childComplexity int) int
+		Departure func(childComplexity int) int
+		Route     func(childComplexity int) int
+		Trip      func(childComplexity int) int
 	}
 
 	TravelPayload struct {
@@ -163,10 +166,12 @@ type ComplexityRoot struct {
 	}
 
 	TravelSchedule struct {
-		Arrival   func(childComplexity int) int
-		Departure func(childComplexity int) int
-		Duration  func(childComplexity int) int
-		Legs      func(childComplexity int) int
+		Arrival     func(childComplexity int) int
+		Departure   func(childComplexity int) int
+		Destination func(childComplexity int) int
+		Duration    func(childComplexity int) int
+		Legs        func(childComplexity int) int
+		Origin      func(childComplexity int) int
 	}
 
 	TravelScheduleLeg struct {
@@ -240,6 +245,7 @@ type StopRouteScheduleResolver interface {
 	On(ctx context.Context, obj *db.ScheduleResults, date time.Time) ([]*model.StopTime, error)
 }
 type StopTimeResolver interface {
+	Stop(ctx context.Context, obj *model.StopTime) (*model.Stop, error)
 	Trip(ctx context.Context, obj *model.StopTime) (*model.Trip, error)
 
 	Sequence(ctx context.Context, obj *model.StopTime) (int, error)
@@ -247,6 +253,8 @@ type StopTimeResolver interface {
 type TransitResolver interface {
 	Route(ctx context.Context, obj *model.Transit) (*model.Route, error)
 	Trip(ctx context.Context, obj *model.Transit) (*model.Trip, error)
+	Departure(ctx context.Context, obj *model.Transit) (*model.StopTime, error)
+	Arrival(ctx context.Context, obj *model.Transit) (*model.StopTime, error)
 }
 type TravelRouteResolver interface {
 	Legs(ctx context.Context, obj travel.Route) ([]*travel.FixedLeg, error)
@@ -261,7 +269,8 @@ type TravelRouteLegResolver interface {
 }
 type TravelScheduleResolver interface {
 	Legs(ctx context.Context, obj travel.Schedule) ([]*travel.Leg, error)
-
+	Origin(ctx context.Context, obj travel.Schedule) (*model.Stop, error)
+	Destination(ctx context.Context, obj travel.Schedule) (*model.Stop, error)
 	Duration(ctx context.Context, obj travel.Schedule) (int, error)
 }
 type TravelScheduleLegResolver interface {
@@ -638,6 +647,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.StopTime.Sequence(childComplexity), true
 
+	case "StopTime.stop":
+		if e.complexity.StopTime.Stop == nil {
+			break
+		}
+
+		return e.complexity.StopTime.Stop(childComplexity), true
+
 	case "StopTime.time":
 		if e.complexity.StopTime.Time == nil {
 			break
@@ -651,6 +667,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.StopTime.Trip(childComplexity), true
+
+	case "Transit.arrival":
+		if e.complexity.Transit.Arrival == nil {
+			break
+		}
+
+		return e.complexity.Transit.Arrival(childComplexity), true
+
+	case "Transit.departure":
+		if e.complexity.Transit.Departure == nil {
+			break
+		}
+
+		return e.complexity.Transit.Departure(childComplexity), true
 
 	case "Transit.route":
 		if e.complexity.Transit.Route == nil {
@@ -748,6 +778,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TravelSchedule.Departure(childComplexity), true
 
+	case "TravelSchedule.destination":
+		if e.complexity.TravelSchedule.Destination == nil {
+			break
+		}
+
+		return e.complexity.TravelSchedule.Destination(childComplexity), true
+
 	case "TravelSchedule.duration":
 		if e.complexity.TravelSchedule.Duration == nil {
 			break
@@ -761,6 +798,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TravelSchedule.Legs(childComplexity), true
+
+	case "TravelSchedule.origin":
+		if e.complexity.TravelSchedule.Origin == nil {
+			break
+		}
+
+		return e.complexity.TravelSchedule.Origin(childComplexity), true
 
 	case "TravelScheduleLeg.arrival":
 		if e.complexity.TravelScheduleLeg.Arrival == nil {
@@ -991,6 +1035,7 @@ type Trip {
 
 type StopTime {
     id: ID!
+    stop: Stop!
     trip: Trip!
     time: Time!
     sequence: Int!
@@ -1028,9 +1073,11 @@ type TravelScheduleLeg {
 
 type TravelSchedule {
     legs: [TravelScheduleLeg!]!
-    departure: DateTime!
-    arrival: DateTime!
+    origin: Stop!
+    destination: Stop!
     duration: Int! 
+    departure: DateTime! # origin departure time
+    arrival: DateTime! # destination arrival
 }
 
 # Travel route leg
@@ -1051,6 +1098,8 @@ type TravelRoute {
 type Transit {
     route: Route!
     trip: Trip!
+    departure: StopTime!
+    arrival: StopTime!
 }
 
 input TravelLegInput {
@@ -3305,6 +3354,8 @@ func (ec *executionContext) fieldContext_StopRouteSchedule_next(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_StopTime_id(ctx, field)
+			case "stop":
+				return ec.fieldContext_StopTime_stop(ctx, field)
 			case "trip":
 				return ec.fieldContext_StopTime_trip(ctx, field)
 			case "time":
@@ -3370,6 +3421,8 @@ func (ec *executionContext) fieldContext_StopRouteSchedule_on(ctx context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_StopTime_id(ctx, field)
+			case "stop":
+				return ec.fieldContext_StopTime_stop(ctx, field)
 			case "trip":
 				return ec.fieldContext_StopTime_trip(ctx, field)
 			case "time":
@@ -3539,6 +3592,62 @@ func (ec *executionContext) fieldContext_StopTime_id(ctx context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StopTime_stop(ctx context.Context, field graphql.CollectedField, obj *model.StopTime) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StopTime_stop(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.StopTime().Stop(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Stop)
+	fc.Result = res
+	return ec.marshalNStop2ᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStop(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StopTime_stop(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StopTime",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Stop_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Stop_name(ctx, field)
+			case "code":
+				return ec.fieldContext_Stop_code(ctx, field)
+			case "location":
+				return ec.fieldContext_Stop_location(ctx, field)
+			case "routes":
+				return ec.fieldContext_Stop_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Stop", field.Name)
 		},
 	}
 	return fc, nil
@@ -3804,6 +3913,118 @@ func (ec *executionContext) fieldContext_Transit_trip(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Transit_departure(ctx context.Context, field graphql.CollectedField, obj *model.Transit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transit_departure(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Transit().Departure(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.StopTime)
+	fc.Result = res
+	return ec.marshalNStopTime2ᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStopTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transit_departure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_StopTime_id(ctx, field)
+			case "stop":
+				return ec.fieldContext_StopTime_stop(ctx, field)
+			case "trip":
+				return ec.fieldContext_StopTime_trip(ctx, field)
+			case "time":
+				return ec.fieldContext_StopTime_time(ctx, field)
+			case "sequence":
+				return ec.fieldContext_StopTime_sequence(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StopTime", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transit_arrival(ctx context.Context, field graphql.CollectedField, obj *model.Transit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transit_arrival(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Transit().Arrival(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.StopTime)
+	fc.Result = res
+	return ec.marshalNStopTime2ᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStopTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transit_arrival(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_StopTime_id(ctx, field)
+			case "stop":
+				return ec.fieldContext_StopTime_stop(ctx, field)
+			case "trip":
+				return ec.fieldContext_StopTime_trip(ctx, field)
+			case "time":
+				return ec.fieldContext_StopTime_time(ctx, field)
+			case "sequence":
+				return ec.fieldContext_StopTime_sequence(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StopTime", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TravelPayload_travelRoute(ctx context.Context, field graphql.CollectedField, obj *sdl.TravelPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TravelPayload_travelRoute(ctx, field)
 	if err != nil {
@@ -3995,12 +4216,16 @@ func (ec *executionContext) fieldContext_TravelRoute_travelSchedule(ctx context.
 			switch field.Name {
 			case "legs":
 				return ec.fieldContext_TravelSchedule_legs(ctx, field)
+			case "origin":
+				return ec.fieldContext_TravelSchedule_origin(ctx, field)
+			case "destination":
+				return ec.fieldContext_TravelSchedule_destination(ctx, field)
+			case "duration":
+				return ec.fieldContext_TravelSchedule_duration(ctx, field)
 			case "departure":
 				return ec.fieldContext_TravelSchedule_departure(ctx, field)
 			case "arrival":
 				return ec.fieldContext_TravelSchedule_arrival(ctx, field)
-			case "duration":
-				return ec.fieldContext_TravelSchedule_duration(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TravelSchedule", field.Name)
 		},
@@ -4334,6 +4559,162 @@ func (ec *executionContext) fieldContext_TravelSchedule_legs(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _TravelSchedule_origin(ctx context.Context, field graphql.CollectedField, obj travel.Schedule) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TravelSchedule_origin(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TravelSchedule().Origin(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Stop)
+	fc.Result = res
+	return ec.marshalNStop2ᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStop(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TravelSchedule_origin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TravelSchedule",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Stop_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Stop_name(ctx, field)
+			case "code":
+				return ec.fieldContext_Stop_code(ctx, field)
+			case "location":
+				return ec.fieldContext_Stop_location(ctx, field)
+			case "routes":
+				return ec.fieldContext_Stop_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Stop", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TravelSchedule_destination(ctx context.Context, field graphql.CollectedField, obj travel.Schedule) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TravelSchedule_destination(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TravelSchedule().Destination(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Stop)
+	fc.Result = res
+	return ec.marshalNStop2ᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStop(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TravelSchedule_destination(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TravelSchedule",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Stop_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Stop_name(ctx, field)
+			case "code":
+				return ec.fieldContext_Stop_code(ctx, field)
+			case "location":
+				return ec.fieldContext_Stop_location(ctx, field)
+			case "routes":
+				return ec.fieldContext_Stop_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Stop", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TravelSchedule_duration(ctx context.Context, field graphql.CollectedField, obj travel.Schedule) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TravelSchedule_duration(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TravelSchedule().Duration(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TravelSchedule_duration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TravelSchedule",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TravelSchedule_departure(ctx context.Context, field graphql.CollectedField, obj travel.Schedule) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TravelSchedule_departure(ctx, field)
 	if err != nil {
@@ -4417,50 +4798,6 @@ func (ec *executionContext) fieldContext_TravelSchedule_arrival(ctx context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type DateTime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TravelSchedule_duration(ctx context.Context, field graphql.CollectedField, obj travel.Schedule) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TravelSchedule_duration(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.TravelSchedule().Duration(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TravelSchedule_duration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TravelSchedule",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4706,6 +5043,10 @@ func (ec *executionContext) fieldContext_TravelScheduleLeg_transit(ctx context.C
 				return ec.fieldContext_Transit_route(ctx, field)
 			case "trip":
 				return ec.fieldContext_Transit_trip(ctx, field)
+			case "departure":
+				return ec.fieldContext_Transit_departure(ctx, field)
+			case "arrival":
+				return ec.fieldContext_Transit_arrival(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Transit", field.Name)
 		},
@@ -4986,6 +5327,8 @@ func (ec *executionContext) fieldContext_Trip_stopTimes(ctx context.Context, fie
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_StopTime_id(ctx, field)
+			case "stop":
+				return ec.fieldContext_StopTime_stop(ctx, field)
 			case "trip":
 				return ec.fieldContext_StopTime_trip(ctx, field)
 			case "time":
@@ -8023,6 +8366,26 @@ func (ec *executionContext) _StopTime(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "stop":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StopTime_stop(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "trip":
 			field := field
 
@@ -8121,6 +8484,46 @@ func (ec *executionContext) _Transit(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._Transit_trip(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "departure":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Transit_departure(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "arrival":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Transit_arrival(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -8367,20 +8770,46 @@ func (ec *executionContext) _TravelSchedule(ctx context.Context, sel ast.Selecti
 				return innerFunc(ctx)
 
 			})
-		case "departure":
+		case "origin":
+			field := field
 
-			out.Values[i] = ec._TravelSchedule_departure(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TravelSchedule_origin(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
-		case "arrival":
 
-			out.Values[i] = ec._TravelSchedule_arrival(ctx, field, obj)
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			})
+		case "destination":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TravelSchedule_destination(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "duration":
 			field := field
 
@@ -8401,6 +8830,20 @@ func (ec *executionContext) _TravelSchedule(ctx context.Context, sel ast.Selecti
 				return innerFunc(ctx)
 
 			})
+		case "departure":
+
+			out.Values[i] = ec._TravelSchedule_departure(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "arrival":
+
+			out.Values[i] = ec._TravelSchedule_arrival(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9435,6 +9878,10 @@ func (ec *executionContext) marshalNStopSearchPayload2ᚖstopᚑcheckerᚗcomᚋ
 		return graphql.Null
 	}
 	return ec._StopSearchPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStopTime2stopᚑcheckerᚗcomᚋdbᚋmodelᚐStopTime(ctx context.Context, sel ast.SelectionSet, v model.StopTime) graphql.Marshaler {
+	return ec._StopTime(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNStopTime2ᚕᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐStopTimeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StopTime) graphql.Marshaler {
