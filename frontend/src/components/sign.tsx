@@ -1,27 +1,24 @@
 import React from "react";
 
 type SignProps = {
-  text: string;
-  background: string;
+  text: string; // color
+  background: string; // color
   name: string; // route name
-  headsign: string; // trip headsign
-  css?: string;
 };
 
 export const Sign: React.FC<{ props: SignProps }> = ({ props }) => {
-  const { text, background, name, headsign, css = "text-sm" } = props;
+  const { text, background, name } = props;
+  const px = name.length === 1 ? "px-2" : "px-1";
+
   return (
-    <span className={`${css} mr-3 inline-block`}>
-      <span
-        style={{
-          color: text,
-          background: background,
-        }}
-        className="px-1 rounded font-semibold text-xs tracking-wider"
-      >
-        {name}
-      </span>{" "}
-      {headsign}
+    <span
+      style={{
+        color: text,
+        background: background,
+      }}
+      className={`${px} rounded font-semibold text-xs tracking-wider`}
+    >
+      {name}
     </span>
   );
 };

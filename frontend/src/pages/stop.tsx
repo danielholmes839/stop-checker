@@ -20,7 +20,6 @@ const StopPageResponse: React.FC<{ data: StopPageQuery }> = ({ data }) => {
                 props={{
                   background: route.background,
                   text: route.text,
-                  headsign: headsign,
                   name: route.name,
                 }}
               />

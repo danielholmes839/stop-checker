@@ -105,7 +105,7 @@ export const SearchMap: React.FC<{
     <div className="mb-3">
       <div style={{ height: 450 }}>
         <button
-          className="absolute text-white bg-indigo-500 hover:bg-indigo-600 z-10 mt-3 ml-3 px-3 py-1 shadow-lg rounded-sm text-sm font-semibold"
+          className="absolute text-white bg-primary-500 hover:bg-primary-600 z-10 mt-3 ml-3 px-3 py-1 shadow-lg rounded-sm text-sm font-semibold"
           onClick={() => {
             navigator.geolocation.getCurrentPosition(
               (e) => {
@@ -200,7 +200,7 @@ export const SearchMap: React.FC<{
                   onClick={() => {
                     config.action(selected as Stop);
                   }}
-                  className="border border-indigo-500 px-5 py-1 mt-2 hover:bg-indigo-500 hover:text-white text-indigo-500 text-sm rounded-sm"
+                  className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm"
                 >
                   {config.actionName}
                 </button>

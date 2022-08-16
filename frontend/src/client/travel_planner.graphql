@@ -1,0 +1,70 @@
+query TravelPlanner(
+  $origin: ID!
+  $destination: ID!
+  $mode: ScheduleMode!
+  $datetime: DateTime
+) {
+  travelPlanner(
+    origin: $origin
+    destination: $destination
+    departure: $datetime
+  ) {
+    errors {
+      field
+      message
+    }
+    travelRoute {
+      travelSchedule(mode: $mode, dt: $datetime) {
+        legs {
+          ...TravelScheduleLegDefault
+        }
+        departure
+        arrival
+        duration
+      }
+    }
+  }
+}
+
+fragment TravelScheduleLegDefault on TravelScheduleLeg {
+  departure
+  arrival
+  duration
+  origin {
+    id
+    name
+    code
+  }
+  destination {
+    id
+    name
+    code
+  }
+  walk
+  distance
+  transit {
+    route {
+      name
+      type
+      text
+      background
+    }
+    trip {
+      headsign
+      stopTimes {
+        id
+        sequence
+        time
+        stop {
+          name
+        }
+      }
+    }
+    arrival {
+      sequence
+    }
+    departure {
+      sequence
+    }
+  }
+}

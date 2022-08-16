@@ -24,20 +24,22 @@ const StopPreview: React.FC<{ stop: Stop; config: SearchConfig }> = ({
 
       <div>
         {routes.map(({ direction, headsign, route }) => (
-          <Sign
-            key={route.name + direction}
-            props={{
-              background: route.background,
-              headsign: headsign,
-              name: route.name,
-              text: route.text,
-            }}
-          />
+          <span className="text-sm mr-3 inline-block">
+            <Sign
+              key={route.name + direction}
+              props={{
+                background: route.background,
+                name: route.name,
+                text: route.text,
+              }}
+            />{" "}
+            {headsign}
+          </span>
         ))}
       </div>
       <div>
         <button
-          className="border border-indigo-500 px-5 py-1 mt-2 hover:bg-indigo-500 hover:text-white text-indigo-500 text-sm rounded-sm"
+          className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm"
           onClick={() => {
             config.action(stop as Stop);
           }}
@@ -83,7 +85,7 @@ const SelectedStopPreview: React.FC<{
   return (
     <div className="mb-3">
       <StopPreview stop={debounced.stop as Stop} config={config} />
-      <hr className="bg-indigo-500 rounded-full mt-3" style={{ height: 2 }} />
+      <hr className="bg-primary-500 rounded-full mt-3" style={{ height: 2 }} />
     </div>
   );
 };
@@ -106,7 +108,7 @@ export const Search: React.FC<{ config: SearchConfig }> = ({ config }) => {
   return (
     <>
       <input
-        className="bg-gray-50 border-b-2 border-gray-200 w-full mb-1 p-3 rounded-t-sm focus:outline-none focus:border-b-1 focus:border-indigo-500 sm:text-xs md:text-sm"
+        className="bg-gray-50 border-b-2 border-gray-200 w-full mb-1 p-3 rounded-t-sm focus:outline-none focus:border-b-1 focus:border-primary-500 sm:text-xs md:text-sm"
         value={searchText}
         type="text"
         placeholder="Search by stop name or code Ex. Rideau A, O-Train, 3000"

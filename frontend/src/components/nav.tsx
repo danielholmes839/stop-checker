@@ -8,8 +8,8 @@ const links = [
   { to: "/dashboard", text: "Dashboard" },
 ];
 
-const linkClassName = "hover:text-indigo-800 text-indigo-600";
-const linkClassNameActive = "hover:text-indigo-800 text-indigo-600 underline";
+const linkClassName = "hover:text-primary-800 text-primary-600";
+const linkClassNameActive = "hover:text-primary-800 text-primary-600 underline";
 const linkClassNameFunc: any = ({ isActive }: { isActive: boolean }) =>
   isActive ? linkClassNameActive : linkClassName;
 
@@ -55,12 +55,12 @@ export const Nav: React.FC = () => {
     <nav className="bg-gray-50 py-3">
       <Container>
         <div className="flex flex-wrap justify-between items-center mx-auto">
-          <h1 className="text-3xl lg:text-4xl text-indigo-600 font-semibold">
+          <h1 className="text-3xl lg:text-4xl text-primary-600 font-semibold">
             stop-checker.com
           </h1>
           <button
             onClick={() => setDropDown(!dropDown)}
-            className="inline-flex items-center ml-3 text-sm text-indigo-500 rounded md:hidden hover:bg-indigo-100 focus:outline-none"
+            className="inline-flex items-center ml-3 text-sm text-primary-500 rounded md:hidden hover:bg-primary-100 focus:outline-none"
           >
             <svg
               className="w-6 h-6"
