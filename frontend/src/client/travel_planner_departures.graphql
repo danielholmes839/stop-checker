@@ -1,0 +1,15 @@
+query TravelPlannerDepartures(
+  $stop: ID!
+  $route: ID!
+  $after: DateTime!
+  $limit: Int!
+) {
+  stopRoute(stop: $stop, route: $route) {
+    schedule {
+      next(limit: $limit, after: $after) {
+        id
+        time
+      }
+    }
+  }
+}

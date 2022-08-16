@@ -1,4 +1,7 @@
-import { TravelScheduleLegDefaultFragment } from "client/types";
+import {
+  TravelScheduleLegDefaultFragment,
+  useTravelPlannerDeparturesQuery,
+} from "client/types";
 import { Sign } from "components";
 import { formatDistance, formatTime } from "format";
 import { useMemo, useState } from "react";
@@ -14,11 +17,42 @@ export const InstructionTitle: React.FC = ({ children }) => {
 };
 
 export const InstructionSubtitle: React.FC = ({ children }) => {
-  return <h2 className="text-xs text-gray-700 font-semibold">{children}</h2>;
+  return <h2 className="text-xs text-gray-800 font-semibold">{children}</h2>;
 };
 
+type MoreDepartureInput = {
+  stop: string;
+  route: string;
+  after: string;
+  limit: number;
+};
+
+const MoreDepartures: React.FC<{ input: MoreDepartureInput }> = ({ input }) => {
+  const [{ data }, _] = useTravelPlannerDeparturesQuery({
+    variables: input,
+  });
+
+  if (!data || !data.stopRoute) {
+    return <></>;
+  }
+
+  return (
+    <div className="border-t mt-1 pt-1">
+      <p className="text-xs">
+        {data.stopRoute.schedule.next
+          .filter((_, i) => i > 0)
+          .map(({ id, time }) => (
+            <span key={id} className="mr-2">
+              {time}
+            </span>
+          ))}
+      </p>
+    </div>
+  );
+};
 export const BoardInstructions: React.FC<InstructionProps> = ({ leg }) => {
   const { origin, departure, transit } = leg;
+  const [showMoreDepartures, setShowMoreDepartures] = useState(false);
 
   if (!transit) {
     return <></>;
@@ -40,7 +74,22 @@ export const BoardInstructions: React.FC<InstructionProps> = ({ leg }) => {
         <p className="text-sm mt-2">
           Scheduled to depart at {formatTime(departure)}
         </p>
-        <button className="text-primary-500 text-xs">More Departures</button>
+        <button
+          onClick={() => setShowMoreDepartures(!showMoreDepartures)}
+          className="text-primary-500 text-xs"
+        >
+          More
+        </button>
+        {showMoreDepartures && (
+          <MoreDepartures
+            input={{
+              after: departure,
+              limit: 4,
+              route: transit.route.id,
+              stop: origin.id,
+            }}
+          />
+        )}
       </div>
     </Instruction>
   );
@@ -62,7 +111,7 @@ export const RideInstructions: React.FC<InstructionProps> = ({ leg }) => {
 
     // the previous stop times
     return prev[prev.length - 1];
-  }, []);
+  }, [transit]);
 
   if (!transit || !prevStopTime) {
     return <></>;
@@ -98,11 +147,9 @@ export const RideInstructions: React.FC<InstructionProps> = ({ leg }) => {
           <div className="border-t mt-1 pt-1">
             {transit.trip.stopTimes
               .filter((st) => {
-                let originSeq = transit.departure.sequence;
-                let destinationSeq = transit.arrival.sequence;
-                console.log(originSeq, destinationSeq, st.sequence);
                 return (
-                  st.sequence >= originSeq && st.sequence <= destinationSeq
+                  st.sequence >= transit.departure.sequence &&
+                  st.sequence <= transit.arrival.sequence
                 );
               })
               .map((st) => {
@@ -129,7 +176,7 @@ export const WalkInstructions: React.FC<InstructionProps> = ({ leg }) => {
           <span className="align-text-bottom">Walk to {destination.name}</span>
         </InstructionTitle>
         <InstructionSubtitle>
-          Distance of {formatDistance(distance)} ({duration} min)
+          {formatDistance(distance)} ({duration} min)
         </InstructionSubtitle>
       </div>
     </Instruction>

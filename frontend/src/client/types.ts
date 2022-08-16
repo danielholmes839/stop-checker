@@ -52,8 +52,9 @@ export type Query = {
   searchStopLocation: StopSearchPayload;
   searchStopText: StopSearchPayload;
   stop?: Maybe<Stop>;
+  stopRoute?: Maybe<StopRoute>;
   travelPlanner: TravelPayload;
-  travelScheduler: TravelPayload;
+  travelPlannerFixedRoute: TravelPayload;
 };
 
 
@@ -75,15 +76,22 @@ export type QueryStopArgs = {
 };
 
 
-export type QueryTravelPlannerArgs = {
-  departure?: InputMaybe<Scalars['DateTime']>;
-  destination: Scalars['ID'];
-  origin: Scalars['ID'];
+export type QueryStopRouteArgs = {
+  route: Scalars['ID'];
+  stop: Scalars['ID'];
 };
 
 
-export type QueryTravelSchedulerArgs = {
+export type QueryTravelPlannerArgs = {
+  destination: Scalars['ID'];
+  origin: Scalars['ID'];
+  scheduleOptions: TravelScheduleInput;
+};
+
+
+export type QueryTravelPlannerFixedRouteArgs = {
   route: Array<TravelLegInput>;
+  scheduleOptions: TravelScheduleInput;
 };
 
 export type Route = {
@@ -151,6 +159,7 @@ export type StopRouteSchedule = {
 
 
 export type StopRouteScheduleNextArgs = {
+  after?: InputMaybe<Scalars['DateTime']>;
   limit: Scalars['Int'];
 };
 
@@ -191,28 +200,7 @@ export type TravelLegInput = {
 export type TravelPayload = {
   __typename?: 'TravelPayload';
   errors: Array<UserError>;
-  travelRoute?: Maybe<TravelRoute>;
-};
-
-export type TravelRoute = {
-  __typename?: 'TravelRoute';
-  legs: Array<TravelRouteLeg>;
-  travelSchedule?: Maybe<TravelSchedule>;
-};
-
-
-export type TravelRouteTravelScheduleArgs = {
-  dt?: InputMaybe<Scalars['DateTime']>;
-  mode: ScheduleMode;
-};
-
-export type TravelRouteLeg = {
-  __typename?: 'TravelRouteLeg';
-  destination: Stop;
-  distance: Scalars['Float'];
-  origin: Stop;
-  route?: Maybe<Route>;
-  walk: Scalars['Boolean'];
+  schedule?: Maybe<TravelSchedule>;
 };
 
 export type TravelSchedule = {
@@ -223,6 +211,11 @@ export type TravelSchedule = {
   duration: Scalars['Int'];
   legs: Array<TravelScheduleLeg>;
   origin: Stop;
+};
+
+export type TravelScheduleInput = {
+  datetime?: InputMaybe<Scalars['DateTime']>;
+  mode: ScheduleMode;
 };
 
 export type TravelScheduleLeg = {
@@ -286,14 +279,23 @@ export type TextSearchQuery = { __typename?: 'Query', searchStopText: { __typena
 export type TravelPlannerQueryVariables = Exact<{
   origin: Scalars['ID'];
   destination: Scalars['ID'];
-  mode: ScheduleMode;
-  datetime?: InputMaybe<Scalars['DateTime']>;
+  options: TravelScheduleInput;
 }>;
 
 
-export type TravelPlannerQuery = { __typename?: 'Query', travelPlanner: { __typename?: 'TravelPayload', errors: Array<{ __typename?: 'UserError', field: string, message: string }>, travelRoute?: { __typename?: 'TravelRoute', travelSchedule?: { __typename?: 'TravelSchedule', departure: any, arrival: any, duration: number, legs: Array<{ __typename?: 'TravelScheduleLeg', departure: any, arrival: any, duration: number, walk: boolean, distance: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', name: string, type: RouteType, text: any, background: any }, trip: { __typename?: 'Trip', headsign: string, stopTimes: Array<{ __typename?: 'StopTime', id: string, sequence: number, time: any, stop: { __typename?: 'Stop', name: string } }> }, arrival: { __typename?: 'StopTime', sequence: number }, departure: { __typename?: 'StopTime', sequence: number } } | null }> } | null } | null } };
+export type TravelPlannerQuery = { __typename?: 'Query', travelPlanner: { __typename?: 'TravelPayload', errors: Array<{ __typename?: 'UserError', field: string, message: string }>, schedule?: { __typename?: 'TravelSchedule', departure: any, arrival: any, duration: number, legs: Array<{ __typename?: 'TravelScheduleLeg', departure: any, arrival: any, duration: number, walk: boolean, distance: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', id: string, name: string, type: RouteType, text: any, background: any }, trip: { __typename?: 'Trip', headsign: string, stopTimes: Array<{ __typename?: 'StopTime', id: string, sequence: number, time: any, stop: { __typename?: 'Stop', name: string } }> }, arrival: { __typename?: 'StopTime', sequence: number }, departure: { __typename?: 'StopTime', sequence: number } } | null }> } | null } };
 
-export type TravelScheduleLegDefaultFragment = { __typename?: 'TravelScheduleLeg', departure: any, arrival: any, duration: number, walk: boolean, distance: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', name: string, type: RouteType, text: any, background: any }, trip: { __typename?: 'Trip', headsign: string, stopTimes: Array<{ __typename?: 'StopTime', id: string, sequence: number, time: any, stop: { __typename?: 'Stop', name: string } }> }, arrival: { __typename?: 'StopTime', sequence: number }, departure: { __typename?: 'StopTime', sequence: number } } | null };
+export type TravelScheduleLegDefaultFragment = { __typename?: 'TravelScheduleLeg', departure: any, arrival: any, duration: number, walk: boolean, distance: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', id: string, name: string, type: RouteType, text: any, background: any }, trip: { __typename?: 'Trip', headsign: string, stopTimes: Array<{ __typename?: 'StopTime', id: string, sequence: number, time: any, stop: { __typename?: 'Stop', name: string } }> }, arrival: { __typename?: 'StopTime', sequence: number }, departure: { __typename?: 'StopTime', sequence: number } } | null };
+
+export type TravelPlannerDeparturesQueryVariables = Exact<{
+  stop: Scalars['ID'];
+  route: Scalars['ID'];
+  after: Scalars['DateTime'];
+  limit: Scalars['Int'];
+}>;
+
+
+export type TravelPlannerDeparturesQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> } } | null };
 
 export const TravelScheduleLegDefaultFragmentDoc = gql`
     fragment TravelScheduleLegDefault on TravelScheduleLeg {
@@ -314,6 +316,7 @@ export const TravelScheduleLegDefaultFragmentDoc = gql`
   distance
   transit {
     route {
+      id
       name
       type
       text
@@ -431,21 +434,23 @@ export function useTextSearchQuery(options: Omit<Urql.UseQueryArgs<TextSearchQue
   return Urql.useQuery<TextSearchQuery, TextSearchQueryVariables>({ query: TextSearchDocument, ...options });
 };
 export const TravelPlannerDocument = gql`
-    query TravelPlanner($origin: ID!, $destination: ID!, $mode: ScheduleMode!, $datetime: DateTime) {
-  travelPlanner(origin: $origin, destination: $destination, departure: $datetime) {
+    query TravelPlanner($origin: ID!, $destination: ID!, $options: TravelScheduleInput!) {
+  travelPlanner(
+    origin: $origin
+    destination: $destination
+    scheduleOptions: $options
+  ) {
     errors {
       field
       message
     }
-    travelRoute {
-      travelSchedule(mode: $mode, dt: $datetime) {
-        legs {
-          ...TravelScheduleLegDefault
-        }
-        departure
-        arrival
-        duration
+    schedule {
+      legs {
+        ...TravelScheduleLegDefault
       }
+      departure
+      arrival
+      duration
     }
   }
 }
@@ -453,4 +458,20 @@ export const TravelPlannerDocument = gql`
 
 export function useTravelPlannerQuery(options: Omit<Urql.UseQueryArgs<TravelPlannerQueryVariables>, 'query'>) {
   return Urql.useQuery<TravelPlannerQuery, TravelPlannerQueryVariables>({ query: TravelPlannerDocument, ...options });
+};
+export const TravelPlannerDeparturesDocument = gql`
+    query TravelPlannerDepartures($stop: ID!, $route: ID!, $after: DateTime!, $limit: Int!) {
+  stopRoute(stop: $stop, route: $route) {
+    schedule {
+      next(limit: $limit, after: $after) {
+        id
+        time
+      }
+    }
+  }
+}
+    `;
+
+export function useTravelPlannerDeparturesQuery(options: Omit<Urql.UseQueryArgs<TravelPlannerDeparturesQueryVariables>, 'query'>) {
+  return Urql.useQuery<TravelPlannerDeparturesQuery, TravelPlannerDeparturesQueryVariables>({ query: TravelPlannerDeparturesDocument, ...options });
 };

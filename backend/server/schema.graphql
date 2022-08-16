@@ -36,7 +36,7 @@ type StopRoute {
 }
 
 type StopRouteSchedule {
-    next(limit: Int!): [StopTime!]!
+    next(limit: Int!, after: DateTime): [StopTime!]!
     on(date: Date!): [StopTime!]!
 }
 
@@ -83,18 +83,6 @@ type ServiceException {
     date: Date!
 }
 
-# Travel schedule leg
-type TravelScheduleLeg {
-    origin: Stop!
-    destination: Stop!
-    walk: Boolean!
-    distance: Float!
-    transit: Transit            # if null then walking
-    duration: Int!
-    departure: DateTime!
-    arrival: DateTime!
-}
-
 type TravelSchedule {
     legs: [TravelScheduleLeg!]!
     origin: Stop!
@@ -104,18 +92,15 @@ type TravelSchedule {
     arrival: DateTime! # destination arrival
 }
 
-# Travel route leg
-type TravelRouteLeg {
+type TravelScheduleLeg {
     origin: Stop!
     destination: Stop!
     walk: Boolean!
     distance: Float!
-    route: Route                # if null then walking - maybe this could be a StopRoute
-}
-
-type TravelRoute {
-    legs: [TravelRouteLeg!]!
-    travelSchedule(mode: ScheduleMode!, dt: DateTime): TravelSchedule # null when the schedule planner fails. 
+    transit: Transit            # if null then walking
+    duration: Int!
+    departure: DateTime!
+    arrival: DateTime!
 }
 
 # Transit taken by a scheduled leg
@@ -132,8 +117,13 @@ input TravelLegInput {
     route: ID # if the route id is null then walk
 }
 
+input TravelScheduleOptions {
+    datetime: DateTime # default is the current time
+    mode: ScheduleMode!
+}
+
 type TravelPayload {
-    travelRoute: TravelRoute
+    schedule: TravelSchedule
     errors: [UserError!]!
 }
 
@@ -163,16 +153,17 @@ input PageInput {
 }
 
 type Query {
-    # simple
+    # lookups by id
     stop(id: ID!): Stop
+    stopRoute(stop: ID!, route: ID!): StopRoute
 
     # search
     searchStopText(text: String!, page: PageInput!): StopSearchPayload! 
     searchStopLocation(location: LocationInput!, radius: Float!, page: PageInput!): StopSearchPayload! 
     
-    # travel planner finds a route
-    travelPlanner(origin: ID!, destination: ID!, departure: DateTime): TravelPayload!
+    # travel planner that creates a route and schedule
+    travelPlanner(origin: ID!, destination: ID!, options: TravelScheduleOptions!): TravelPayload!
 
-    # travel scheduler using a pre-defined route
-    travelScheduler(route: [TravelLegInput!]!): TravelPayload!
+    # travel planner that creates a schedule from a route
+    travelPlannerFixedRoute(route: [TravelLegInput!]!, options: TravelScheduleOptions!): TravelPayload!
 }

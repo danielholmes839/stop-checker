@@ -230,5 +230,6 @@ func (s *Scheduler) stopTime(stopId string, all []model.StopTime) (model.StopTim
 			return stopTime, nil
 		}
 	}
+	fmt.Println(len(all))
 	return model.StopTime{}, fmt.Errorf("stoptime not found stop:%s", stopId)
 }

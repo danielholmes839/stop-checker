@@ -99,9 +99,11 @@ const TravelPlanner: React.FC = () => {
   const [{ data }, _] = useTravelPlannerQuery({
     variables: {
       origin: "AK151",
-      destination: "CD998",
-      datetime: "2022-08-15T10:45:00Z",
-      mode: ScheduleMode.DepartAt,
+      destination: "WG360",
+      options: {
+        datetime: "2022-08-15T12:30:00Z",
+        mode: ScheduleMode.DepartAt,
+      },
     },
   });
 
@@ -109,18 +111,17 @@ const TravelPlanner: React.FC = () => {
     return <></>;
   }
 
-  const { travelRoute, errors } = data.travelPlanner;
+  const { schedule, errors } = data.travelPlanner;
 
   if (errors.length > 0) {
     return <pre>{JSON.stringify(errors, undefined, 4)}</pre>;
   }
 
-  if (!travelRoute || !travelRoute.travelSchedule) {
-    return <pre>Unknown server error. failed to create route.</pre>;
+  if (!schedule) {
+    return <p>Failed to create a schedule...</p>;
   }
 
-  const schedule = travelRoute.travelSchedule;
-  const { arrival, departure, duration } = travelRoute.travelSchedule;
+  const { arrival, departure, duration } = schedule;
 
   return (
     <div>

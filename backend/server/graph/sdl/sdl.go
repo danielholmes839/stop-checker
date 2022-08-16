@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 
 	"stop-checker.com/db/model"
 	"stop-checker.com/travel"
@@ -33,8 +34,13 @@ type TravelLegInput struct {
 }
 
 type TravelPayload struct {
-	TravelRoute travel.Route `json:"travelRoute"`
-	Errors      []*UserError `json:"errors"`
+	Schedule travel.Schedule `json:"schedule"`
+	Errors   []*UserError    `json:"errors"`
+}
+
+type TravelScheduleOptions struct {
+	Datetime *time.Time   `json:"datetime"`
+	Mode     ScheduleMode `json:"mode"`
 }
 
 type UserError struct {

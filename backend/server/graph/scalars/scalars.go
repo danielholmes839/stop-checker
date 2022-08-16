@@ -56,6 +56,7 @@ func UnmarshalDateTime(v interface{}) (time.Time, error) {
 	location, _ := time.LoadLocation("America/Montreal")
 
 	t, err := time.Parse("2006-01-02T15:04:00Z", date)
+
 	if err != nil {
 		return time.Time{}, err
 	}

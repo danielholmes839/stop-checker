@@ -1,27 +1,24 @@
 query TravelPlanner(
   $origin: ID!
   $destination: ID!
-  $mode: ScheduleMode!
-  $datetime: DateTime
+  $options: TravelScheduleInput!
 ) {
   travelPlanner(
     origin: $origin
     destination: $destination
-    departure: $datetime
+    scheduleOptions: $options
   ) {
     errors {
       field
       message
     }
-    travelRoute {
-      travelSchedule(mode: $mode, dt: $datetime) {
-        legs {
-          ...TravelScheduleLegDefault
-        }
-        departure
-        arrival
-        duration
+    schedule {
+      legs {
+        ...TravelScheduleLegDefault
       }
+      departure
+      arrival
+      duration
     }
   }
 }
@@ -44,6 +41,7 @@ fragment TravelScheduleLegDefault on TravelScheduleLeg {
   distance
   transit {
     route {
+      id
       name
       type
       text
