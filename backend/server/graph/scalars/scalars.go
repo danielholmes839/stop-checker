@@ -10,7 +10,7 @@ import (
 
 func MarshalTime(t time.Time) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		w.Write([]byte(t.Format("\"3:04pm\"")))
+		w.Write([]byte(t.Format("\"3:04 PM\"")))
 	})
 }
 
