@@ -73,7 +73,7 @@ func (p *Planner) route(solution *dijkstra.Path[*node]) Route {
 		solution = solution.Prev
 	}
 
-	// reverse
+	// reverse the route
 	for i, j := 0, len(route)-1; i < j; i, j = i+1, j-1 {
 		route[i], route[j] = route[j], route[i]
 	}
@@ -146,14 +146,13 @@ func (p *Planner) expandWalk(origin *node) []*node {
 	return connections
 }
 
-func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
+func (p *Planner) expandTransit(n *node) []*node {
 	// origin
 	origin := n.ID()
 	originArrival := n.Arrival()
 
-	stops := dijkstra.Set{n.stopId: struct{}{}}
-	blockers := map[string]dijkstra.Set{}
-	fastest := map[string]fastestTransit{}
+	blockers := map[string]dijkstra.Set{}  // blocked routes key:stopid, set of routeid
+	fastest := map[string]fastestTransit{} // fastest transit option key:stopid
 
 	// expand on routes
 	for _, route := range p.stopRouteIndex.Get(n.ID()) {
@@ -185,14 +184,13 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 				}
 			}
 
-			// add blocked route
+			// add key to blocked route
 			if _, ok := blockers[tripDestination.StopId]; !ok {
 				blockers[tripDestination.StopId] = dijkstra.Set{}
 			}
 
 			stopBlockers := blockers[tripDestination.StopId]
 			stopBlockers.Add(route.DirectedID())
-			stops.Add(tripDestination.StopId)
 		}
 	}
 
@@ -200,7 +198,6 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 	connections := []*node{}
 
 	for stopId, trip := range fastest {
-		// stop, _ := p.StopIndex.Get(stopId)
 		connection := &node{
 			stopId:    stopId,
 			arrival:   trip.arrival,
@@ -214,7 +211,7 @@ func (p *Planner) expandTransit(n *node) ([]*node, dijkstra.Set) {
 		connections = append(connections, connection)
 	}
 
-	return connections, stops
+	return connections
 }
 
 func (p *Planner) expandTrip(origin model.StopTime) []model.StopTime {
