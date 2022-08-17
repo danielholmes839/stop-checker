@@ -39,7 +39,6 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error
 	initial := &node{
 		stopId:    origin,
 		arrival:   at,
-		duration:  time.Duration(0),
 		walk:      false,
 		routeId:   "",
 		transfers: 0,
@@ -178,8 +177,6 @@ func (p *Planner) expandTransit(n *node) []*node {
 			if !seen || tripDestinationArrival.Before(current.arrival) {
 				fastest[tripDestination.StopId] = fastestTransit{
 					arrival: tripDestinationArrival,
-					wait:    waitDuration,
-					transit: transitDuration,
 					routeId: route.RouteId,
 				}
 			}
@@ -201,7 +198,6 @@ func (p *Planner) expandTransit(n *node) []*node {
 		connection := &node{
 			stopId:    stopId,
 			arrival:   trip.arrival,
-			duration:  trip.transit,
 			transfers: n.transfers + 1,
 			blockers:  blockers[stopId],
 			routeId:   trip.routeId,

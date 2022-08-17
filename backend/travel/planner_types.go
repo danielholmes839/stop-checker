@@ -15,18 +15,15 @@ type closestWalk struct {
 type fastestTransit struct {
 	routeId string
 	arrival time.Time
-	wait    time.Duration
-	transit time.Duration
 }
 
 type node struct {
-	walk      bool
-	routeId   string
-	stopId    string
-	transfers int
-	arrival   time.Time
-	duration  time.Duration
-	blockers  dijkstra.Set
+	walk      bool         // walked to the stop
+	routeId   string       // route taken to the stop, empty when walking
+	stopId    string       // stop id
+	transfers int          // transfers
+	arrival   time.Time    // arrival time at this stop
+	blockers  dijkstra.Set // routes than cannot be taken from this node
 }
 
 func (n *node) ID() string {
