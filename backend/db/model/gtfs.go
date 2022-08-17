@@ -8,7 +8,7 @@ import (
 type Agency struct {
 	Name     string
 	URL      string
-	Timezone string
+	Timezone *time.Location
 }
 
 type Service struct {

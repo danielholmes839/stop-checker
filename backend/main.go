@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"stop-checker.com/db"
-	"stop-checker.com/db/gtfs"
 	"stop-checker.com/db/model"
 	"stop-checker.com/travel"
 )
@@ -17,16 +16,7 @@ func printLegs(legs []*travel.Leg) {
 }
 
 func main() {
-	dataset, _ := gtfs.NewDatasetFromFilesystem("./db/data")
-
-	octranspo := &model.BaseParser{
-		TimeZone:   dataset.TimeZone,
-		TimeLayout: "15:04:05",
-		DateLayout: "20060102",
-	}
-
-	base := model.NewBaseFromGTFS(dataset, octranspo)
-	database := db.NewDatabase(base)
+	database, base := db.NewDatabaseFromFilesystem("./db/data")
 
 	stopRanker := db.NewStopRanker(database.StopRouteIndex)
 
@@ -49,8 +39,8 @@ func main() {
 		{Origin: "AF990", Destination: "CD998", RouteId: "1-340", Walk: false},  // o train west to uottawa
 	}
 
-	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 7:55", dataset.TimeZone)
-	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:30", dataset.TimeZone)
+	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 7:55", base.TZ())
+	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 8:30", base.TZ())
 
 	if legs, err := scheduler.Depart(departure, route); err == nil {
 		fmt.Println(time.Since(t0))

@@ -6,8 +6,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"stop-checker.com/db"
-	"stop-checker.com/db/gtfs"
-	"stop-checker.com/db/model"
 	"stop-checker.com/server/graph"
 	"stop-checker.com/server/graph/generated"
 	"stop-checker.com/travel"
@@ -18,25 +16,13 @@ type Server struct {
 }
 
 func (s *Server) HandleGraphQL() {
-	dataset, err := gtfs.NewDatasetFromFilesystem("./db/data")
-	if err != nil {
-		panic(err)
-	}
-
-	octranspo := &model.BaseParser{
-		TimeZone:   dataset.TimeZone,
-		TimeLayout: "15:04:05",
-		DateLayout: "20060102",
-	}
-
-	base := model.NewBaseFromGTFS(dataset, octranspo)
-	database := db.NewDatabase(base)
+	database, base := db.NewDatabaseFromFilesystem("./db/data")
 
 	resolvers := handler.NewDefaultServer(generated.NewExecutableSchema(
 		generated.Config{
 			Resolvers: &graph.Resolver{
 				Database: database,
-				Timezone: dataset.TimeZone,
+				Timezone: base.TZ(),
 				Planner: travel.NewPlanner(&travel.PlannerConfig{
 					ScheduleIndex:     database.ScheduleIndex,
 					StopLocationIndex: database.StopLocationIndex,

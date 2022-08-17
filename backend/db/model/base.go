@@ -8,7 +8,6 @@ import (
 )
 
 type Base struct {
-	Timezone          *time.Location
 	Agency            Agency
 	Routes            []Route
 	Stops             []Stop
@@ -18,15 +17,19 @@ type Base struct {
 	ServiceExceptions []ServiceException
 }
 
+func (b *Base) TZ() *time.Location {
+	return b.Agency.Timezone
+}
+
 func NewBaseFromGTFS(data *gtfs.Dataset, parser *BaseParser) *Base {
 	agency := data.Agencies[0]
+	tz, _ := time.LoadLocation(agency.Timezone)
 
 	base := &Base{
-		Timezone: data.TimeZone,
 		Agency: Agency{
 			Name:     agency.Name,
 			URL:      agency.URL,
-			Timezone: agency.Timezone,
+			Timezone: tz,
 		},
 		Routes:            make([]Route, len(data.Routes)),
 		Stops:             make([]Stop, len(data.Stops)),
