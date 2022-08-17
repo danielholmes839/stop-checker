@@ -89,11 +89,11 @@ func (p *Planner) expand(n *node) []*node {
 func (p *Planner) expandWalk(origin *node) []*node {
 	stop, _ := p.stopIndex.Get(origin.ID())
 
-	originRoutesIndex := dijkstra.Set{}
-	originRoutes := p.stopRouteIndex.Get(origin.ID())
+	originRoutes := dijkstra.Set{}
+	originRoutesList := p.stopRouteIndex.Get(origin.ID())
 
-	for _, originRoute := range originRoutes {
-		originRoutesIndex.Add(originRoute.DirectedID())
+	for _, originRoute := range originRoutesList {
+		originRoutes.Add(originRoute.DirectedID())
 	}
 
 	// closest walk for each route
@@ -109,7 +109,7 @@ func (p *Planner) expandWalk(origin *node) []*node {
 				continue
 			}
 
-			if originRoutesIndex.Contains(directedRouteId) {
+			if originRoutes.Contains(directedRouteId) {
 				continue
 			}
 
