@@ -82,7 +82,7 @@ func (p *Planner) route(solution *dijkstra.Path[*node]) Route {
 }
 
 func (p *Planner) expand(n *node) []*node {
-	transit, _ := p.expandTransit(n)
+	transit := p.expandTransit(n)
 	walking := p.expandWalk(n)
 	return append(transit, walking...)
 }
