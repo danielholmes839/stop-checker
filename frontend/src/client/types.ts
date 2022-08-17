@@ -90,8 +90,8 @@ export type QueryTravelPlannerArgs = {
 
 
 export type QueryTravelPlannerFixedRouteArgs = {
+  input: Array<TravelLegInput>;
   options: TravelScheduleOptions;
-  route: Array<TravelLegInput>;
 };
 
 export type Route = {

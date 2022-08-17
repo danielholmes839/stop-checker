@@ -76,7 +76,7 @@ type ComplexityRoot struct {
 		Stop                    func(childComplexity int, id string) int
 		StopRoute               func(childComplexity int, stop string, route string) int
 		TravelPlanner           func(childComplexity int, origin string, destination string, options sdl.TravelScheduleOptions) int
-		TravelPlannerFixedRoute func(childComplexity int, route []*sdl.TravelLegInput, options sdl.TravelScheduleOptions) int
+		TravelPlannerFixedRoute func(childComplexity int, input []*sdl.TravelLegInput, options sdl.TravelScheduleOptions) int
 	}
 
 	Route struct {
@@ -195,7 +195,7 @@ type QueryResolver interface {
 	SearchStopText(ctx context.Context, text string, page sdl.PageInput) (*sdl.StopSearchPayload, error)
 	SearchStopLocation(ctx context.Context, location model.Location, radius float64, page sdl.PageInput) (*sdl.StopSearchPayload, error)
 	TravelPlanner(ctx context.Context, origin string, destination string, options sdl.TravelScheduleOptions) (*sdl.TravelPayload, error)
-	TravelPlannerFixedRoute(ctx context.Context, route []*sdl.TravelLegInput, options sdl.TravelScheduleOptions) (*sdl.TravelPayload, error)
+	TravelPlannerFixedRoute(ctx context.Context, input []*sdl.TravelLegInput, options sdl.TravelScheduleOptions) (*sdl.TravelPayload, error)
 }
 type RouteResolver interface {
 	ID(ctx context.Context, obj *model.Route) (string, error)
@@ -392,7 +392,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.TravelPlannerFixedRoute(childComplexity, args["route"].([]*sdl.TravelLegInput), args["options"].(sdl.TravelScheduleOptions)), true
+		return e.complexity.Query.TravelPlannerFixedRoute(childComplexity, args["input"].([]*sdl.TravelLegInput), args["options"].(sdl.TravelScheduleOptions)), true
 
 	case "Route.background":
 		if e.complexity.Route.Background == nil {
@@ -1064,7 +1064,7 @@ input PageInput {
 }
 
 type Query {
-    # lookups by id
+    # lookup by id
     stop(id: ID!): Stop
     stopRoute(stop: ID!, route: ID!): StopRoute
 
@@ -1076,7 +1076,7 @@ type Query {
     travelPlanner(origin: ID!, destination: ID!, options: TravelScheduleOptions!): TravelPayload!
 
     # travel planner that creates a schedule from a route
-    travelPlannerFixedRoute(route: [TravelLegInput!]!, options: TravelScheduleOptions!): TravelPayload!
+    travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelScheduleOptions!): TravelPayload!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1215,14 +1215,14 @@ func (ec *executionContext) field_Query_travelPlannerFixedRoute_args(ctx context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 []*sdl.TravelLegInput
-	if tmp, ok := rawArgs["route"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("route"))
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNTravelLegInput2ᚕᚖstopᚑcheckerᚗcomᚋserverᚋgraphᚋsdlᚐTravelLegInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["route"] = arg0
+	args["input"] = arg0
 	var arg1 sdl.TravelScheduleOptions
 	if tmp, ok := rawArgs["options"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("options"))
@@ -1901,7 +1901,7 @@ func (ec *executionContext) _Query_travelPlannerFixedRoute(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().TravelPlannerFixedRoute(rctx, fc.Args["route"].([]*sdl.TravelLegInput), fc.Args["options"].(sdl.TravelScheduleOptions))
+		return ec.resolvers.Query().TravelPlannerFixedRoute(rctx, fc.Args["input"].([]*sdl.TravelLegInput), fc.Args["options"].(sdl.TravelScheduleOptions))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

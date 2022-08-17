@@ -122,14 +122,9 @@ func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destin
 }
 
 // TravelPlannerFixedRoute is the resolver for the travelPlannerFixedRoute field.
-func (r *queryResolver) TravelPlannerFixedRoute(ctx context.Context, route []*sdl.TravelLegInput, options sdl.TravelScheduleOptions) (*sdl.TravelPayload, error) {
-	fixed := sdl.NewTravelRoute(route)
-	schedule, err := sdl.ScheduleWrapper(r.Scheduler, fixed, options)
-
-	if err != nil {
-		return &sdl.TravelPayload{Schedule: nil, Errors: []*sdl.UserError{}}, nil
-	}
-
+func (r *queryResolver) TravelPlannerFixedRoute(ctx context.Context, input []*sdl.TravelLegInput, options sdl.TravelScheduleOptions) (*sdl.TravelPayload, error) {
+	fixed := sdl.NewTravelRoute(input)
+	schedule, _ := sdl.ScheduleWrapper(r.Scheduler, fixed, options)
 	return &sdl.TravelPayload{Schedule: schedule, Errors: []*sdl.UserError{}}, nil
 }
 

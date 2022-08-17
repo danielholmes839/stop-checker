@@ -137,6 +137,22 @@ input LocationInput {
     longitude: Float!
 }
 
+type Query {
+    # lookup by id
+    stop(id: ID!): Stop
+    stopRoute(stop: ID!, route: ID!): StopRoute
+
+    # search
+    searchStopText(text: String!, page: PageInput!): StopSearchPayload! 
+    searchStopLocation(location: LocationInput!, radius: Float!, page: PageInput!): StopSearchPayload! 
+    
+    # travel planner that creates a route and schedule
+    travelPlanner(origin: ID!, destination: ID!, options: TravelScheduleOptions!): TravelPayload!
+
+    # travel planner that creates a schedule from a route
+    travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelScheduleOptions!): TravelPayload!
+}
+
 type UserError {
     field: String!
     message: String!
@@ -150,20 +166,4 @@ type PageInfo {
 input PageInput {
     skip: Int!
     limit: Int! # use a negative number to disable the limit
-}
-
-type Query {
-    # lookups by id
-    stop(id: ID!): Stop
-    stopRoute(stop: ID!, route: ID!): StopRoute
-
-    # search
-    searchStopText(text: String!, page: PageInput!): StopSearchPayload! 
-    searchStopLocation(location: LocationInput!, radius: Float!, page: PageInput!): StopSearchPayload! 
-    
-    # travel planner that creates a route and schedule
-    travelPlanner(origin: ID!, destination: ID!, options: TravelScheduleOptions!): TravelPayload!
-
-    # travel planner that creates a schedule from a route
-    travelPlannerFixedRoute(route: [TravelLegInput!]!, options: TravelScheduleOptions!): TravelPayload!
 }
