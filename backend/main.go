@@ -95,9 +95,27 @@ func main() {
 	fmt.Println(time.Since(t0))
 	printPlan(plan)
 
-	index := db.NewStopTextIndex(base.Stops, database.StopRouteIndex)
+	tripsByRoute := db.NewInvertedIndex("trips by route", base.Trips, func(record model.Trip) (key string) {
+		return record.RouteId
+	})
 
-	for _, stop := range index.Query("pleasant park arch 3000") {
-		fmt.Printf("%#v\n", stop)
+	for _, route := range base.Routes {
+		trips, _ := tripsByRoute.Get(route.ID())
+		lengths := map[int]model.Trip{}
+
+		for _, trip := range trips {
+			stoptimes, _ := database.StopTimesFromTrip.Get(trip.Id)
+			lengths[len(stoptimes)] = trip
+		}
+
+		if len(lengths) > 2 {
+			fmt.Println("------------")
+			fmt.Println(route.ID())
+			for length, trip := range lengths {
+				fmt.Println(trip.Headsign, trip.DirectionId, length)
+			}
+		}
+
 	}
+
 }

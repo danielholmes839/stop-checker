@@ -96,7 +96,7 @@ func (p *Planner) expandWalk(origin *node) []*node {
 		originRoutes.Add(originRoute.DirectedID())
 	}
 
-	// closest walk for each route
+	// closest walk for each route key:routeid
 	closest := map[string]closestWalk{}
 
 	// for all stops within a 250m radius
@@ -126,8 +126,6 @@ func (p *Planner) expandWalk(origin *node) []*node {
 			}
 		}
 	}
-
-	// calculate walking distance and duration
 
 	connections := []*node{}
 
