@@ -3,9 +3,9 @@ module stop-checker.com
 go 1.18
 
 require (
-	github.com/99designs/gqlgen v0.17.13
+	github.com/99designs/gqlgen v0.17.14
 	github.com/artonge/go-csv-tag/v2 v2.0.7
-	github.com/vektah/gqlparser/v2 v2.4.6
+	github.com/vektah/gqlparser/v2 v2.4.8
 )
 
 require (

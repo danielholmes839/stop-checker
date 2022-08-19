@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"stop-checker.com/db"
+	"stop-checker.com/travel/schedule"
 )
 
 func assertEqualSchedule(t *testing.T, s1, s2 Schedule) {
@@ -18,8 +19,10 @@ func assertEqualSchedule(t *testing.T, s1, s2 Schedule) {
 
 func TestPlanner(t *testing.T) {
 	database, base := db.NewDatabaseFromFilesystem("../db/data")
+	scheduleIndex := schedule.NewIndex(database.BaseIndex, base)
+
 	planner := NewPlanner(&PlannerConfig{
-		ScheduleIndex:     database.ScheduleIndex,
+		ScheduleIndex:     scheduleIndex,
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,
@@ -29,7 +32,7 @@ func TestPlanner(t *testing.T) {
 	scheduler := NewScheduler(&SchedulerConfig{
 		StopIndex:         database.Stops,
 		StopTimesFromTrip: database.StopTimesFromTrip,
-		ScheduleIndex:     database.ScheduleIndex,
+		ScheduleIndex:     scheduleIndex,
 	})
 
 	t.Run("pleasant park -> uottawa", func(t *testing.T) {
@@ -38,6 +41,8 @@ func TestPlanner(t *testing.T) {
 
 		p1, err := planner.Depart(depart, "AK151", "CD998")
 		assert.NoError(t, err)
+
+		t.Log(p1)
 
 		// assert.Equal(t, "AF920", p1[0].Destination) // hurdman B
 		// assert.Equal(t, "AF990", p1[1].Destination) //

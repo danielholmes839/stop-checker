@@ -6,18 +6,19 @@ import (
 
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
+	"stop-checker.com/travel/schedule"
 )
 
 type SchedulerConfig struct {
 	StopIndex         *db.Index[model.Stop]
 	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
-	ScheduleIndex     *db.ScheduleIndex
+	ScheduleIndex     *schedule.Index
 }
 
 type Scheduler struct {
 	stopIndex         *db.Index[model.Stop]
 	stopTimesFromTrip *db.InvertedIndex[model.StopTime]
-	scheduleIndex     *db.ScheduleIndex
+	scheduleIndex     *schedule.Index
 }
 
 func NewScheduler(config *SchedulerConfig) *Scheduler {
@@ -129,8 +130,8 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	waitDuration := stopTimeDiffDuration(acc, originArrival.Time)
-	transitDuration := stopTimeDiffDuration(originArrival.Time, destinationArrival.Time)
+	waitDuration := schedule.StopTimeDiff(acc, originArrival.Time)
+	transitDuration := schedule.StopTimeDiff(originArrival.Time, destinationArrival.Time)
 	departure := acc.Add(waitDuration)
 
 	// planned leg
@@ -190,8 +191,8 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	excess := stopTimeDiffDuration(destinationArrival.Time, acc)
-	transitDuration := stopTimeDiffDuration(originArrival.Time, destinationArrival.Time)
+	excess := schedule.StopTimeDiff(destinationArrival.Time, acc)
+	transitDuration := schedule.StopTimeDiff(originArrival.Time, destinationArrival.Time)
 
 	// planned leg
 	return &Leg{

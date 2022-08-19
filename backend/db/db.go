@@ -25,7 +25,6 @@ type Database struct {
 
 	// specialized indexes
 	*StopRouteIndex    // get routes by stop id
-	*ScheduleIndex     // get schedule by stop and route id
 	*StopLocationIndex // get stops by location
 	*StopTextIndex     // get stops by text
 }
@@ -58,7 +57,6 @@ func NewDatabase(base *model.Base) *Database {
 		// specialized indexes
 		BaseIndex:      baseIndex,
 		StopRouteIndex: stopRoutesIndex,
-		ScheduleIndex:  NewScheduleIndex(baseIndex, base),
 		StopLocationIndex: NewStopLocationIndex(baseIndex, base, ResolutionConfig{
 			Level:      9,
 			EdgeLength: 174.375668,

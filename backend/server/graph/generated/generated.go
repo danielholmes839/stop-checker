@@ -16,11 +16,11 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"stop-checker.com/db"
 	"stop-checker.com/db/model"
 	"stop-checker.com/server/graph/scalars"
 	"stop-checker.com/server/graph/sdl"
 	"stop-checker.com/travel"
+	"stop-checker.com/travel/schedule"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -225,11 +225,11 @@ type StopRouteResolver interface {
 	Route(ctx context.Context, obj *model.StopRoute) (*model.Route, error)
 	Direction(ctx context.Context, obj *model.StopRoute) (string, error)
 
-	Schedule(ctx context.Context, obj *model.StopRoute) (*db.ScheduleResults, error)
+	Schedule(ctx context.Context, obj *model.StopRoute) (*schedule.Results, error)
 }
 type StopRouteScheduleResolver interface {
-	Next(ctx context.Context, obj *db.ScheduleResults, limit int, after time.Time) ([]*model.StopTime, error)
-	On(ctx context.Context, obj *db.ScheduleResults, date time.Time) ([]*model.StopTime, error)
+	Next(ctx context.Context, obj *schedule.Results, limit int, after time.Time) ([]*model.StopTime, error)
+	On(ctx context.Context, obj *schedule.Results, date time.Time) ([]*model.StopTime, error)
 }
 type StopTimeResolver interface {
 	Stop(ctx context.Context, obj *model.StopTime) (*model.Stop, error)
@@ -1048,21 +1048,6 @@ input LocationInput {
     longitude: Float!
 }
 
-type UserError {
-    field: String!
-    message: String!
-}
-
-type PageInfo {
-    cursor: Int!   # how many to skip next time
-    remaining: Int!
-}
-
-input PageInput {
-    skip: Int!
-    limit: Int! # use a negative number to disable the limit
-}
-
 type Query {
     # lookup by id
     stop(id: ID!): Stop
@@ -1077,7 +1062,23 @@ type Query {
 
     # travel planner that creates a schedule from a route
     travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelScheduleOptions!): TravelPayload!
-}`, BuiltIn: false},
+}
+
+type UserError {
+    field: String!
+    message: String!
+}
+
+type PageInfo {
+    cursor: Int!   # how many to skip next time
+    remaining: Int!
+}
+
+input PageInput {
+    skip: Int!
+    limit: Int! # use a negative number to disable the limit
+}
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -3297,9 +3298,9 @@ func (ec *executionContext) _StopRoute_schedule(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*db.ScheduleResults)
+	res := resTmp.(*schedule.Results)
 	fc.Result = res
-	return ec.marshalNStopRouteSchedule2ᚖstopᚑcheckerᚗcomᚋdbᚐScheduleResults(ctx, field.Selections, res)
+	return ec.marshalNStopRouteSchedule2ᚖstopᚑcheckerᚗcomᚋtravelᚋscheduleᚐResults(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_StopRoute_schedule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3321,7 +3322,7 @@ func (ec *executionContext) fieldContext_StopRoute_schedule(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _StopRouteSchedule_next(ctx context.Context, field graphql.CollectedField, obj *db.ScheduleResults) (ret graphql.Marshaler) {
+func (ec *executionContext) _StopRouteSchedule_next(ctx context.Context, field graphql.CollectedField, obj *schedule.Results) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StopRouteSchedule_next(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3388,7 +3389,7 @@ func (ec *executionContext) fieldContext_StopRouteSchedule_next(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _StopRouteSchedule_on(ctx context.Context, field graphql.CollectedField, obj *db.ScheduleResults) (ret graphql.Marshaler) {
+func (ec *executionContext) _StopRouteSchedule_on(ctx context.Context, field graphql.CollectedField, obj *schedule.Results) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StopRouteSchedule_on(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7952,7 +7953,7 @@ func (ec *executionContext) _StopRoute(ctx context.Context, sel ast.SelectionSet
 
 var stopRouteScheduleImplementors = []string{"StopRouteSchedule"}
 
-func (ec *executionContext) _StopRouteSchedule(ctx context.Context, sel ast.SelectionSet, obj *db.ScheduleResults) graphql.Marshaler {
+func (ec *executionContext) _StopRouteSchedule(ctx context.Context, sel ast.SelectionSet, obj *schedule.Results) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, stopRouteScheduleImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -9386,11 +9387,11 @@ func (ec *executionContext) marshalNStopRoute2ᚖstopᚑcheckerᚗcomᚋdbᚋmod
 	return ec._StopRoute(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStopRouteSchedule2stopᚑcheckerᚗcomᚋdbᚐScheduleResults(ctx context.Context, sel ast.SelectionSet, v db.ScheduleResults) graphql.Marshaler {
+func (ec *executionContext) marshalNStopRouteSchedule2stopᚑcheckerᚗcomᚋtravelᚋscheduleᚐResults(ctx context.Context, sel ast.SelectionSet, v schedule.Results) graphql.Marshaler {
 	return ec._StopRouteSchedule(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStopRouteSchedule2ᚖstopᚑcheckerᚗcomᚋdbᚐScheduleResults(ctx context.Context, sel ast.SelectionSet, v *db.ScheduleResults) graphql.Marshaler {
+func (ec *executionContext) marshalNStopRouteSchedule2ᚖstopᚑcheckerᚗcomᚋtravelᚋscheduleᚐResults(ctx context.Context, sel ast.SelectionSet, v *schedule.Results) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

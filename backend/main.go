@@ -7,6 +7,7 @@ import (
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
 	"stop-checker.com/travel"
+	"stop-checker.com/travel/schedule"
 )
 
 func printLegs(legs []*travel.Leg) {
@@ -26,10 +27,12 @@ func main() {
 
 	fmt.Println("ranked:", len(stops))
 
+	scheduleIndex := schedule.NewIndex(database.BaseIndex, base)
+
 	scheduler := travel.NewScheduler(&travel.SchedulerConfig{
 		StopIndex:         database.Stops,
 		StopTimesFromTrip: database.StopTimesFromTrip,
-		ScheduleIndex:     database.ScheduleIndex,
+		ScheduleIndex:     scheduleIndex,
 	})
 
 	t0 := time.Now()
@@ -54,7 +57,7 @@ func main() {
 	}
 
 	planner := travel.NewPlanner(&travel.PlannerConfig{
-		ScheduleIndex:     database.ScheduleIndex,
+		ScheduleIndex:     scheduleIndex,
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,
