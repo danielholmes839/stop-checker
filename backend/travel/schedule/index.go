@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"fmt"
+	"sort"
 
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
@@ -24,6 +25,12 @@ func NewIndex(indexes *db.BaseIndex, base *model.Base) *Index {
 		trip, _ := indexes.Trips.Get(stopTime.TripId)
 		return fmt.Sprintf("%s:%s", stopTime.StopId, trip.RouteId)
 	})
+
+	for _, schedule := range index.Data() {
+		sort.Slice(schedule, func(i, j int) bool {
+			return schedule[i].Time.Before(schedule[j].Time)
+		})
+	}
 
 	return &Index{
 		index: index,

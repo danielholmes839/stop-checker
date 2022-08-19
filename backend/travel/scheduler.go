@@ -191,16 +191,16 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	excess := schedule.StopTimeDiff(destinationArrival.Time, acc)
-	transitDuration := schedule.StopTimeDiff(originArrival.Time, destinationArrival.Time)
+	originResult := schedule.NewResultBefore(acc, originArrival)
+	destinationResult := schedule.NewResultBefore(acc, destinationArrival)
 
 	// planned leg
 	return &Leg{
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
-		Departure:   acc.Add(-(transitDuration + excess)),
-		Duration:    transitDuration,
+		Departure:   originResult.Time,
+		Duration:    destinationResult.Sub(originResult.Time),
 		Transit: &transit{
 			TripId:                previous.TripId,
 			OriginStopTimeId:      originArrival.ID(),
@@ -231,6 +231,5 @@ func (s *Scheduler) stopTime(stopId string, all []model.StopTime) (model.StopTim
 			return stopTime, nil
 		}
 	}
-	fmt.Println(len(all))
 	return model.StopTime{}, fmt.Errorf("stoptime not found stop:%s", stopId)
 }
