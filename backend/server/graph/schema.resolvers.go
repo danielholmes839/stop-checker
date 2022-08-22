@@ -13,7 +13,6 @@ import (
 	"stop-checker.com/server/graph/generated"
 	"stop-checker.com/server/graph/sdl"
 	"stop-checker.com/travel"
-	"stop-checker.com/travel/schedule"
 )
 
 // Distance is the resolver for the distance field.
@@ -222,29 +221,25 @@ func (r *stopRouteResolver) Direction(ctx context.Context, obj *model.StopRoute)
 }
 
 // Schedule is the resolver for the schedule field.
-func (r *stopRouteResolver) Schedule(ctx context.Context, obj *model.StopRoute) (*schedule.Results, error) {
+func (r *stopRouteResolver) Schedule(ctx context.Context, obj *model.StopRoute) (*db.ScheduleResults, error) {
 	return r.ScheduleIndex.Get(obj.StopId, obj.RouteId), nil
 }
 
 // Next is the resolver for the next field.
-func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *schedule.Results, limit int, after time.Time) ([]*model.StopTime, error) {
+func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *db.ScheduleResults, limit int, after time.Time) ([]*model.StopTime, error) {
 	t := time.Now().In(r.Timezone)
 	if !after.IsZero() {
 		t = after
 	}
 
 	stopTimes := obj.After(t, limit)
-	return ref(apply(stopTimes, func(result schedule.Result) model.StopTime {
-		return result.StopTime
-	})), nil
+	return ref(stopTimes), nil
 }
 
 // On is the resolver for the on field.
-func (r *stopRouteScheduleResolver) On(ctx context.Context, obj *schedule.Results, date time.Time) ([]*model.StopTime, error) {
+func (r *stopRouteScheduleResolver) On(ctx context.Context, obj *db.ScheduleResults, date time.Time) ([]*model.StopTime, error) {
 	stopTimes := obj.Day(date)
-	return ref(apply(stopTimes, func(result schedule.Result) model.StopTime {
-		return result.StopTime
-	})), nil
+	return ref(stopTimes), nil
 }
 
 // Stop is the resolver for the stop field.

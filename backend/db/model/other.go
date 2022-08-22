@@ -3,13 +3,7 @@ package model
 import (
 	"fmt"
 	"math"
-	"time"
 )
-
-type ScheduledStopTime struct {
-	StopTime
-	Datetime time.Time
-}
 
 type StopRoute struct {
 	RouteId     string
@@ -22,6 +16,7 @@ func (r StopRoute) DirectedID() string {
 	return fmt.Sprintf("%s:%s", r.RouteId, r.DirectionId)
 }
 
+// GraphQL related
 type Transit struct {
 	RouteId       string
 	TripId        string

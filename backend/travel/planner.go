@@ -6,7 +6,6 @@ import (
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
 	"stop-checker.com/travel/dijkstra"
-	"stop-checker.com/travel/schedule"
 )
 
 type closestWalk struct {
@@ -46,7 +45,7 @@ func (n *node) Blocked(routeId string) bool {
 }
 
 type PlannerConfig struct {
-	ScheduleIndex     *schedule.Index
+	ScheduleIndex     *db.ScheduleIndex
 	StopLocationIndex *db.StopLocationIndex
 	StopRouteIndex    *db.StopRouteIndex
 	StopIndex         *db.Index[model.Stop]
@@ -54,7 +53,7 @@ type PlannerConfig struct {
 }
 
 type Planner struct {
-	scheduleIndex     *schedule.Index
+	scheduleIndex     *db.ScheduleIndex
 	stopLocationIndex *db.StopLocationIndex
 	stopRouteIndex    *db.StopRouteIndex
 	stopIndex         *db.Index[model.Stop]
@@ -197,11 +196,11 @@ func (p *Planner) expandTransit(n *node) []*node {
 		tripOrigin, _ := p.scheduleIndex.Get(origin, route.RouteId).Next(originArrival)
 
 		// calculate the time spent waiting for the trip
-		waitDuration := tripOrigin.Sub(originArrival)
+		waitDuration := stopTimeDiffDuration(originArrival, tripOrigin.Time)
 
 		for _, tripDestination := range p.expandTrip(tripOrigin) {
 			// calculate the time spent in transit and the destination arrival time
-			transitDuration := tripDestination.Sub(tripOrigin.Time)
+			transitDuration := stopTimeDiffDuration(tripOrigin.Time, tripDestination.Time)
 			tripDestinationArrival := n.arrival.Add(waitDuration + transitDuration)
 
 			// the current fastest trip
@@ -244,17 +243,27 @@ func (p *Planner) expandTransit(n *node) []*node {
 	return connections
 }
 
-func (p *Planner) expandTrip(origin schedule.Result) []schedule.Result {
+func (p *Planner) expandTrip(origin model.StopTime) []model.StopTime {
 	// all stop times after the origin stop time
 	all, _ := p.stopTimesFromTrip.Get(origin.TripId)
-	connections := []schedule.Result{}
+	connections := []model.StopTime{}
 
 	for _, stopTime := range all {
 		if stopTime.StopSeq > origin.StopSeq {
-			result := schedule.NewResultAfter(origin.Time, stopTime)
-			connections = append(connections, result)
+			connections = append(connections, stopTime)
 		}
 	}
 
 	return connections
+}
+
+func stopTimeDiffDuration(from, to time.Time) time.Duration {
+	f := from.Hour()*60 + from.Minute()
+	t := to.Hour()*60 + to.Minute()
+
+	if t < f {
+		t += 60 * 24
+	}
+
+	return time.Duration(t-f) * time.Minute
 }

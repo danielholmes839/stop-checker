@@ -9,7 +9,6 @@ import (
 	"stop-checker.com/server/graph"
 	"stop-checker.com/server/graph/generated"
 	"stop-checker.com/travel"
-	"stop-checker.com/travel/schedule"
 )
 
 type Server struct {
@@ -18,16 +17,14 @@ type Server struct {
 
 func (s *Server) HandleGraphQL() {
 	database, base := db.NewDatabaseFromFilesystem("./db/data")
-	scheduleIndex := schedule.NewIndex(database.BaseIndex, base)
 
 	resolvers := handler.NewDefaultServer(generated.NewExecutableSchema(
 		generated.Config{
 			Resolvers: &graph.Resolver{
-				Database:      database,
-				Timezone:      base.TZ(),
-				ScheduleIndex: scheduleIndex,
+				Database: database,
+				Timezone: base.TZ(),
 				Planner: travel.NewPlanner(&travel.PlannerConfig{
-					ScheduleIndex:     scheduleIndex,
+					ScheduleIndex:     database.ScheduleIndex,
 					StopLocationIndex: database.StopLocationIndex,
 					StopRouteIndex:    database.StopRouteIndex,
 					StopIndex:         database.Stops,
@@ -36,7 +33,7 @@ func (s *Server) HandleGraphQL() {
 				Scheduler: travel.NewScheduler(&travel.SchedulerConfig{
 					StopIndex:         database.Stops,
 					StopTimesFromTrip: database.StopTimesFromTrip,
-					ScheduleIndex:     scheduleIndex,
+					ScheduleIndex:     database.ScheduleIndex,
 				}),
 			},
 		},

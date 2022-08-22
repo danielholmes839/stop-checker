@@ -67,7 +67,7 @@ models:
   StopRoute:
     model: "stop-checker.com/db/model.StopRoute"
   StopRouteSchedule:
-    model: "stop-checker.com/travel/schedule.Results"
+    model: "stop-checker.com/db.ScheduleResults"
   StopLocationResult:
     model: "stop-checker.com/db.StopLocationResult"
   StopTextResult:

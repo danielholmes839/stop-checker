@@ -6,15 +6,12 @@ import (
 	"time"
 
 	"stop-checker.com/db"
-	"stop-checker.com/travel/schedule"
 )
 
 func BenchmarkPlanComplete(b *testing.B) {
 	database, base := db.NewDatabaseFromFilesystem("../db/data")
-	scheduleIndex := schedule.NewIndex(database.BaseIndex, base)
-
 	planner := NewPlanner(&PlannerConfig{
-		ScheduleIndex:     scheduleIndex,
+		ScheduleIndex:     database.ScheduleIndex,
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,

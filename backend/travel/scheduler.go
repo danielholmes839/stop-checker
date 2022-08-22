@@ -6,19 +6,18 @@ import (
 
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
-	"stop-checker.com/travel/schedule"
 )
 
 type SchedulerConfig struct {
 	StopIndex         *db.Index[model.Stop]
 	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
-	ScheduleIndex     *schedule.Index
+	ScheduleIndex     *db.ScheduleIndex
 }
 
 type Scheduler struct {
 	stopIndex         *db.Index[model.Stop]
 	stopTimesFromTrip *db.InvertedIndex[model.StopTime]
-	scheduleIndex     *schedule.Index
+	scheduleIndex     *db.ScheduleIndex
 }
 
 func NewScheduler(config *SchedulerConfig) *Scheduler {
@@ -130,8 +129,8 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	waitDuration := schedule.StopTimeDiff(acc, originArrival.Time)
-	transitDuration := schedule.StopTimeDiff(originArrival.Time, destinationArrival.Time)
+	waitDuration := stopTimeDiffDuration(acc, originArrival.Time)
+	transitDuration := stopTimeDiffDuration(originArrival.Time, destinationArrival.Time)
 	departure := acc.Add(waitDuration)
 
 	// planned leg
@@ -191,16 +190,16 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	originResult := schedule.NewResultBefore(acc, originArrival)
-	destinationResult := schedule.NewResultBefore(acc, destinationArrival)
+	excess := stopTimeDiffDuration(destinationArrival.Time, acc)
+	transitDuration := stopTimeDiffDuration(originArrival.Time, destinationArrival.Time)
 
 	// planned leg
 	return &Leg{
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
-		Departure:   originResult.Time,
-		Duration:    destinationResult.Sub(originResult.Time),
+		Departure:   acc.Add(-(transitDuration + excess)),
+		Duration:    transitDuration,
 		Transit: &transit{
 			TripId:                previous.TripId,
 			OriginStopTimeId:      originArrival.ID(),
@@ -231,5 +230,6 @@ func (s *Scheduler) stopTime(stopId string, all []model.StopTime) (model.StopTim
 			return stopTime, nil
 		}
 	}
+	fmt.Println(len(all))
 	return model.StopTime{}, fmt.Errorf("stoptime not found stop:%s", stopId)
 }

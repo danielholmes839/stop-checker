@@ -63,7 +63,3 @@ func (index *InvertedIndex[R]) Get(key string) ([]R, error) {
 	}
 	return records, nil
 }
-
-func (index *InvertedIndex[R]) Data() map[string][]R {
-	return index.data
-}

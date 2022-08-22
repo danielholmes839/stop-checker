@@ -5,7 +5,6 @@ import (
 
 	"stop-checker.com/db"
 	"stop-checker.com/travel"
-	"stop-checker.com/travel/schedule"
 )
 
 // This file will not be regenerated automatically.
@@ -14,8 +13,7 @@ import (
 
 type Resolver struct {
 	*db.Database
-	ScheduleIndex *schedule.Index
-	Planner       travel.RoutePlanner
-	Scheduler     travel.SchedulePlanner
-	Timezone      *time.Location
+	Planner   travel.RoutePlanner
+	Scheduler travel.SchedulePlanner
+	Timezone  *time.Location
 }
