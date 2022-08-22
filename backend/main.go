@@ -31,8 +31,8 @@ func main() {
 		{Origin: "AF990", Destination: "CD998", RouteId: "1-340", Walk: false},  // o train west to uottawa
 	}
 
-	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-18 08:27", base.TZ()) // 8:12 am EST
-	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-18 08:44", base.TZ())    // 8:28 am EST
+	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-24 07:57", base.TZ()) // 8:12 am EST
+	before, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-24 08:18", base.TZ())    // 8:28 am EST
 
 	legs, _ := scheduler.Depart(departure, route)
 	for _, leg := range legs {
