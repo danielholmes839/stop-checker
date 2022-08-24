@@ -158,6 +158,7 @@ func parseTrip(trip responseTrip) model.Bus {
 	arrival, lastUpdated := parseTripArrival(trip)
 
 	return model.Bus{
+		Headsign:    trip.Destination,
 		Arrival:     arrival,
 		LastUpdated: lastUpdated,
 		Location:    loc,
