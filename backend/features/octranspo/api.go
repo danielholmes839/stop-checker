@@ -4,10 +4,12 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"stop-checker.com/db/model"
 )
 
 type entry struct {
-	Routes  map[string][]Bus
+	Routes  map[string][]model.Bus
 	Error   error
 	Ready   sync.WaitGroup
 	Created time.Time
@@ -29,7 +31,7 @@ func NewAPI(ttl time.Duration, client *Client) *API {
 	}
 }
 
-func (api *API) StopData(stopCode string) (map[string][]Bus, error) {
+func (api *API) StopData(stopCode string) (map[string][]model.Bus, error) {
 	entry := api.getEntry(stopCode)
 	entry.Ready.Wait()
 
@@ -40,7 +42,7 @@ func (api *API) StopData(stopCode string) (map[string][]Bus, error) {
 }
 
 // Request by stop code and route name
-func (api *API) StopRouteData(stopCode string, routeName string) ([]Bus, error) {
+func (api *API) StopRouteData(stopCode string, routeName string) ([]model.Bus, error) {
 	routes, err := api.StopData(stopCode)
 	if err != nil {
 		return nil, err

@@ -5,14 +5,7 @@ import (
 	"time"
 
 	"stop-checker.com/features/octranspo"
-	"stop-checker.com/features/travel"
 )
-
-func printLegs(legs []*travel.Leg) {
-	for _, leg := range legs {
-		fmt.Println(leg.String())
-	}
-}
 
 func main() {
 	api := octranspo.NewAPI(time.Second*30, &octranspo.Client{
@@ -21,11 +14,19 @@ func main() {
 		OCTRANSPO_API_KEY: "508a0741b6945609192422d77f3a1da4",
 	})
 
-	go func() {
-		api.StopData("8810")
-	}()
+	t0 := time.Now()
 
 	res, err := api.StopData("8810")
+
+	fmt.Println(time.Since(t0))
+
+	t1 := time.Now()
+
+	for i := 0; i < 10; i++ {
+		api.StopData("8810")
+	}
+
+	fmt.Println(time.Since(t1))
 
 	fmt.Println(res)
 	fmt.Println(err)

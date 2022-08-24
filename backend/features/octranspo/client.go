@@ -19,7 +19,7 @@ type Client struct {
 	OCTRANSPO_API_KEY string
 }
 
-func (c *Client) Request(stopCode string) (map[string][]Bus, error) {
+func (c *Client) Request(stopCode string) (map[string][]model.Bus, error) {
 	q := url.Values{}
 	q.Add("appID", c.OCTRANSPO_APP_ID)
 	q.Add("apiKey", c.OCTRANSPO_API_KEY)
@@ -93,12 +93,12 @@ type responseTrip struct {
 	Latitude             string `xml:"Latitude"`
 }
 
-func parseResults(results []responseGetRouteSummaryForStopResult) map[string][]Bus {
-	data := map[string][]Bus{}
+func parseResults(results []responseGetRouteSummaryForStopResult) map[string][]model.Bus {
+	data := map[string][]model.Bus{}
 
 	for _, result := range results {
 		for _, route := range result.Routes.Routes {
-			buses := []Bus{}
+			buses := []model.Bus{}
 			for _, trip := range route.Trips.Trips {
 				buses = append(buses, parseTrip(trip))
 			}
@@ -153,11 +153,11 @@ func parseTripArrival(trip responseTrip) (time.Time, time.Time) {
 	return arrival, lastUpdated
 }
 
-func parseTrip(trip responseTrip) Bus {
+func parseTrip(trip responseTrip) model.Bus {
 	loc := parseTripLocation(trip)
 	arrival, lastUpdated := parseTripArrival(trip)
 
-	return Bus{
+	return model.Bus{
 		Arrival:     arrival,
 		LastUpdated: lastUpdated,
 		Location:    loc,
