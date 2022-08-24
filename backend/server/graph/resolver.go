@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"stop-checker.com/db"
-	"stop-checker.com/travel"
+	"stop-checker.com/features/travel"
 )
 
 // This file will not be regenerated automatically.

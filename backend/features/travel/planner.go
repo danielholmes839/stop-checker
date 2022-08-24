@@ -5,7 +5,7 @@ import (
 
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
-	"stop-checker.com/travel/dijkstra"
+	"stop-checker.com/features/travel/dijkstra"
 )
 
 type closestWalk struct {

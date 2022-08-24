@@ -89,10 +89,10 @@ models:
   Transit:
     model: "stop-checker.com/db/model.Transit"
   TravelSchedule:
-    model: "stop-checker.com/travel.Schedule"
+    model: "stop-checker.com/features/travel.Schedule"
   TravelScheduleLeg:
-    model: "stop-checker.com/travel.Leg"
+    model: "stop-checker.com/features/travel.Leg"
   TravelRoute:
-    model: "stop-checker.com/travel.Route"
+    model: "stop-checker.com/features/travel.Route"
   TravelRouteLeg:
-    model: "stop-checker.com/travel.FixedLeg"
+    model: "stop-checker.com/features/travel.FixedLeg"

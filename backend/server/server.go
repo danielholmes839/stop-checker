@@ -6,9 +6,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"stop-checker.com/db"
+	"stop-checker.com/features/travel"
 	"stop-checker.com/server/graph"
 	"stop-checker.com/server/graph/generated"
-	"stop-checker.com/travel"
 )
 
 type Server struct {

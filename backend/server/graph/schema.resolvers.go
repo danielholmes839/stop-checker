@@ -10,9 +10,9 @@ import (
 
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
+	"stop-checker.com/features/travel"
 	"stop-checker.com/server/graph/generated"
 	"stop-checker.com/server/graph/sdl"
-	"stop-checker.com/travel"
 )
 
 // Distance is the resolver for the distance field.

@@ -20,7 +20,7 @@ import (
 	"stop-checker.com/db/model"
 	"stop-checker.com/server/graph/scalars"
 	"stop-checker.com/server/graph/sdl"
-	"stop-checker.com/travel"
+	"stop-checker.com/features/travel"
 )
 
 // region    ************************** generated!.gotpl **************************

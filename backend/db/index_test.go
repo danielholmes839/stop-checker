@@ -44,5 +44,5 @@ func TestInvertedIndex(t *testing.T) {
 	results, err = index.Get("2")
 	assert.Empty(t, results)
 	assert.Error(t, err)
-	
+
 }

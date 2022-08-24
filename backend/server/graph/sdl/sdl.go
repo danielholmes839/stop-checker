@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"stop-checker.com/db/model"
-	"stop-checker.com/travel"
+	"stop-checker.com/features/travel"
 )
 
 type PageInfo struct {
