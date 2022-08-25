@@ -5,12 +5,6 @@ import (
 	"time"
 )
 
-type Agency struct {
-	Name     string
-	URL      string
-	Timezone *time.Location
-}
-
 type Service struct {
 	Id    string
 	On    map[time.Weekday]bool

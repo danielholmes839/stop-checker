@@ -17,7 +17,7 @@ func assertEqualSchedule(t *testing.T, s1, s2 Schedule) {
 }
 
 func TestPlanner(t *testing.T) {
-	database, base := db.NewDatabaseFromFilesystem("../db/data")
+	database, _ := db.NewDatabaseFromFilesystem("../db/data")
 	planner := NewPlanner(&PlannerConfig{
 		ScheduleIndex:     database.ScheduleIndex,
 		StopLocationIndex: database.StopLocationIndex,
@@ -33,8 +33,8 @@ func TestPlanner(t *testing.T) {
 	})
 
 	t.Run("pleasant park -> uottawa", func(t *testing.T) {
-		depart, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-25 12:12", base.TZ()) // 8:12 am EST
-		arrive, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-25 12:28", base.TZ()) // 8:28 am EST
+		depart, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-25 12:12", database.TZ()) // 8:12 am EST
+		arrive, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-25 12:28", database.TZ()) // 8:28 am EST
 
 		p1, err := planner.Depart(depart, "AK151", "CD998")
 		assert.NoError(t, err)

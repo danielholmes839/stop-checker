@@ -18,7 +18,7 @@ func BenchmarkPlanComplete(b *testing.B) {
 		StopTimesFromTrip: database.StopTimesFromTrip,
 	})
 
-	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 11:55", base.TZ())
+	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 11:55", database.TZ())
 
 	b.ResetTimer()
 

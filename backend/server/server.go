@@ -16,13 +16,12 @@ type Server struct {
 }
 
 func (s *Server) HandleGraphQL() {
-	database, base := db.NewDatabaseFromFilesystem("./db/data")
+	database, _ := db.NewDatabaseFromFilesystem("./db/data")
 
 	resolvers := handler.NewDefaultServer(generated.NewExecutableSchema(
 		generated.Config{
 			Resolvers: &graph.Resolver{
 				Database: database,
-				Timezone: base.TZ(),
 				Planner: travel.NewPlanner(&travel.PlannerConfig{
 					ScheduleIndex:     database.ScheduleIndex,
 					StopLocationIndex: database.StopLocationIndex,

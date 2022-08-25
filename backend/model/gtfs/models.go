@@ -5,7 +5,6 @@ package gtfs
 // Route -
 type Route struct {
 	ID        string `csv:"route_id"`
-	AgencyID  string `csv:"agency_id"`
 	ShortName string `csv:"route_short_name"`
 	LongName  string `csv:"route_long_name"`
 	Type      int    `csv:"route_type"`
@@ -76,14 +75,4 @@ type Transfer struct {
 	ToStopID   string `csv:"to_stop_id"`
 	Type       int    `csv:"transfer_type"`
 	MinTime    int    `csv:"min_transfer_time"`
-}
-
-// Agency -
-type Agency struct {
-	ID       string `csv:"agency_id"`
-	Name     string `csv:"agency_name"`
-	URL      string `csv:"agency_url"`
-	Timezone string `csv:"agency_timezone"`
-	Langue   string `csv:"agency_lang"`
-	Phone    string `csv:"agency_phone"`
 }

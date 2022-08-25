@@ -96,7 +96,7 @@ func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destin
 	}
 
 	if options.Datetime == nil {
-		t := time.Now().In(r.Timezone)
+		t := time.Now().In(r.TZ())
 		options.Datetime = &t
 	}
 
@@ -227,7 +227,7 @@ func (r *stopRouteResolver) Schedule(ctx context.Context, obj *model.StopRoute) 
 
 // Next is the resolver for the next field.
 func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *db.ScheduleResults, limit int, after time.Time) ([]*model.StopTime, error) {
-	t := time.Now().In(r.Timezone)
+	t := time.Now().In(r.TZ())
 	if !after.IsZero() {
 		t = after
 	}

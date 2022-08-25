@@ -1,8 +1,6 @@
 package graph
 
 import (
-	"time"
-
 	"stop-checker.com/db"
 	"stop-checker.com/features/travel"
 )
@@ -15,5 +13,4 @@ type Resolver struct {
 	*db.Database
 	Planner   travel.RoutePlanner
 	Scheduler travel.SchedulePlanner
-	Timezone  *time.Location
 }

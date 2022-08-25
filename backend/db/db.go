@@ -17,6 +17,8 @@ type BaseIndex struct {
 }
 
 type Database struct {
+	timezone *time.Location
+
 	// basic indexes
 	*BaseIndex
 
@@ -30,7 +32,7 @@ type Database struct {
 	*StopTextIndex     // get stops by text
 }
 
-func NewDatabase(base *model.Base) *Database {
+func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 	// record start time
 	now := time.Now()
 	defer func() {
@@ -65,4 +67,8 @@ func NewDatabase(base *model.Base) *Database {
 		}),
 		StopTextIndex: NewStopTextIndex(base.Stops, stopRoutesIndex),
 	}
+}
+
+func (db *Database) TZ() *time.Location {
+	return db.timezone
 }
