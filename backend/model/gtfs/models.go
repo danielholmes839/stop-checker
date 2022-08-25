@@ -1,6 +1,6 @@
 package gtfs
 
-// shoutout https://github.com/artonge/go-gtfs/blob/master/models.go
+// from https://github.com/artonge/go-gtfs/blob/master/models.go
 
 // Route -
 type Route struct {
@@ -67,12 +67,4 @@ type CalendarDate struct {
 	ServiceID     string `csv:"service_id"`
 	Date          string `csv:"date"`
 	ExceptionType int    `csv:"exception_type"`
-}
-
-// Transfer -
-type Transfer struct {
-	FromStopID string `csv:"from_stop_id"`
-	ToStopID   string `csv:"to_stop_id"`
-	Type       int    `csv:"transfer_type"`
-	MinTime    int    `csv:"min_transfer_time"`
 }
