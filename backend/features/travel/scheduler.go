@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"stop-checker.com/db"
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
 )
 
 type SchedulerConfig struct {

@@ -1,7 +1,7 @@
 package db
 
 import (
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
 )
 
 type StopRouteIndex struct {

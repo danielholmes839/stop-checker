@@ -17,7 +17,7 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"stop-checker.com/db"
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
 	"stop-checker.com/server/graph/scalars"
 	"stop-checker.com/server/graph/sdl"
 	"stop-checker.com/features/travel"

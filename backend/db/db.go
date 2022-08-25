@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
 )
 
 type BaseIndex struct {

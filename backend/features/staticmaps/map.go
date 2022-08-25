@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
 )
 
 const (

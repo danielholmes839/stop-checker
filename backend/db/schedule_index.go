@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
 )
 
 type indexesRequiredBySchedule struct {

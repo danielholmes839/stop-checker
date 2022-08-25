@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"stop-checker.com/db"
-	"stop-checker.com/db/model"
 	"stop-checker.com/features/travel"
+	"stop-checker.com/model"
 	"stop-checker.com/server/graph/generated"
 	"stop-checker.com/server/graph/sdl"
 )

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
 )
 
 type StopTextResult struct {

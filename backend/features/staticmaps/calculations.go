@@ -3,7 +3,7 @@ package staticmaps
 import (
 	"math"
 
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
 )
 
 /*

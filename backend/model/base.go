@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"stop-checker.com/db/gtfs"
+	"stop-checker.com/model/gtfs"
 )
 
 type Base struct {

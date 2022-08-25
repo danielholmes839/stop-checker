@@ -1,8 +1,8 @@
 package db
 
 import (
-	"stop-checker.com/db/gtfs"
-	"stop-checker.com/db/model"
+	"stop-checker.com/model"
+	"stop-checker.com/model/gtfs"
 )
 
 func NewDatabaseFromFilesystem(path string) (*Database, *model.Base) {
