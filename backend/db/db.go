@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
 )
 
 type BaseIndex struct {
@@ -52,6 +52,8 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 	stopRoutesIndex := NewStopRouteIndex(baseIndex, base)
 
 	return &Database{
+		timezone: timezone,
+
 		// inverted indexes
 		StopTimesFromTrip: NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
 			return record.TripId

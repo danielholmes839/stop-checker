@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
 )
 
 type indexesRequiredBySchedule struct {
@@ -30,7 +30,7 @@ func NewScheduleIndex(indexes *BaseIndex, base *model.Base) *ScheduleIndex {
 	// sort the stop times by arrival time
 	for _, schedule := range index.data {
 		sort.Slice(schedule, func(i, j int) bool {
-			return schedule[i].Time.Before(schedule[j].Time)
+			return schedule[i].Time < schedule[j].Time
 		})
 	}
 
@@ -52,38 +52,42 @@ func (schedule *ScheduleIndex) Get(stopId, routeId string) *ScheduleResults {
 	}
 }
 
+type ScheduleResult struct {
+	model.StopTime
+	time.Time
+}
+
 type ScheduleResults struct {
 	*indexesRequiredBySchedule
 	results []model.StopTime
 }
 
-func (s *ScheduleResults) Next(after time.Time) (model.StopTime, error) {
+func (s *ScheduleResults) Next(after time.Time) (ScheduleResult, error) {
 	results := s.After(after, 1)
 
 	if len(results) == 0 {
-		return model.StopTime{}, errors.New("not found")
+		return ScheduleResult{}, errors.New("not found")
 	}
 
 	return results[0], nil
 }
 
-func (s *ScheduleResults) Previous(before time.Time) (model.StopTime, error) {
+func (s *ScheduleResults) Previous(before time.Time) (ScheduleResult, error) {
 	results := s.Before(before, 1)
 
 	if len(results) == 0 {
-		return model.StopTime{}, errors.New("not found")
+		return ScheduleResult{}, errors.New("not found")
 	}
 
 	return results[0], nil
 }
 
-func (s *ScheduleResults) Before(before time.Time, limit int) []model.StopTime {
+func (s *ScheduleResults) Before(before time.Time, limit int) []ScheduleResult {
 	results := s.beforeWithinDay(before, limit)
 
 	before = truncate(before).Add(-time.Second)
 	attempts := 0
 	for len(results) != limit && attempts < 3 {
-		fmt.Println(before)
 		attempts++
 		results = append(results, s.beforeWithinDay(before, limit-len(results))...)
 		before = before.AddDate(0, 0, -1)
@@ -93,7 +97,7 @@ func (s *ScheduleResults) Before(before time.Time, limit int) []model.StopTime {
 }
 
 // query next N stop times after a specific time
-func (s *ScheduleResults) After(after time.Time, limit int) []model.StopTime {
+func (s *ScheduleResults) After(after time.Time, limit int) []ScheduleResult {
 	results := s.afterWithinDay(after, limit)
 
 	attempts := 0
@@ -107,15 +111,16 @@ func (s *ScheduleResults) After(after time.Time, limit int) []model.StopTime {
 }
 
 // query all stop times on a specific date
-func (s *ScheduleResults) Day(on time.Time) []model.StopTime {
+func (s *ScheduleResults) Day(on time.Time) []ScheduleResult {
 	return s.afterWithinDay(truncate(on), -1)
 }
 
-func (s *ScheduleResults) afterWithinDay(t time.Time, limit int) []model.StopTime {
-	results := []model.StopTime{}
+func (s *ScheduleResults) afterWithinDay(t time.Time, limit int) []ScheduleResult {
+	results := []ScheduleResult{}
+	year, month, day := t.Date()
 
 	for _, stopTime := range s.results {
-		if !after(stopTime.Time, t) {
+		if !stopTime.After(t) {
 			continue
 		}
 
@@ -123,7 +128,12 @@ func (s *ScheduleResults) afterWithinDay(t time.Time, limit int) []model.StopTim
 			continue
 		}
 
-		results = append(results, stopTime)
+		dt := time.Date(year, month, day, stopTime.Hour(), stopTime.Minute(), 0, 0, time.Local)
+
+		results = append(results, ScheduleResult{
+			StopTime: stopTime,
+			Time:     dt,
+		})
 
 		if len(results) == limit {
 			break
@@ -133,11 +143,12 @@ func (s *ScheduleResults) afterWithinDay(t time.Time, limit int) []model.StopTim
 	return results
 }
 
-func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []model.StopTime {
-	results := []model.StopTime{}
+func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []ScheduleResult {
+	results := []ScheduleResult{}
+	year, month, day := t.Date()
 
 	for _, stopTime := range reverse(s.results) {
-		if !before(stopTime.Time, t) {
+		if !stopTime.Before(t) {
 			continue
 		}
 
@@ -145,7 +156,10 @@ func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []model.StopTi
 			continue
 		}
 
-		results = append(results, stopTime)
+		results = append(results, ScheduleResult{
+			StopTime: stopTime,
+			Time:     time.Date(year, month, day, stopTime.Hour(), stopTime.Minute(), 0, 0, time.Local),
+		})
 
 		if len(results) == limit {
 			break
@@ -160,50 +174,33 @@ func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []model.StopTi
 - the service is running on the time's day of the week
 - there on no service exception on the time's date
 */
-func (s *ScheduleResults) valid(t time.Time, stopTime model.StopTime) bool {
+func (s *ScheduleResults) valid(date time.Time, stopTime model.StopTime) bool {
 	if stopTime.Overflow {
-		t = t.Add(time.Hour * -24)
+		/* stop times can overflow to the next day. service day of
+		2022-08-28 and time of 26:00 means 2AM on 2022-08-29 so to check
+		if the stoptime will happen on the 29th we actually check the 28th*/
+		date = date.Add(time.Hour * -24)
 	}
 
 	trip, _ := s.trips.Get(stopTime.TripId)
 	service, _ := s.services.Get(trip.ServiceId)
 
 	// results must be between the start and end dates
-	if service.End.Before(t) || service.Start.After(t) {
+	if service.End.Before(date) || service.Start.After(date) {
 		return false
 	}
 
-	// results must have service on the given day
-	if !service.On[t.Weekday()] {
+	// results must have service on the week day
+	if !service.On[date.Weekday()] {
 		return false
 	}
 
 	// results must not have execpetions
-	if exception, err := s.serviceExceptions.Get(service.Id, t); err == nil && !exception.Added {
+	if exception, err := s.serviceExceptions.Get(service.Id, date); err == nil && !exception.Added {
 		return false
 	}
 
 	return true
-}
-
-// if a is ahead of b (hours and minutes)
-func after(a, b time.Time) bool {
-	if a.Hour() > b.Hour() {
-		return true
-	} else if a.Hour() == b.Hour() && a.Minute() >= b.Minute() { // minutes can be equal
-		return true
-	}
-	return false
-}
-
-// if a is before of b (hours and minutes)
-func before(a, b time.Time) bool {
-	if a.Hour() < b.Hour() {
-		return true
-	} else if a.Hour() == b.Hour() && a.Minute() <= b.Minute() { // minutes can be equal
-		return true
-	}
-	return false
 }
 
 // truncate time leaving only the date

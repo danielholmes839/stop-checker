@@ -17,10 +17,10 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"stop-checker.com/db"
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
+	"stop-checker.com/features/travel"
 	"stop-checker.com/server/graph/scalars"
 	"stop-checker.com/server/graph/sdl"
-	"stop-checker.com/features/travel"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -1048,21 +1048,6 @@ input LocationInput {
     longitude: Float!
 }
 
-type UserError {
-    field: String!
-    message: String!
-}
-
-type PageInfo {
-    cursor: Int!   # how many to skip next time
-    remaining: Int!
-}
-
-input PageInput {
-    skip: Int!
-    limit: Int! # use a negative number to disable the limit
-}
-
 type Query {
     # lookup by id
     stop(id: ID!): Stop
@@ -1077,7 +1062,23 @@ type Query {
 
     # travel planner that creates a schedule from a route
     travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelScheduleOptions!): TravelPayload!
-}`, BuiltIn: false},
+}
+
+type UserError {
+    field: String!
+    message: String!
+}
+
+type PageInfo {
+    cursor: Int!   # how many to skip next time
+    remaining: Int!
+}
+
+input PageInput {
+    skip: Int!
+    limit: Int! # use a negative number to disable the limit
+}
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -3745,9 +3746,9 @@ func (ec *executionContext) _StopTime_time(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(model.Time)
 	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2stopᚑcheckerᚗcomᚋdbᚋmodelᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_StopTime_time(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4058,7 +4059,7 @@ func (ec *executionContext) _TravelPayload_schedule(ctx context.Context, field g
 	}
 	res := resTmp.(travel.Schedule)
 	fc.Result = res
-	return ec.marshalOTravelSchedule2stopᚑcheckerᚗcomᚋtravelᚐSchedule(ctx, field.Selections, res)
+	return ec.marshalOTravelSchedule2stopᚑcheckerᚗcomᚋfeaturesᚋtravelᚐSchedule(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TravelPayload_schedule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4166,7 +4167,7 @@ func (ec *executionContext) _TravelSchedule_legs(ctx context.Context, field grap
 	}
 	res := resTmp.([]*travel.Leg)
 	fc.Result = res
-	return ec.marshalNTravelScheduleLeg2ᚕᚖstopᚑcheckerᚗcomᚋtravelᚐLegᚄ(ctx, field.Selections, res)
+	return ec.marshalNTravelScheduleLeg2ᚕᚖstopᚑcheckerᚗcomᚋfeaturesᚋtravelᚐLegᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TravelSchedule_legs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9487,12 +9488,12 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+func (ec *executionContext) unmarshalNTime2stopᚑcheckerᚗcomᚋdbᚋmodelᚐTime(ctx context.Context, v interface{}) (model.Time, error) {
 	res, err := scalars.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+func (ec *executionContext) marshalNTime2stopᚑcheckerᚗcomᚋdbᚋmodelᚐTime(ctx context.Context, sel ast.SelectionSet, v model.Time) graphql.Marshaler {
 	res := scalars.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -9538,7 +9539,7 @@ func (ec *executionContext) marshalNTravelPayload2ᚖstopᚑcheckerᚗcomᚋserv
 	return ec._TravelPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTravelScheduleLeg2ᚕᚖstopᚑcheckerᚗcomᚋtravelᚐLegᚄ(ctx context.Context, sel ast.SelectionSet, v []*travel.Leg) graphql.Marshaler {
+func (ec *executionContext) marshalNTravelScheduleLeg2ᚕᚖstopᚑcheckerᚗcomᚋfeaturesᚋtravelᚐLegᚄ(ctx context.Context, sel ast.SelectionSet, v []*travel.Leg) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9562,7 +9563,7 @@ func (ec *executionContext) marshalNTravelScheduleLeg2ᚕᚖstopᚑcheckerᚗcom
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTravelScheduleLeg2ᚖstopᚑcheckerᚗcomᚋtravelᚐLeg(ctx, sel, v[i])
+			ret[i] = ec.marshalNTravelScheduleLeg2ᚖstopᚑcheckerᚗcomᚋfeaturesᚋtravelᚐLeg(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9582,7 +9583,7 @@ func (ec *executionContext) marshalNTravelScheduleLeg2ᚕᚖstopᚑcheckerᚗcom
 	return ret
 }
 
-func (ec *executionContext) marshalNTravelScheduleLeg2ᚖstopᚑcheckerᚗcomᚋtravelᚐLeg(ctx context.Context, sel ast.SelectionSet, v *travel.Leg) graphql.Marshaler {
+func (ec *executionContext) marshalNTravelScheduleLeg2ᚖstopᚑcheckerᚗcomᚋfeaturesᚋtravelᚐLeg(ctx context.Context, sel ast.SelectionSet, v *travel.Leg) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -10023,7 +10024,7 @@ func (ec *executionContext) marshalOTransit2ᚖstopᚑcheckerᚗcomᚋdbᚋmodel
 	return ec._Transit(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTravelSchedule2stopᚑcheckerᚗcomᚋtravelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v travel.Schedule) graphql.Marshaler {
+func (ec *executionContext) marshalOTravelSchedule2stopᚑcheckerᚗcomᚋfeaturesᚋtravelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v travel.Schedule) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"stop-checker.com/db"
+	"stop-checker.com/db/model"
 	"stop-checker.com/features/travel"
-	"stop-checker.com/model"
 	"stop-checker.com/server/graph/generated"
 	"stop-checker.com/server/graph/sdl"
 )
@@ -233,13 +233,17 @@ func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *db.ScheduleRe
 	}
 
 	stopTimes := obj.After(t, limit)
-	return ref(stopTimes), nil
+	return apply(stopTimes, func(r db.ScheduleResult) *model.StopTime {
+		return &r.StopTime
+	}), nil
 }
 
 // On is the resolver for the on field.
 func (r *stopRouteScheduleResolver) On(ctx context.Context, obj *db.ScheduleResults, date time.Time) ([]*model.StopTime, error) {
 	stopTimes := obj.Day(date)
-	return ref(stopTimes), nil
+	return apply(stopTimes, func(r db.ScheduleResult) *model.StopTime {
+		return &r.StopTime
+	}), nil
 }
 
 // Stop is the resolver for the stop field.
@@ -449,3 +453,13 @@ type transitResolver struct{ *Resolver }
 type travelScheduleResolver struct{ *Resolver }
 type travelScheduleLegResolver struct{ *Resolver }
 type tripResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *stopTimeResolver) Time(ctx context.Context, obj *model.StopTime) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: Time - time"))
+}

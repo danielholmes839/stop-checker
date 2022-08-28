@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"stop-checker.com/db"
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
 )
 
 type SchedulerConfig struct {
@@ -61,6 +61,9 @@ func (s *Scheduler) Arrive(by time.Time, route Route) (Schedule, error) {
 }
 
 func (s *Scheduler) arrive(by time.Time, fixed []*FixedLeg) ([]*Leg, error) {
+	fmt.Println("-----------------------------")
+	fmt.Println("--- Arrive ---", by)
+
 	planned := []*Leg{}
 	acc := by
 
@@ -68,6 +71,7 @@ func (s *Scheduler) arrive(by time.Time, fixed []*FixedLeg) ([]*Leg, error) {
 	for i := len(fixed) - 1; i >= 0; i-- {
 		leg := fixed[i]
 		plan, err := s.planArrive(acc, leg)
+		fmt.Printf("%#v\n", plan)
 
 		if err != nil {
 			return nil, err
@@ -129,8 +133,8 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	waitDuration := stopTimeDiffDuration(acc, originArrival.Time)
-	transitDuration := stopTimeDiffDuration(originArrival.Time, destinationArrival.Time)
+	waitDuration := model.TimeDiff(model.NewTimeFromDateTime(acc), originArrival.Time)
+	transitDuration := model.TimeDiff(originArrival.Time, destinationArrival.Time)
 	departure := acc.Add(waitDuration)
 
 	// planned leg
@@ -171,6 +175,7 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 
 	// planned leg by transit
 	previous, err := s.scheduleIndex.Get(fixed.Destination, fixed.RouteId).Previous(acc)
+	fmt.Println(acc.After(previous.Time), previous, acc)
 	if err != nil {
 		return nil, err
 	}
@@ -190,8 +195,9 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	excess := stopTimeDiffDuration(destinationArrival.Time, acc)
-	transitDuration := stopTimeDiffDuration(originArrival.Time, destinationArrival.Time)
+	excess := model.TimeDiff(destinationArrival.Time, model.NewTimeFromDateTime(acc))
+	transitDuration := model.TimeDiff(originArrival.Time, destinationArrival.Time)
+	fmt.Println("excess", excess, "transit", transitDuration, "destinataion arrival", destinationArrival.String(), "acc", acc)
 
 	// planned leg
 	return &Leg{

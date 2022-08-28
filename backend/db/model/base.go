@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"stop-checker.com/model/gtfs"
+	"stop-checker.com/db/model/gtfs"
 )
 
 type Base struct {
@@ -35,7 +35,7 @@ func NewDatasetFromGTFS(data *gtfs.Dataset, parser *DatasetParser) *Base {
 	}
 
 	for i, stopTime := range data.StopTimes {
-		base.StopTimes[i] = parser.NewStopTimeFromGTFS(stopTime, parser.TimeZone)
+		base.StopTimes[i] = parser.NewStopTimeFromGTFS(stopTime)
 	}
 
 	for i, trips := range data.Trips {
@@ -75,7 +75,7 @@ func (p *DatasetParser) NewCalendarFromGTFS(data gtfs.Calendar) Service {
 			time.Saturday:  data.Saturday == 1,
 		},
 		Start: start,
-		End:   end,
+		End:   end.Add(time.Hour*24 - time.Minute),
 	}
 }
 
@@ -99,26 +99,23 @@ func (p *DatasetParser) NewRouteFromGTFS(data gtfs.Route) Route {
 	}
 }
 
-func (p *DatasetParser) NewStopTimeFromGTFS(data gtfs.StopTime, tz *time.Location) StopTime {
+func (p *DatasetParser) NewStopTimeFromGTFS(data gtfs.StopTime) StopTime {
 	seq, _ := strconv.Atoi(data.StopSeq)
-	arrival, err := time.ParseInLocation(p.TimeLayout, data.Departure, p.TimeZone)
-	overflow := false
 
-	if err != nil {
-		hours, _ := strconv.Atoi(data.Departure[0:2])
-		hours %= 24
+	hours, _ := strconv.Atoi(data.Departure[0:2])
+	overflow := hours >= 24
 
-		minutes, _ := strconv.Atoi(data.Departure[3:5])
+	hours %= 24
 
-		arrival = time.Date(0, 1, 1, hours, minutes, 0, 0, tz)
-		overflow = true
-	}
+	minutes, _ := strconv.Atoi(data.Departure[3:5])
+
+	t := NewTime(hours, minutes)
 
 	return StopTime{
 		StopId:   data.StopID,
 		StopSeq:  seq,
 		TripId:   data.TripID,
-		Time:     arrival,
+		Time:     t,
 		Overflow: overflow,
 	}
 }

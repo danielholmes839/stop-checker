@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
 )
 
 type ServiceExceptionIndex struct {

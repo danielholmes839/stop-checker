@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
 )
 
 type entry struct {

@@ -3,8 +3,8 @@ package db
 import (
 	"time"
 
-	"stop-checker.com/model"
-	"stop-checker.com/model/gtfs"
+	"stop-checker.com/db/model"
+	"stop-checker.com/db/model/gtfs"
 )
 
 func NewDatabaseFromFilesystem(path string) (*Database, *model.Base) {
@@ -13,10 +13,7 @@ func NewDatabaseFromFilesystem(path string) (*Database, *model.Base) {
 		panic(err)
 	}
 
-	tz, err := time.LoadLocation("America/Toronto")
-	if err != nil {
-		panic(err)
-	}
+	tz, _ := time.LoadLocation("America/Montreal")
 
 	octranspo := &model.DatasetParser{
 		TimeZone:   tz,

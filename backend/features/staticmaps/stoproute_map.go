@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
 )
 
 func NewStopRouteMap(width, height int, stop model.Location, buses []model.Bus) (*Map, error) {

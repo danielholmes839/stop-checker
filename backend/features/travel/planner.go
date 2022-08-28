@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"stop-checker.com/db"
+	"stop-checker.com/db/model"
 	"stop-checker.com/features/travel/dijkstra"
-	"stop-checker.com/model"
 )
 
 type closestWalk struct {
@@ -134,7 +134,7 @@ func (p *Planner) expandWalk(origin *node) []*node {
 	// closest walk for each route key:routeid
 	closest := map[string]closestWalk{}
 
-	// for all stops within a 250m radius
+	// for all stops within a 200m radius
 	for _, neighbor := range p.stopLocationIndex.Query(stop.Location, 200) {
 		neighborRoutes := p.stopRouteIndex.Get(neighbor.ID())
 
@@ -193,14 +193,20 @@ func (p *Planner) expandTransit(n *node) []*node {
 		}
 
 		// lookup the trip and "tripOrigin" stop time
-		tripOrigin, _ := p.scheduleIndex.Get(origin, route.RouteId).Next(originArrival)
+		tripOrigin, err := p.scheduleIndex.Get(origin, route.RouteId).Next(originArrival)
+		if err != nil {
+			continue
+		}
 
 		// calculate the time spent waiting for the trip
-		waitDuration := stopTimeDiffDuration(originArrival, tripOrigin.Time)
+		waitDuration := tripOrigin.Sub(originArrival)
+		if waitDuration > time.Hour*24 {
+			continue
+		}
 
-		for _, tripDestination := range p.expandTrip(tripOrigin) {
+		for _, tripDestination := range p.expandTrip(tripOrigin.StopTime) {
 			// calculate the time spent in transit and the destination arrival time
-			transitDuration := stopTimeDiffDuration(tripOrigin.Time, tripDestination.Time)
+			transitDuration := model.TimeDiff(model.NewTimeFromDateTime(tripOrigin.Time), tripDestination.Time)
 			tripDestinationArrival := n.arrival.Add(waitDuration + transitDuration)
 
 			// the current fastest trip
@@ -255,15 +261,4 @@ func (p *Planner) expandTrip(origin model.StopTime) []model.StopTime {
 	}
 
 	return connections
-}
-
-func stopTimeDiffDuration(from, to time.Time) time.Duration {
-	f := from.Hour()*60 + from.Minute()
-	t := to.Hour()*60 + to.Minute()
-
-	if t < f {
-		t += 60 * 24
-	}
-
-	return time.Duration(t-f) * time.Minute
 }

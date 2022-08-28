@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	"github.com/uber/h3-go"
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
 )
 
 type ResolutionConfig struct {

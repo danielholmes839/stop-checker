@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"stop-checker.com/model"
+	"stop-checker.com/db/model"
 )
 
 type Client struct {

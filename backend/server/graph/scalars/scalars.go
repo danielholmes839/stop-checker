@@ -2,20 +2,23 @@ package scalars
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"stop-checker.com/db/model"
 )
 
-func MarshalTime(t time.Time) graphql.Marshaler {
+func MarshalTime(t model.Time) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		w.Write([]byte(t.Format("\"3:04 PM\"")))
+		str := t.String()
+		w.Write([]byte(fmt.Sprintf("\"%s\"", str)))
 	})
 }
 
-func UnmarshalTime(v interface{}) (time.Time, error) {
-	return time.Now(), errors.New("Unmarshalling 'Time' not implemented")
+func UnmarshalTime(v interface{}) (model.Time, error) {
+	return model.NewTime(0, 0), errors.New("Unmarshalling 'Time' not implemented")
 }
 
 func MarshalDate(t time.Time) graphql.Marshaler {
@@ -53,7 +56,10 @@ func UnmarshalDateTime(v interface{}) (time.Time, error) {
 		return time.Time{}, errors.New("'DateTime' scalar must be a string")
 	}
 
-	location, _ := time.LoadLocation("America/Montreal")
+	location, err := time.LoadLocation("America/Toronto")
+	if err != nil {
+		panic(err)
+	}
 
 	t, err := time.Parse("2006-01-02T15:04:00Z", date)
 
