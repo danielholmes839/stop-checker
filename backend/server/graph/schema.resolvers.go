@@ -10,6 +10,7 @@ import (
 
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
+	"stop-checker.com/features/staticmaps"
 	"stop-checker.com/features/travel"
 	"stop-checker.com/server/graph/generated"
 	"stop-checker.com/server/graph/sdl"
@@ -223,6 +224,38 @@ func (r *stopRouteResolver) Direction(ctx context.Context, obj *model.StopRoute)
 // Schedule is the resolver for the schedule field.
 func (r *stopRouteResolver) Schedule(ctx context.Context, obj *model.StopRoute) (*db.ScheduleResults, error) {
 	return r.ScheduleIndex.Get(obj.StopId, obj.RouteId), nil
+}
+
+// LiveMap is the resolver for the liveMap field.
+func (r *stopRouteResolver) LiveMap(ctx context.Context, obj *model.StopRoute) (*string, error) {
+	stop, _ := r.Stops.Get(obj.StopId)
+	route, _ := r.Routes.Get(obj.RouteId)
+
+	buses, err := r.OCTranspo.StopRouteData(stop.Code, route.Name)
+	if err != nil {
+		return nil, nil
+	}
+
+	m, err := staticmaps.NewStopRouteMap(600, 400, stop.Location, buses)
+	if err != nil {
+		return nil, nil
+	}
+
+	url := m.Encode(r.GOOGLE_MAPS_API_KEY)
+	return &url, nil
+}
+
+// LiveBuses is the resolver for the liveBuses field.
+func (r *stopRouteResolver) LiveBuses(ctx context.Context, obj *model.StopRoute) ([]*model.Bus, error) {
+	stop, _ := r.Stops.Get(obj.StopId)
+	route, _ := r.Routes.Get(obj.RouteId)
+
+	buses, err := r.OCTranspo.StopRouteData(stop.Code, route.Name)
+	if err != nil {
+		return nil, nil
+	}
+
+	return ref(buses), nil
 }
 
 // Next is the resolver for the next field.
@@ -453,13 +486,3 @@ type transitResolver struct{ *Resolver }
 type travelScheduleResolver struct{ *Resolver }
 type travelScheduleLegResolver struct{ *Resolver }
 type tripResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *stopTimeResolver) Time(ctx context.Context, obj *model.StopTime) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented: Time - time"))
-}

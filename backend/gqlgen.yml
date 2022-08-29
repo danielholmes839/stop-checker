@@ -56,6 +56,8 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  Bus:
+    model: "stop-checker.com/db/model.Bus"
   Location:
     model: "stop-checker.com/db/model.Location"
   LocationInput:

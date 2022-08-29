@@ -27,12 +27,21 @@ type Stop {
     routes: [StopRoute!]!
 }
 
+type Bus {
+    headsign: String!
+    arrival: Time!
+    lastUpdated: Time!
+    location: Location
+}
+
 type StopRoute { 
     stop: Stop!
     route: Route!
     direction: ID!
     headsign: String!
     schedule: StopRouteSchedule!
+    liveMap: String
+    liveBuses: [Bus!]!
 }
 
 type StopRouteSchedule {
@@ -63,6 +72,7 @@ type StopTime {
     trip: Trip!
     time: Time!
     sequence: Int!
+    overflow: Boolean!
 }
 
 type Service {

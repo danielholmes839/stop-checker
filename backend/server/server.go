@@ -2,10 +2,12 @@ package server
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"stop-checker.com/db"
+	"stop-checker.com/features/octranspo"
 	"stop-checker.com/features/travel"
 	"stop-checker.com/server/graph"
 	"stop-checker.com/server/graph/generated"
@@ -21,6 +23,14 @@ func (s *Server) HandleGraphQL() {
 	resolvers := handler.NewDefaultServer(generated.NewExecutableSchema(
 		generated.Config{
 			Resolvers: &graph.Resolver{
+				Config: graph.Config{
+					GOOGLE_MAPS_API_KEY: "AIzaSyB1ha-Cb9kOv0dPi-mBZQ4JHukDRVEJ4ME",
+				},
+				OCTranspo: octranspo.NewAPI(time.Second*30, &octranspo.Client{
+					Endpoint:          "https://api.octranspo1.com/v2.0/GetNextTripsForStopAllRoutes",
+					OCTRANSPO_APP_ID:  "13d12d72",
+					OCTRANSPO_API_KEY: "508a0741b6945609192422d77f3a1da4",
+				}),
 				Database: database,
 				Planner: travel.NewPlanner(&travel.PlannerConfig{
 					ScheduleIndex:     database.ScheduleIndex,
