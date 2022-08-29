@@ -61,9 +61,6 @@ func (s *Scheduler) Arrive(by time.Time, route Route) (Schedule, error) {
 }
 
 func (s *Scheduler) arrive(by time.Time, fixed []*FixedLeg) ([]*Leg, error) {
-	fmt.Println("-----------------------------")
-	fmt.Println("--- Arrive ---", by)
-
 	planned := []*Leg{}
 	acc := by
 
