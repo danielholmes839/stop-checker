@@ -16,9 +16,34 @@ import (
 	"stop-checker.com/server/graph/sdl"
 )
 
+// LastUpdatedMinutes is the resolver for the lastUpdatedMinutes field.
+func (r *busResolver) LastUpdatedMinutes(ctx context.Context, obj *model.Bus) (int, error) {
+	now := model.NewTimeFromDateTime(time.Now().Local())
+	diff := int(model.TimeDiff(obj.LastUpdated, now).Minutes())
+	return diff, nil
+}
+
+// LastUpdatedMessage is the resolver for the lastUpdatedMessage field.
+func (r *busResolver) LastUpdatedMessage(ctx context.Context, obj *model.Bus) (string, error) {
+	now := model.NewTimeFromDateTime(time.Now().Local())
+	diff := int(model.TimeDiff(obj.LastUpdated, now).Minutes())
+
+	if diff <= 1 {
+		return "Updated just now", nil
+	}
+
+	return fmt.Sprintf("Updated %d minutes ago", diff), nil
+}
+
 // Distance is the resolver for the distance field.
-func (r *locationResolver) Distance(ctx context.Context, obj *model.Location, location model.Location) (float64, error) {
-	return obj.Distance(location), nil
+func (r *busResolver) Distance(ctx context.Context, obj *model.Bus) (*float64, error) {
+	if obj.Location == nil {
+		return nil, nil
+	}
+
+	distance := obj.Destination.Distance(*obj.Location)
+
+	return &distance, nil
 }
 
 // Stop is the resolver for the stop field.
@@ -231,12 +256,12 @@ func (r *stopRouteResolver) LiveMap(ctx context.Context, obj *model.StopRoute) (
 	stop, _ := r.Stops.Get(obj.StopId)
 	route, _ := r.Routes.Get(obj.RouteId)
 
-	buses, err := r.OCTranspo.StopRouteData(stop.Code, route.Name)
+	buses, err := r.OCTranspo.StopRouteData(stop, route.Name)
 	if err != nil {
 		return nil, nil
 	}
 
-	m, err := staticmaps.NewStopRouteMap(600, 400, stop.Location, buses)
+	m, err := staticmaps.NewStopRouteMap(800, 400, stop.Location, buses)
 	if err != nil {
 		return nil, nil
 	}
@@ -250,7 +275,7 @@ func (r *stopRouteResolver) LiveBuses(ctx context.Context, obj *model.StopRoute)
 	stop, _ := r.Stops.Get(obj.StopId)
 	route, _ := r.Routes.Get(obj.RouteId)
 
-	buses, err := r.OCTranspo.StopRouteData(stop.Code, route.Name)
+	buses, err := r.OCTranspo.StopRouteData(stop, route.Name)
 	if err != nil {
 		return nil, nil
 	}
@@ -432,8 +457,8 @@ func (r *tripResolver) Direction(ctx context.Context, obj *model.Trip) (string, 
 	return obj.DirectionId, nil
 }
 
-// Location returns generated.LocationResolver implementation.
-func (r *Resolver) Location() generated.LocationResolver { return &locationResolver{r} }
+// Bus returns generated.BusResolver implementation.
+func (r *Resolver) Bus() generated.BusResolver { return &busResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
@@ -474,7 +499,7 @@ func (r *Resolver) TravelScheduleLeg() generated.TravelScheduleLegResolver {
 // Trip returns generated.TripResolver implementation.
 func (r *Resolver) Trip() generated.TripResolver { return &tripResolver{r} }
 
-type locationResolver struct{ *Resolver }
+type busResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type routeResolver struct{ *Resolver }
 type serviceResolver struct{ *Resolver }

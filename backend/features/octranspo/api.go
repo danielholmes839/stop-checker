@@ -31,8 +31,8 @@ func NewAPI(ttl time.Duration, client *Client) *API {
 	}
 }
 
-func (api *API) StopData(stopCode string) (map[string][]model.Bus, error) {
-	entry := api.getEntry(stopCode)
+func (api *API) StopData(stop model.Stop) (map[string][]model.Bus, error) {
+	entry := api.getEntry(stop)
 	entry.Ready.Wait()
 
 	if entry.Error != nil {
@@ -42,8 +42,8 @@ func (api *API) StopData(stopCode string) (map[string][]model.Bus, error) {
 }
 
 // Request by stop code and route name
-func (api *API) StopRouteData(stopCode string, routeName string) ([]model.Bus, error) {
-	routes, err := api.StopData(stopCode)
+func (api *API) StopRouteData(stop model.Stop, routeName string) ([]model.Bus, error) {
+	routes, err := api.StopData(stop)
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +56,13 @@ func (api *API) StopRouteData(stopCode string, routeName string) ([]model.Bus, e
 	return buses, nil
 }
 
-func (api *API) getEntry(stopCode string) *entry {
+func (api *API) getEntry(stop model.Stop) *entry {
 	api.lock.Lock()
 	defer api.lock.Unlock()
 
-	entry, err := api.getCurrentEntry(stopCode)
+	entry, err := api.getCurrentEntry(stop.Code)
 	if err != nil {
-		return api.update(stopCode)
+		return api.update(stop)
 	}
 	return entry
 }
@@ -80,7 +80,7 @@ func (api *API) getCurrentEntry(stopCode string) (*entry, error) {
 	return entry, nil
 }
 
-func (api *API) update(stopCode string) *entry {
+func (api *API) update(stop model.Stop) *entry {
 	entry := &entry{
 		Routes:  nil,
 		Error:   nil,
@@ -90,10 +90,10 @@ func (api *API) update(stopCode string) *entry {
 
 	entry.Ready.Add(1)
 
-	api.data[stopCode] = entry
+	api.data[stop.Code] = entry
 
 	go func() {
-		routes, err := api.client.Request(stopCode)
+		routes, err := api.client.Request(stop)
 		entry.Routes = routes
 		entry.Error = err
 		entry.Ready.Done()

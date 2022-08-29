@@ -16,7 +16,6 @@ enum RouteType {
 type Location {
     latitude: Float!
     longitude: Float!
-    distance(location: LocationInput!): Float!
 }
 
 type Stop {
@@ -31,6 +30,9 @@ type Bus {
     headsign: String!
     arrival: Time!
     lastUpdated: Time!
+    lastUpdatedMinutes: Int!
+    lastUpdatedMessage: String!
+    distance: Float
     location: Location
 }
 

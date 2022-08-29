@@ -41,7 +41,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	Location() LocationResolver
+	Bus() BusResolver
 	Query() QueryResolver
 	Route() RouteResolver
 	Service() ServiceResolver
@@ -60,14 +60,16 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Bus struct {
-		Arrival     func(childComplexity int) int
-		Headsign    func(childComplexity int) int
-		LastUpdated func(childComplexity int) int
-		Location    func(childComplexity int) int
+		Arrival            func(childComplexity int) int
+		Distance           func(childComplexity int) int
+		Headsign           func(childComplexity int) int
+		LastUpdated        func(childComplexity int) int
+		LastUpdatedMessage func(childComplexity int) int
+		LastUpdatedMinutes func(childComplexity int) int
+		Location           func(childComplexity int) int
 	}
 
 	Location struct {
-		Distance  func(childComplexity int, location model.Location) int
 		Latitude  func(childComplexity int) int
 		Longitude func(childComplexity int) int
 	}
@@ -196,8 +198,10 @@ type ComplexityRoot struct {
 	}
 }
 
-type LocationResolver interface {
-	Distance(ctx context.Context, obj *model.Location, location model.Location) (float64, error)
+type BusResolver interface {
+	LastUpdatedMinutes(ctx context.Context, obj *model.Bus) (int, error)
+	LastUpdatedMessage(ctx context.Context, obj *model.Bus) (string, error)
+	Distance(ctx context.Context, obj *model.Bus) (*float64, error)
 }
 type QueryResolver interface {
 	Stop(ctx context.Context, id string) (*model.Stop, error)
@@ -301,6 +305,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bus.Arrival(childComplexity), true
 
+	case "Bus.distance":
+		if e.complexity.Bus.Distance == nil {
+			break
+		}
+
+		return e.complexity.Bus.Distance(childComplexity), true
+
 	case "Bus.headsign":
 		if e.complexity.Bus.Headsign == nil {
 			break
@@ -315,24 +326,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bus.LastUpdated(childComplexity), true
 
+	case "Bus.lastUpdatedMessage":
+		if e.complexity.Bus.LastUpdatedMessage == nil {
+			break
+		}
+
+		return e.complexity.Bus.LastUpdatedMessage(childComplexity), true
+
+	case "Bus.lastUpdatedMinutes":
+		if e.complexity.Bus.LastUpdatedMinutes == nil {
+			break
+		}
+
+		return e.complexity.Bus.LastUpdatedMinutes(childComplexity), true
+
 	case "Bus.location":
 		if e.complexity.Bus.Location == nil {
 			break
 		}
 
 		return e.complexity.Bus.Location(childComplexity), true
-
-	case "Location.distance":
-		if e.complexity.Location.Distance == nil {
-			break
-		}
-
-		args, err := ec.field_Location_distance_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Location.Distance(childComplexity, args["location"].(model.Location)), true
 
 	case "Location.latitude":
 		if e.complexity.Location.Latitude == nil {
@@ -973,7 +986,7 @@ var sources = []*ast.Source{
 	{Name: "../../schema.graphql", Input: `scalar DateTime     # Input/Output: "2022-07-28T06:30:00Z"
 scalar Date         # Input/Output: "2022-07-28"
 scalar Time         # Output: 6:30pm, 8:30am...
-scalar Color
+scalar Color 
 
 enum ScheduleMode {
     ARRIVE_BY
@@ -988,7 +1001,6 @@ enum RouteType {
 type Location {
     latitude: Float!
     longitude: Float!
-    distance(location: LocationInput!): Float!
 }
 
 type Stop {
@@ -1003,6 +1015,9 @@ type Bus {
     headsign: String!
     arrival: Time!
     lastUpdated: Time!
+    lastUpdatedMinutes: Int!
+    lastUpdatedMessage: String!
+    distance: Float
     location: Location
 }
 
@@ -1156,21 +1171,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
-
-func (ec *executionContext) field_Location_distance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.Location
-	if tmp, ok := rawArgs["location"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
-		arg0, err = ec.unmarshalNLocationInput2stopᚑcheckerᚗcomᚋdbᚋmodelᚐLocation(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["location"] = arg0
-	return args, nil
-}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1549,6 +1549,135 @@ func (ec *executionContext) fieldContext_Bus_lastUpdated(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Bus_lastUpdatedMinutes(ctx context.Context, field graphql.CollectedField, obj *model.Bus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bus_lastUpdatedMinutes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Bus().LastUpdatedMinutes(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bus_lastUpdatedMinutes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bus",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bus_lastUpdatedMessage(ctx context.Context, field graphql.CollectedField, obj *model.Bus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bus_lastUpdatedMessage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Bus().LastUpdatedMessage(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bus_lastUpdatedMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bus",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bus_distance(ctx context.Context, field graphql.CollectedField, obj *model.Bus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bus_distance(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Bus().Distance(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*float64)
+	fc.Result = res
+	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bus_distance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bus",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Bus_location(ctx context.Context, field graphql.CollectedField, obj *model.Bus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Bus_location(ctx, field)
 	if err != nil {
@@ -1589,8 +1718,6 @@ func (ec *executionContext) fieldContext_Bus_location(ctx context.Context, field
 				return ec.fieldContext_Location_latitude(ctx, field)
 			case "longitude":
 				return ec.fieldContext_Location_longitude(ctx, field)
-			case "distance":
-				return ec.fieldContext_Location_distance(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -1682,61 +1809,6 @@ func (ec *executionContext) fieldContext_Location_longitude(ctx context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Location_distance(ctx context.Context, field graphql.CollectedField, obj *model.Location) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Location_distance(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Location().Distance(rctx, obj, fc.Args["location"].(model.Location))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(float64)
-	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Location_distance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Location",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Location_distance_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
 	}
 	return fc, nil
 }
@@ -3263,8 +3335,6 @@ func (ec *executionContext) fieldContext_Stop_location(ctx context.Context, fiel
 				return ec.fieldContext_Location_latitude(ctx, field)
 			case "longitude":
 				return ec.fieldContext_Location_longitude(ctx, field)
-			case "distance":
-				return ec.fieldContext_Location_distance(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -3668,6 +3738,12 @@ func (ec *executionContext) fieldContext_StopRoute_liveBuses(ctx context.Context
 				return ec.fieldContext_Bus_arrival(ctx, field)
 			case "lastUpdated":
 				return ec.fieldContext_Bus_lastUpdated(ctx, field)
+			case "lastUpdatedMinutes":
+				return ec.fieldContext_Bus_lastUpdatedMinutes(ctx, field)
+			case "lastUpdatedMessage":
+				return ec.fieldContext_Bus_lastUpdatedMessage(ctx, field)
+			case "distance":
+				return ec.fieldContext_Bus_distance(ctx, field)
 			case "location":
 				return ec.fieldContext_Bus_location(ctx, field)
 			}
@@ -7583,22 +7659,79 @@ func (ec *executionContext) _Bus(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = ec._Bus_headsign(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "arrival":
 
 			out.Values[i] = ec._Bus_arrival(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "lastUpdated":
 
 			out.Values[i] = ec._Bus_lastUpdated(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "lastUpdatedMinutes":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Bus_lastUpdatedMinutes(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "lastUpdatedMessage":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Bus_lastUpdatedMessage(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "distance":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Bus_distance(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "location":
 
 			out.Values[i] = ec._Bus_location(ctx, field, obj)
@@ -7629,35 +7762,15 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Location_latitude(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "longitude":
 
 			out.Values[i] = ec._Location_longitude(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
-		case "distance":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Location_distance(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10522,6 +10635,22 @@ func (ec *executionContext) marshalODateTime2ᚖtimeᚐTime(ctx context.Context,
 	}
 	res := scalars.MarshalDateTime(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

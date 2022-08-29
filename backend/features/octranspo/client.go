@@ -19,11 +19,11 @@ type Client struct {
 	OCTRANSPO_API_KEY string
 }
 
-func (c *Client) Request(stopCode string) (map[string][]model.Bus, error) {
+func (c *Client) Request(stop model.Stop) (map[string][]model.Bus, error) {
 	q := url.Values{}
 	q.Add("appID", c.OCTRANSPO_APP_ID)
 	q.Add("apiKey", c.OCTRANSPO_API_KEY)
-	q.Add("stopNo", stopCode)
+	q.Add("stopNo", stop.Code)
 	q.Add("format", "XML")
 
 	url := fmt.Sprintf("%s?%s", c.Endpoint, q.Encode())
@@ -44,7 +44,7 @@ func (c *Client) Request(stopCode string) (map[string][]model.Bus, error) {
 		return nil, err
 	}
 
-	return parseResults(parsed.Body.Response.Results), err
+	return parseResults(parsed.Body.Response.Results, stop), err
 }
 
 type soapEnvelope struct {
@@ -93,14 +93,14 @@ type responseTrip struct {
 	Latitude             string `xml:"Latitude"`
 }
 
-func parseResults(results []responseGetRouteSummaryForStopResult) map[string][]model.Bus {
+func parseResults(results []responseGetRouteSummaryForStopResult, destination model.Stop) map[string][]model.Bus {
 	data := map[string][]model.Bus{}
 
 	for _, result := range results {
 		for _, route := range result.Routes.Routes {
 			buses := []model.Bus{}
 			for _, trip := range route.Trips.Trips {
-				buses = append(buses, parseTrip(trip))
+				buses = append(buses, parseTrip(trip, destination))
 			}
 			data[route.RouteNo] = buses
 		}
@@ -154,11 +154,12 @@ func parseTripArrival(trip responseTrip) (time.Time, time.Time) {
 	return arrival, lastUpdated
 }
 
-func parseTrip(trip responseTrip) model.Bus {
+func parseTrip(trip responseTrip, destination model.Stop) model.Bus {
 	loc := parseTripLocation(trip)
 	arrival, lastUpdated := parseTripArrival(trip)
 
 	return model.Bus{
+		Destination: destination,
 		Headsign:    trip.Destination,
 		Arrival:     model.NewTimeFromDateTime(arrival),
 		LastUpdated: model.NewTimeFromDateTime(lastUpdated),
