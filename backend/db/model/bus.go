@@ -1,10 +1,8 @@
 package model
 
-import "time"
-
 type Bus struct {
 	Headsign    string
-	Arrival     time.Time
-	LastUpdated time.Time
+	Arrival     Time
+	LastUpdated Time
 	Location    *Location
 }
