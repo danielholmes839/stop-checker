@@ -146,7 +146,8 @@ func parseTripArrival(trip responseTrip) (time.Time, time.Time) {
 
 	// get arrival time
 	duration, _ := strconv.Atoi(trip.AdjustedScheduleTime)
-	now := time.Now().UTC()
+
+	now := time.Now().In(time.Local)
 	arrival := now.Add(time.Minute * time.Duration(duration))
 	lastUpdated := now.Add(-time.Minute * time.Duration(age))
 
@@ -159,8 +160,8 @@ func parseTrip(trip responseTrip) model.Bus {
 
 	return model.Bus{
 		Headsign:    trip.Destination,
-		Arrival:     arrival,
-		LastUpdated: lastUpdated,
+		Arrival:     model.NewTimeFromDateTime(arrival),
+		LastUpdated: model.NewTimeFromDateTime(lastUpdated),
 		Location:    loc,
 	}
 }
