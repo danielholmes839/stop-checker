@@ -205,9 +205,7 @@ func (s *ScheduleResults) valid(date time.Time, stopTime model.StopTime) bool {
 
 // truncate time leaving only the date
 func truncate(t time.Time) time.Time {
-	_, offset := t.Zone()
-	sub := time.Duration(offset) * time.Second
-	return t.Add(-sub).Truncate(time.Hour * 24).Add(-sub)
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
 
 func reverse(data []model.StopTime) []model.StopTime {
