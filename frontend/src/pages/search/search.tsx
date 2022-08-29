@@ -54,14 +54,16 @@ const StopPreview: React.FC<{
               enabled={enableStopRouteLinks}
               to={`/stop/${stop.id}/route/${route.id}`}
             >
-              <Sign
-                key={route.name}
-                props={{
-                  background: route.background,
-                  name: route.name,
-                  text: route.text,
-                }}
-              />{" "}
+              <span className="text-xs">
+                <Sign
+                  key={route.name}
+                  props={{
+                    background: route.background,
+                    name: route.name,
+                    text: route.text,
+                  }}
+                />
+              </span>{" "}
               {headsign}
             </FlagLink>
           </span>
@@ -139,7 +141,7 @@ const SearchResults: React.FC<{
 };
 
 export const Search: React.FC<{ config: Config }> = ({ config }) => {
-  const { Actions } = config;
+  const { enableMap } = config;
   const [selected, setSelected] = useState<Stop | null>(null);
   const [searchText, setSearchText] = useState("");
   const [searchTextDebounced] = useDebounce(searchText, 200);
@@ -163,8 +165,13 @@ export const Search: React.FC<{ config: Config }> = ({ config }) => {
         placeholder="Search by stop name or code Ex. Rideau A, O-Train, 3000"
         onChange={(event) => setSearchText(event.target.value)}
       />
-      <SearchMap selected={selected} setSelected={setSelected} />
-      {selected && <SelectedStopPreview config={config} id={selected.id} />}
+      {enableMap && (
+        <>
+          <SearchMap selected={selected} setSelected={setSelected} />
+          {selected && <SelectedStopPreview config={config} id={selected.id} />}
+        </>
+      )}
+
       <SearchResults data={data} config={config} />
     </>
   );

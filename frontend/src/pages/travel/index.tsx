@@ -1,7 +1,7 @@
 import { Container } from "components";
 import React from "react";
 import { ScheduleMode, useTravelPlannerQuery } from "client/types";
-import { formatTime } from "format";
+import { formatTime } from "helper";
 import {
   BoardInstructions,
   RideInstructions,
@@ -14,8 +14,8 @@ const TravelPlanner: React.FC = () => {
       origin: "AK151",
       destination: "CD998",
       options: {
-        datetime: "2022-08-27T13:30:00Z",
-        mode: ScheduleMode.ArriveBy,
+        datetime: "2022-08-25T11:57:00Z",
+        mode: ScheduleMode.DepartAt,
       },
     },
   });

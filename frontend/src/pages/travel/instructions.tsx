@@ -3,7 +3,7 @@ import {
   useTravelPlannerDeparturesQuery,
 } from "client/types";
 import { Sign } from "components";
-import { formatDistance, formatTime } from "format";
+import { formatDistance, formatTime } from "helper";
 import { useMemo, useState } from "react";
 
 type InstructionProps = { leg: TravelScheduleLegDefaultFragment };
@@ -67,7 +67,11 @@ export const BoardInstructions: React.FC<InstructionProps> = ({ leg }) => {
         style={{ borderColor: route.background }}
       >
         <InstructionTitle>
-          Board the <Sign props={route} /> at {origin.name}
+          Board the{" "}
+          <span className="text-sm">
+            <Sign props={route} />
+          </span>{" "}
+          at {origin.name}
         </InstructionTitle>
         <InstructionSubtitle>Towards {trip.headsign}</InstructionSubtitle>
 
@@ -126,7 +130,11 @@ export const RideInstructions: React.FC<InstructionProps> = ({ leg }) => {
         style={{ borderColor: route.background }}
       >
         <InstructionTitle>
-          Exit the <Sign props={route} /> at {destination.name}
+          Exit the{" "}
+          <span className="text-sm">
+            <Sign props={route} />
+          </span>{" "}
+          at {destination.name}
         </InstructionTitle>
         <InstructionSubtitle>
           After {prevStopTime.stop.name}

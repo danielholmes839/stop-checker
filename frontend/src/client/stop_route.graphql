@@ -1,0 +1,49 @@
+query StopRoute($stop: ID!, $route: ID!) {
+  stopRoute(stop: $stop, route: $route) {
+    stop {
+      id
+      name
+      code
+    }
+    route {
+      id
+      name
+      text
+      background
+    }
+    headsign
+    ...LiveData
+    schedule {
+      next(limit: 3) {
+        id
+        time
+        overflow
+        trip {
+          service {
+            saturday
+            sunday
+            monday
+            start
+            end
+          }
+        }
+      }
+    }
+  }
+}
+
+fragment LiveData on StopRoute {
+  liveMap
+  liveBuses {
+    headsign
+    arrival
+    lastUpdated
+    lastUpdatedMessage
+    lastUpdatedMinutes
+    distance
+    location {
+      latitude
+      longitude
+    }
+  }
+}

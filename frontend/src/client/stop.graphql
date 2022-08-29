@@ -17,6 +17,9 @@ query StopPage($id: ID!) {
           time
         }
       }
+      liveBuses {
+        headsign
+      }
     }
   }
 }

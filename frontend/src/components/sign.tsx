@@ -16,7 +16,7 @@ export const Sign: React.FC<{ props: SignProps }> = ({ props }) => {
         color: text,
         background: background,
       }}
-      className={`${px} rounded font-semibold text-xs tracking-wider`}
+      className={`${px} rounded font-semibold tracking-wider`}
     >
       {name}
     </span>

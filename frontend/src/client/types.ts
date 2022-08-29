@@ -22,21 +22,18 @@ export type Scalars = {
 export type Bus = {
   __typename?: 'Bus';
   arrival: Scalars['Time'];
+  distance?: Maybe<Scalars['Float']>;
   headsign: Scalars['String'];
   lastUpdated: Scalars['Time'];
+  lastUpdatedMessage: Scalars['String'];
+  lastUpdatedMinutes: Scalars['Int'];
   location?: Maybe<Location>;
 };
 
 export type Location = {
   __typename?: 'Location';
-  distance: Scalars['Float'];
   latitude: Scalars['Float'];
   longitude: Scalars['Float'];
-};
-
-
-export type LocationDistanceArgs = {
-  location: LocationInput;
 };
 
 export type LocationInput = {
@@ -187,6 +184,7 @@ export type StopSearchPayload = {
 export type StopTime = {
   __typename?: 'StopTime';
   id: Scalars['ID'];
+  overflow: Scalars['Boolean'];
   sequence: Scalars['Int'];
   stop: Stop;
   time: Scalars['Time'];
@@ -269,7 +267,7 @@ export type StopPageQueryVariables = Exact<{
 }>;
 
 
-export type StopPageQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> } }> } | null };
+export type StopPageQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> }, liveBuses: Array<{ __typename?: 'Bus', headsign: string }> }> } | null };
 
 export type StopPreviewQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -279,6 +277,16 @@ export type StopPreviewQueryVariables = Exact<{
 export type StopPreviewQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any } }> } | null };
 
 export type StopPreviewFragment = { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any } }> };
+
+export type StopRouteQueryVariables = Exact<{
+  stop: Scalars['ID'];
+  route: Scalars['ID'];
+}>;
+
+
+export type StopRouteQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', headsign: string, liveMap?: string | null, stop: { __typename?: 'Stop', id: string, name: string, code: string }, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any, overflow: boolean, trip: { __typename?: 'Trip', service: { __typename?: 'Service', saturday: boolean, sunday: boolean, monday: boolean, start: any, end: any } } }> }, liveBuses: Array<{ __typename?: 'Bus', headsign: string, arrival: any, lastUpdated: any, lastUpdatedMessage: string, lastUpdatedMinutes: number, distance?: number | null, location?: { __typename?: 'Location', latitude: number, longitude: number } | null }> } | null };
+
+export type LiveDataFragment = { __typename?: 'StopRoute', liveMap?: string | null, liveBuses: Array<{ __typename?: 'Bus', headsign: string, arrival: any, lastUpdated: any, lastUpdatedMessage: string, lastUpdatedMinutes: number, distance?: number | null, location?: { __typename?: 'Location', latitude: number, longitude: number } | null }> };
 
 export type TextSearchQueryVariables = Exact<{
   text: Scalars['String'];
@@ -321,6 +329,23 @@ export const StopPreviewFragmentDoc = gql`
       name
       text
       background
+    }
+  }
+}
+    `;
+export const LiveDataFragmentDoc = gql`
+    fragment LiveData on StopRoute {
+  liveMap
+  liveBuses {
+    headsign
+    arrival
+    lastUpdated
+    lastUpdatedMessage
+    lastUpdatedMinutes
+    distance
+    location {
+      latitude
+      longitude
     }
   }
 }
@@ -409,6 +434,9 @@ export const StopPageDocument = gql`
           time
         }
       }
+      liveBuses {
+        headsign
+      }
     }
   }
 }
@@ -427,6 +455,45 @@ export const StopPreviewDocument = gql`
 
 export function useStopPreviewQuery(options: Omit<Urql.UseQueryArgs<StopPreviewQueryVariables>, 'query'>) {
   return Urql.useQuery<StopPreviewQuery, StopPreviewQueryVariables>({ query: StopPreviewDocument, ...options });
+};
+export const StopRouteDocument = gql`
+    query StopRoute($stop: ID!, $route: ID!) {
+  stopRoute(stop: $stop, route: $route) {
+    stop {
+      id
+      name
+      code
+    }
+    route {
+      id
+      name
+      text
+      background
+    }
+    headsign
+    ...LiveData
+    schedule {
+      next(limit: 3) {
+        id
+        time
+        overflow
+        trip {
+          service {
+            saturday
+            sunday
+            monday
+            start
+            end
+          }
+        }
+      }
+    }
+  }
+}
+    ${LiveDataFragmentDoc}`;
+
+export function useStopRouteQuery(options: Omit<Urql.UseQueryArgs<StopRouteQueryVariables>, 'query'>) {
+  return Urql.useQuery<StopRouteQuery, StopRouteQueryVariables>({ query: StopRouteDocument, ...options });
 };
 export const TextSearchDocument = gql`
     query TextSearch($text: String!, $page: PageInput!) {

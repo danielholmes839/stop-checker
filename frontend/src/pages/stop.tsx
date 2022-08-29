@@ -17,10 +17,10 @@ const StopPageResponse: React.FC<{ data: StopPageQuery }> = ({ data }) => {
         {stop.routes
           .sort((a, b) => a.route.name.localeCompare(b.route.name))
           .map((stopRoute) => {
-            const { route, headsign, schedule } = stopRoute;
+            const { route, headsign, schedule, liveBuses } = stopRoute;
             return (
               <Card>
-                <h1>
+                <h1 className="text-xs">
                   <Sign
                     props={{
                       background: route.background,
@@ -31,17 +31,26 @@ const StopPageResponse: React.FC<{ data: StopPageQuery }> = ({ data }) => {
                   <span className="text-sm font-semibold">{headsign}</span>
                 </h1>
                 <div>
-                  {schedule.next.length > 0 ? (
-                    schedule.next.map((stopTime) => (
-                      <span className="mr-2 text-sm inline-block">
-                        {stopTime.time}
+                  <div className="mt-1">
+                    {schedule.next.length > 0 ? (
+                      schedule.next.map((stopTime) => (
+                        <span className="mr-2 text-sm inline-block">
+                          {stopTime.time}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm">
+                        No more stops today or tomorrow
                       </span>
-                    ))
-                  ) : (
-                    <span className="text-sm">
-                      No more stops today or tomorrow
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">
+                      {liveBuses.length === 1
+                        ? "1 Live bus"
+                        : `${liveBuses.length} Live buses`}
                     </span>
-                  )}
+                  </div>
                   <div>
                     <Link to={`/stop/${stop.id}/route/${route.id}`}>
                       <button

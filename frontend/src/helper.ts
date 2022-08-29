@@ -29,3 +29,7 @@ export const formatDistance = (distance: number): string => {
 export const formatRouteType = (rt: RouteType): string => {
   return rt.toLowerCase();
 };
+
+export const currentDate = (): string => {
+  return "";
+};
