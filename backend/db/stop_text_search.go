@@ -122,7 +122,7 @@ func (s *StopTextIndex) tokenize(text string) []string {
 
 	for _, token := range strings.Split(text, " ") {
 		token = s.removePunctuation.ReplaceAllString(token, "")
-		if len(token) <= 2 {
+		if len(token) == 0 {
 			continue
 		}
 		tokens = append(tokens, token)
