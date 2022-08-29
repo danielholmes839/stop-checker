@@ -17,7 +17,7 @@ func assertEqualSchedule(t *testing.T, s1, s2 Schedule) {
 }
 
 func TestPlanner(t *testing.T) {
-	database, _ := db.NewDatabaseFromFilesystem("../db/data")
+	database, _ := db.NewDatabaseFromFilesystem("../../db/data")
 	planner := NewPlanner(&PlannerConfig{
 		ScheduleIndex:     database.ScheduleIndex,
 		StopLocationIndex: database.StopLocationIndex,
@@ -33,20 +33,26 @@ func TestPlanner(t *testing.T) {
 	})
 
 	t.Run("pleasant park -> uottawa", func(t *testing.T) {
-		depart, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-25 12:12", database.TZ()) // 8:12 am EST
-		arrive, _ := time.ParseInLocation("2006-01-02 15:04", "2022-08-25 12:28", database.TZ()) // 8:28 am EST
+		depart, _ := time.Parse("2006-01-02T15:04:00Z", "2022-08-25T11:57:00Z") // 8:12 am EST
+		depart = depart.In(database.TZ())
+
+		arrive, _ := time.Parse("2006-01-02T15:04:00Z", "2022-08-25T12:18:00Z") // 8:28 am EST
+		arrive = arrive.In(database.TZ())
+
+		t.Log(depart)
+		t.Log(arrive)
 
 		p1, err := planner.Depart(depart, "AK151", "CD998")
 		assert.NoError(t, err)
 
-		// assert.Equal(t, "AF920", p1[0].Destination) // hurdman B
-		// assert.Equal(t, "AF990", p1[1].Destination) //
-		// assert.Equal(t, "CD998", p1[2].Destination)
+		assert.Equal(t, "AF920", p1[0].Destination) // hurdman B
+		assert.Equal(t, "AF990", p1[1].Destination) //
+		assert.Equal(t, "CD998", p1[2].Destination)
 
-		s1, err := scheduler.Depart(depart, p1)
+		s1, _ := scheduler.Depart(depart, p1)
 		assert.NoError(t, err)
-		// assert.Equal(t, depart, s1.Departure())
-		// assert.Equal(t, arrive, s1.Arrival())
+		assert.Equal(t, depart, s1.Departure())
+		assert.Equal(t, arrive, s1.Arrival())
 
 		s2, err := scheduler.Arrive(arrive, p1)
 		assert.NoError(t, err)

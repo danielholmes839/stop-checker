@@ -200,9 +200,6 @@ func (p *Planner) expandTransit(n *node) []*node {
 
 		// calculate the time spent waiting for the trip
 		waitDuration := tripOrigin.Sub(originArrival)
-		if waitDuration > time.Hour*24 {
-			continue
-		}
 
 		for _, tripDestination := range p.expandTrip(tripOrigin.StopTime) {
 			// calculate the time spent in transit and the destination arrival time

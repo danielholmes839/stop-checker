@@ -68,7 +68,6 @@ func (s *Scheduler) arrive(by time.Time, fixed []*FixedLeg) ([]*Leg, error) {
 	for i := len(fixed) - 1; i >= 0; i-- {
 		leg := fixed[i]
 		plan, err := s.planArrive(acc, leg)
-		fmt.Printf("%#v\n", plan)
 
 		if err != nil {
 			return nil, err
@@ -172,7 +171,6 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 
 	// planned leg by transit
 	previous, err := s.scheduleIndex.Get(fixed.Destination, fixed.RouteId).Previous(acc)
-	fmt.Println(acc.After(previous.Time), previous, acc)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +192,6 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 
 	excess := model.TimeDiff(destinationArrival.Time, model.NewTimeFromDateTime(acc))
 	transitDuration := model.TimeDiff(originArrival.Time, destinationArrival.Time)
-	fmt.Println("excess", excess, "transit", transitDuration, "destinataion arrival", destinationArrival.String(), "acc", acc)
 
 	// planned leg
 	return &Leg{
@@ -233,6 +230,5 @@ func (s *Scheduler) stopTime(stopId string, all []model.StopTime) (model.StopTim
 			return stopTime, nil
 		}
 	}
-	fmt.Println(len(all))
 	return model.StopTime{}, fmt.Errorf("stoptime not found stop:%s", stopId)
 }
