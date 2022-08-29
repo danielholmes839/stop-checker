@@ -1,18 +1,7 @@
 query TextSearch($text: String!, $page: PageInput!) {
   searchStopText(text: $text, page: $page) {
     results {
-      id
-      name
-      code
-      routes {
-        direction
-        headsign
-        route {
-          name
-          background
-          text
-        }
-      }
+      ...StopPreview
     }
   }
 }

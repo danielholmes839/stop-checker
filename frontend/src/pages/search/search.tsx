@@ -1,21 +1,46 @@
 import React, { useState } from "react";
 import {
   Stop,
+  StopPreviewFragment,
   TextSearchQuery,
   useStopPreviewQuery,
   useTextSearchQuery,
 } from "client/types";
-import { Sign, Card, QueryResponseWrapper } from "components";
+import { Sign, Card } from "components";
 import { useDebounce } from "use-debounce";
 
-import { SearchConfig } from "./config";
 import { SearchMap } from "./map";
+import { Link } from "react-router-dom";
 
-const StopPreview: React.FC<{ stop: Stop; config: SearchConfig }> = ({
-  stop,
-  config,
+type Config = {
+  enableMap: boolean;
+  enableStopRouteLinks: boolean;
+  Actions: StopPreviewActions;
+};
+
+type StopPreviewActions = React.FC<{ stop: StopPreviewFragment }>;
+
+const FlagLink: React.FC<{ to: string; enabled: boolean }> = ({
+  to,
+  enabled,
+  children,
 }) => {
+  if (enabled) {
+    return (
+      <Link to={to} className="text-primary-700">
+        {children}
+      </Link>
+    );
+  }
+  return <>{children}</>;
+};
+
+const StopPreview: React.FC<{
+  stop: StopPreviewFragment;
+  config: Config;
+}> = ({ stop, config }) => {
   const { id, name, code, routes } = stop;
+  const { Actions, enableStopRouteLinks } = config;
   return (
     <Card key={id}>
       <h1 className="font-semibold mb-1">
@@ -23,53 +48,50 @@ const StopPreview: React.FC<{ stop: Stop; config: SearchConfig }> = ({
       </h1>
 
       <div>
-        {routes.map(({ direction, headsign, route }) => (
+        {routes.map(({ headsign, route }) => (
           <span className="text-sm mr-3 inline-block">
-            <Sign
-              key={route.name + direction}
-              props={{
-                background: route.background,
-                name: route.name,
-                text: route.text,
-              }}
-            />{" "}
-            {headsign}
+            <FlagLink
+              enabled={enableStopRouteLinks}
+              to={`/stop/${stop.id}/route/${route.id}`}
+            >
+              <Sign
+                key={route.name}
+                props={{
+                  background: route.background,
+                  name: route.name,
+                  text: route.text,
+                }}
+              />{" "}
+              {headsign}
+            </FlagLink>
           </span>
         ))}
       </div>
       <div>
-        <button
-          className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm"
-          onClick={() => {
-            config.action(stop as Stop);
-          }}
-        >
-          {config.actionName}
-        </button>
+        <Actions stop={stop} />
       </div>
     </Card>
   );
 };
-const TextSearchQueryResponse: React.FC<{
-  data: TextSearchQuery;
-  config: SearchConfig;
-}> = ({ data, config }) => {
+
+export const StopPreviewDefaultActions: StopPreviewActions = ({ stop }) => {
+  const to =
+    stop.routes.length > 1
+      ? `/stop/${stop.id}`
+      : `/stop/${stop.id}/route/${stop.routes[0].route.id}`;
+
   return (
-    <div>
-      {data.searchStopText.results.map((stop) => {
-        return (
-          <div className="mb-3">
-            <StopPreview stop={stop as Stop} config={config} />
-          </div>
-        );
-      })}
-    </div>
+    <Link to={to}>
+      <button className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm">
+        View
+      </button>
+    </Link>
   );
 };
 
 const SelectedStopPreview: React.FC<{
   id: string;
-  config: SearchConfig;
+  config: Config;
 }> = ({ id, config }) => {
   const [{ data }, _] = useStopPreviewQuery({
     variables: {
@@ -82,20 +104,47 @@ const SelectedStopPreview: React.FC<{
     return <></>;
   }
 
+  if (!debounced.stop) {
+    return <></>;
+  }
+
   return (
     <div className="mb-3">
-      <StopPreview stop={debounced.stop as Stop} config={config} />
+      <StopPreview stop={debounced.stop} config={config} />
       <hr className="bg-primary-500 rounded-full mt-3" style={{ height: 2 }} />
     </div>
   );
 };
 
-export const Search: React.FC<{ config: SearchConfig }> = ({ config }) => {
+const SearchResults: React.FC<{
+  data: TextSearchQuery | undefined;
+  config: Config;
+}> = ({ data, config }) => {
+  if (!data) {
+    return <></>;
+  }
+
+  return (
+    <div>
+      {data &&
+        data.searchStopText.results.map((stop) => {
+          return (
+            <div className="mb-3">
+              <StopPreview stop={stop as Stop} config={config} />
+            </div>
+          );
+        })}
+    </div>
+  );
+};
+
+export const Search: React.FC<{ config: Config }> = ({ config }) => {
+  const { Actions } = config;
   const [selected, setSelected] = useState<Stop | null>(null);
   const [searchText, setSearchText] = useState("");
   const [searchTextDebounced] = useDebounce(searchText, 200);
 
-  const [response, _] = useTextSearchQuery({
+  const [{ data }, _] = useTextSearchQuery({
     variables: {
       text: searchTextDebounced,
       page: {
@@ -114,18 +163,9 @@ export const Search: React.FC<{ config: SearchConfig }> = ({ config }) => {
         placeholder="Search by stop name or code Ex. Rideau A, O-Train, 3000"
         onChange={(event) => setSearchText(event.target.value)}
       />
-      <SearchMap
-        config={config}
-        selected={selected}
-        setSelected={setSelected}
-      />
+      <SearchMap selected={selected} setSelected={setSelected} />
       {selected && <SelectedStopPreview config={config} id={selected.id} />}
-      <QueryResponseWrapper response={response}>
-        <TextSearchQueryResponse
-          data={response.data as TextSearchQuery}
-          config={config}
-        />
-      </QueryResponseWrapper>
+      <SearchResults data={data} config={config} />
     </>
   );
 };

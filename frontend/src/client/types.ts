@@ -19,6 +19,14 @@ export type Scalars = {
   Time: any;
 };
 
+export type Bus = {
+  __typename?: 'Bus';
+  arrival: Scalars['Time'];
+  headsign: Scalars['String'];
+  lastUpdated: Scalars['Time'];
+  location?: Maybe<Location>;
+};
+
 export type Location = {
   __typename?: 'Location';
   distance: Scalars['Float'];
@@ -146,6 +154,8 @@ export type StopRoute = {
   __typename?: 'StopRoute';
   direction: Scalars['ID'];
   headsign: Scalars['String'];
+  liveBuses: Array<Bus>;
+  liveMap?: Maybe<Scalars['String']>;
   route: Route;
   schedule: StopRouteSchedule;
   stop: Stop;
@@ -259,14 +269,16 @@ export type StopPageQueryVariables = Exact<{
 }>;
 
 
-export type StopPageQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> } }> } | null };
+export type StopPageQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> } }> } | null };
 
 export type StopPreviewQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type StopPreviewQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', name: string, text: any, background: any } }> } | null };
+export type StopPreviewQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any } }> } | null };
+
+export type StopPreviewFragment = { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any } }> };
 
 export type TextSearchQueryVariables = Exact<{
   text: Scalars['String'];
@@ -274,7 +286,7 @@ export type TextSearchQueryVariables = Exact<{
 }>;
 
 
-export type TextSearchQuery = { __typename?: 'Query', searchStopText: { __typename?: 'StopSearchPayload', results: Array<{ __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', direction: string, headsign: string, route: { __typename?: 'Route', name: string, background: any, text: any } }> }> } };
+export type TextSearchQuery = { __typename?: 'Query', searchStopText: { __typename?: 'StopSearchPayload', results: Array<{ __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any } }> }> } };
 
 export type TravelPlannerQueryVariables = Exact<{
   origin: Scalars['ID'];
@@ -297,6 +309,22 @@ export type TravelPlannerDeparturesQueryVariables = Exact<{
 
 export type TravelPlannerDeparturesQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> } } | null };
 
+export const StopPreviewFragmentDoc = gql`
+    fragment StopPreview on Stop {
+  id
+  name
+  code
+  routes {
+    headsign
+    route {
+      id
+      name
+      text
+      background
+    }
+  }
+}
+    `;
 export const TravelScheduleLegDefaultFragmentDoc = gql`
     fragment TravelScheduleLegDefault on TravelScheduleLeg {
   departure
@@ -370,6 +398,7 @@ export const StopPageDocument = gql`
     routes {
       headsign
       route {
+        id
         name
         text
         background
@@ -391,20 +420,10 @@ export function useStopPageQuery(options: Omit<Urql.UseQueryArgs<StopPageQueryVa
 export const StopPreviewDocument = gql`
     query StopPreview($id: ID!) {
   stop(id: $id) {
-    id
-    name
-    code
-    routes {
-      headsign
-      route {
-        name
-        text
-        background
-      }
-    }
+    ...StopPreview
   }
 }
-    `;
+    ${StopPreviewFragmentDoc}`;
 
 export function useStopPreviewQuery(options: Omit<Urql.UseQueryArgs<StopPreviewQueryVariables>, 'query'>) {
   return Urql.useQuery<StopPreviewQuery, StopPreviewQueryVariables>({ query: StopPreviewDocument, ...options });
@@ -413,22 +432,11 @@ export const TextSearchDocument = gql`
     query TextSearch($text: String!, $page: PageInput!) {
   searchStopText(text: $text, page: $page) {
     results {
-      id
-      name
-      code
-      routes {
-        direction
-        headsign
-        route {
-          name
-          background
-          text
-        }
-      }
+      ...StopPreview
     }
   }
 }
-    `;
+    ${StopPreviewFragmentDoc}`;
 
 export function useTextSearchQuery(options: Omit<Urql.UseQueryArgs<TextSearchQueryVariables>, 'query'>) {
   return Urql.useQuery<TextSearchQuery, TextSearchQueryVariables>({ query: TextSearchDocument, ...options });

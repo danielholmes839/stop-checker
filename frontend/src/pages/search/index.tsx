@@ -1,18 +1,17 @@
 import { Container } from "components";
-import { useNavigate } from "react-router-dom";
-import { Search } from "./search";
+import { Search, StopPreviewDefaultActions } from "./search";
 
 export { Search } from "./search";
 
 export const SearchPage = () => {
-  const navigate = useNavigate();
   return (
     <Container>
       <div className="mt-3">
         <Search
           config={{
-            action: ({ id }) => navigate(`/stop/${id}`),
-            actionName: "View",
+            Actions: StopPreviewDefaultActions,
+            enableMap: true,
+            enableStopRouteLinks: true,
           }}
         />
       </div>

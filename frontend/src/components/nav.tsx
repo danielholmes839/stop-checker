@@ -17,8 +17,8 @@ const NavStandard: React.FC = () => {
   return (
     <div className="hidden w-full md:block md:w-auto">
       <ul className="flex flex-col p-4 mt-4 md:flex-row">
-        {links.map(({ to, text }) => (
-          <li className="ml-5">
+        {links.map(({ to, text }, i) => (
+          <li key={i} className="ml-5">
             <NavLink to={to} className={linkClassNameFunc}>
               {text}
             </NavLink>
@@ -33,8 +33,8 @@ const NavDropDown: React.FC = () => {
   return (
     <div className="md:hidden p-3">
       <ul>
-        {links.map(({ to, text }) => (
-          <li className="mt-1">
+        {links.map(({ to, text }, i) => (
+          <li key={i} className="mt-1">
             <NavLink to={to} className={linkClassNameFunc}>
               {`${text}`}
             </NavLink>
@@ -70,9 +70,9 @@ export const Nav: React.FC = () => {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                fill-rule="evenodd"
+                fillRule="evenodd"
                 d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                clip-rule="evenodd"
+                clipRule="evenodd"
               ></path>
             </svg>
           </button>

@@ -7,7 +7,6 @@ import {
   useLoadScript,
 } from "@react-google-maps/api";
 import { LocationInput, Stop, useLocationSearchQuery } from "client/types";
-import { SearchConfig } from "./config";
 
 const libraries = ["geometry", "drawing"];
 const mapOptions = {
@@ -41,10 +40,9 @@ const initialLocation = {
 };
 
 export const SearchMap: React.FC<{
-  config: SearchConfig;
   selected: Stop | null;
   setSelected: React.Dispatch<React.SetStateAction<Stop | null>>;
-}> = ({ config, selected, setSelected }) => {
+}> = ({ selected, setSelected }) => {
   // load google maps
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyAvCHchRFUDqVPHSs5jpR74ehIY7A5WBIY",
@@ -196,14 +194,6 @@ export const SearchMap: React.FC<{
                 <h1 className="text-gray-700 font-semibold tracking-wide">
                   {selected.name} #{selected.code}
                 </h1>
-                <button
-                  onClick={() => {
-                    config.action(selected as Stop);
-                  }}
-                  className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm"
-                >
-                  {config.actionName}
-                </button>
               </div>
             </InfoWindow>
           )}

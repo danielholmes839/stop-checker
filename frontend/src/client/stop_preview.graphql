@@ -1,15 +1,20 @@
 query StopPreview($id: ID!) {
   stop(id: $id) {
-    id
-    name
-    code
-    routes {
-      headsign
-      route {
-        name
-        text
-        background
-      }
+    ...StopPreview
+  }
+}
+
+fragment StopPreview on Stop {
+  id
+  name
+  code
+  routes {
+    headsign
+    route {
+      id
+      name
+      text
+      background
     }
   }
 }
