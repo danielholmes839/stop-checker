@@ -30,6 +30,7 @@ type Database struct {
 	*ScheduleIndex     // get schedule by stop and route id
 	*StopLocationIndex // get stops by location
 	*StopTextIndex     // get stops by text
+	*ReachIndex
 }
 
 func NewDatabase(base *model.Base, timezone *time.Location) *Database {
@@ -50,14 +51,15 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 	}
 
 	stopRoutesIndex := NewStopRouteIndex(baseIndex, base)
+	stopTimesByTrip := NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
+		return record.TripId
+	})
 
 	return &Database{
 		timezone: timezone,
 
 		// inverted indexes
-		StopTimesByTrip: NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
-			return record.TripId
-		}),
+		StopTimesByTrip: stopTimesByTrip,
 
 		// specialized indexes
 		BaseIndex:      baseIndex,
@@ -68,6 +70,7 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 			EdgeLength: 174.375668,
 		}),
 		StopTextIndex: NewStopTextIndex(base.Stops, stopRoutesIndex),
+		ReachIndex:    NewReachIndex(baseIndex, base, stopTimesByTrip),
 	}
 }
 
