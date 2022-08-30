@@ -15,7 +15,7 @@ func BenchmarkPlanComplete(b *testing.B) {
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,
-		StopTimesFromTrip: database.StopTimesFromTrip,
+		StopTimesFromTrip: database.StopTimesByTrip,
 	})
 
 	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 11:55", database.TZ())

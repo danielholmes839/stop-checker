@@ -23,13 +23,13 @@ func TestPlanner(t *testing.T) {
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,
-		StopTimesFromTrip: database.StopTimesFromTrip,
+		StopTimesFromTrip: database.StopTimesByTrip,
 	})
 
 	scheduler := NewScheduler(&SchedulerConfig{
-		StopIndex:         database.Stops,
-		StopTimesFromTrip: database.StopTimesFromTrip,
-		ScheduleIndex:     database.ScheduleIndex,
+		StopIndex:       database.Stops,
+		StopTimesByTrip: database.StopTimesByTrip,
+		ScheduleIndex:   database.ScheduleIndex,
 	})
 
 	t.Run("pleasant park -> uottawa", func(t *testing.T) {

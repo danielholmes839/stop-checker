@@ -16,7 +16,7 @@ func main() {
 		if _, ok := routeHeadsigns[trip.RouteId]; !ok {
 			routeHeadsigns[trip.RouteId] = map[string]bool{}
 		}
-		stoptimes, _ := database.StopTimesFromTrip.Get(trip.Id)
+		stoptimes, _ := database.StopTimesByTrip.Get(trip.Id)
 
 		key := fmt.Sprintf("hash:%s:%s:%s:%d", trip.DirectionId, stoptimes[0].StopId, stoptimes[len(stoptimes)-1].StopId, len(stoptimes))
 		routeHeadsigns[trip.RouteId][key] = true
