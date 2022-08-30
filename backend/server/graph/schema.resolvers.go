@@ -261,7 +261,7 @@ func (r *stopRouteResolver) LiveMap(ctx context.Context, obj *model.StopRoute) (
 		return nil, nil
 	}
 
-	m, err := staticmaps.NewStopRouteMap(800, 400, stop.Location, buses)
+	m, err := staticmaps.NewStopRouteMap(800, 300, stop.Location, buses)
 	if err != nil {
 		return nil, nil
 	}
@@ -335,7 +335,7 @@ func (r *transitResolver) Trip(ctx context.Context, obj *model.Transit) (*model.
 
 // Departure is the resolver for the departure field.
 func (r *transitResolver) Departure(ctx context.Context, obj *model.Transit) (*model.StopTime, error) {
-	stopTimes, _ := r.StopTimesFromTrip.Get(obj.TripId)
+	stopTimes, _ := r.StopTimesByTrip.Get(obj.TripId)
 	for _, stopTime := range stopTimes {
 		if stopTime.StopId == obj.OriginId {
 			return &stopTime, nil
@@ -346,7 +346,7 @@ func (r *transitResolver) Departure(ctx context.Context, obj *model.Transit) (*m
 
 // Arrival is the resolver for the arrival field.
 func (r *transitResolver) Arrival(ctx context.Context, obj *model.Transit) (*model.StopTime, error) {
-	stopTimes, _ := r.StopTimesFromTrip.Get(obj.TripId)
+	stopTimes, _ := r.StopTimesByTrip.Get(obj.TripId)
 	for _, stopTime := range stopTimes {
 		if stopTime.StopId == obj.DestinationId {
 			return &stopTime, nil
@@ -442,7 +442,7 @@ func (r *tripResolver) Route(ctx context.Context, obj *model.Trip) (*model.Route
 
 // StopTimes is the resolver for the stopTimes field.
 func (r *tripResolver) StopTimes(ctx context.Context, obj *model.Trip) ([]*model.StopTime, error) {
-	stopTimes, _ := r.StopTimesFromTrip.Get(obj.Id)
+	stopTimes, _ := r.StopTimesByTrip.Get(obj.Id)
 	return ref(stopTimes), nil
 }
 

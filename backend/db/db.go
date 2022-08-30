@@ -23,7 +23,7 @@ type Database struct {
 	*BaseIndex
 
 	// inverted indexes
-	StopTimesFromTrip *InvertedIndex[model.StopTime]
+	StopTimesByTrip *InvertedIndex[model.StopTime]
 
 	// specialized indexes
 	*StopRouteIndex    // get routes by stop id
@@ -55,7 +55,7 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 		timezone: timezone,
 
 		// inverted indexes
-		StopTimesFromTrip: NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
+		StopTimesByTrip: NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
 			return record.TripId
 		}),
 

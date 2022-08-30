@@ -9,22 +9,22 @@ import (
 )
 
 type SchedulerConfig struct {
-	StopIndex         *db.Index[model.Stop]
-	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
-	ScheduleIndex     *db.ScheduleIndex
+	StopIndex       *db.Index[model.Stop]
+	StopTimesByTrip *db.InvertedIndex[model.StopTime]
+	ScheduleIndex   *db.ScheduleIndex
 }
 
 type Scheduler struct {
-	stopIndex         *db.Index[model.Stop]
-	stopTimesFromTrip *db.InvertedIndex[model.StopTime]
-	scheduleIndex     *db.ScheduleIndex
+	stopIndex       *db.Index[model.Stop]
+	stopTimesByTrip *db.InvertedIndex[model.StopTime]
+	scheduleIndex   *db.ScheduleIndex
 }
 
 func NewScheduler(config *SchedulerConfig) *Scheduler {
 	return &Scheduler{
-		stopIndex:         config.StopIndex,
-		stopTimesFromTrip: config.StopTimesFromTrip,
-		scheduleIndex:     config.ScheduleIndex,
+		stopIndex:       config.StopIndex,
+		stopTimesByTrip: config.StopTimesByTrip,
+		scheduleIndex:   config.ScheduleIndex,
 	}
 }
 
@@ -115,7 +115,7 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	}
 
 	// all stop times next trip
-	all, _ := s.stopTimesFromTrip.Get(next.TripId)
+	all, _ := s.stopTimesByTrip.Get(next.TripId)
 
 	// origin stop times
 	originArrival, err := s.stopTime(fixed.Origin, all)
@@ -176,7 +176,7 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	}
 
 	// all stop times next trip
-	all, _ := s.stopTimesFromTrip.Get(previous.TripId)
+	all, _ := s.stopTimesByTrip.Get(previous.TripId)
 
 	// origin stop times
 	originArrival, err := s.stopTime(fixed.Origin, all)

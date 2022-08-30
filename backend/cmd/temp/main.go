@@ -2,32 +2,37 @@ package main
 
 import (
 	"fmt"
-	"time"
 
-	"stop-checker.com/features/octranspo"
+	"stop-checker.com/db"
 )
 
 func main() {
-	api := octranspo.NewAPI(time.Second*30, &octranspo.Client{
-		Endpoint:          "https://api.octranspo1.com/v2.0/GetNextTripsForStopAllRoutes",
-		OCTRANSPO_APP_ID:  "13d12d72",
-		OCTRANSPO_API_KEY: "508a0741b6945609192422d77f3a1da4",
-	})
+	database, base := db.NewDatabaseFromFilesystem("./db/data")
 
-	t0 := time.Now()
+	//                    route     headsign direction
+	routeHeadsigns := map[string]map[string]bool{}
 
-	res, err := api.StopData("8810")
+	for _, trip := range base.Trips {
+		if _, ok := routeHeadsigns[trip.RouteId]; !ok {
+			routeHeadsigns[trip.RouteId] = map[string]bool{}
+		}
+		stoptimes, _ := database.StopTimesFromTrip.Get(trip.Id)
 
-	fmt.Println(time.Since(t0))
-
-	t1 := time.Now()
-
-	for i := 0; i < 10; i++ {
-		api.StopData("8810")
+		key := fmt.Sprintf("hash:%s:%s:%s:%d", trip.DirectionId, stoptimes[0].StopId, stoptimes[len(stoptimes)-1].StopId, len(stoptimes))
+		routeHeadsigns[trip.RouteId][key] = true
 	}
 
-	fmt.Println(time.Since(t1))
+	counter := 0
+	for route, headsigns := range routeHeadsigns {
+		if len(headsigns) <= 2 {
+			continue
+		}
+		counter++
+		fmt.Println("--------------------")
+		fmt.Println("route:", route)
+		fmt.Printf("headsigns: %#v\n", headsigns)
+	}
 
-	fmt.Println(res)
-	fmt.Println(err)
+	fmt.Printf("%d/%d routes", counter, len(base.Routes))
+
 }
