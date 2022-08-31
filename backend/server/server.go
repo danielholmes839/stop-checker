@@ -36,11 +36,12 @@ func (s *Server) HandleGraphQL() {
 					StopLocationIndex: database.StopLocationIndex,
 					StopRouteIndex:    database.StopRouteIndex,
 					StopIndex:         database.Stops,
+					ReachIndex:        database.ReachIndex,
 				}),
 				Scheduler: travel.NewScheduler(&travel.SchedulerConfig{
 					StopIndex:       database.Stops,
+					ReachIndex:      database.ReachIndex,
 					StopTimesByTrip: database.StopTimesByTrip,
-					ScheduleIndex:   database.ScheduleIndex,
 				}),
 			},
 		},

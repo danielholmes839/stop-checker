@@ -10,21 +10,21 @@ import (
 
 type SchedulerConfig struct {
 	StopIndex       *db.Index[model.Stop]
+	ReachIndex      *db.ReachIndex
 	StopTimesByTrip *db.InvertedIndex[model.StopTime]
-	ScheduleIndex   *db.ScheduleIndex
 }
 
 type Scheduler struct {
 	stopIndex       *db.Index[model.Stop]
+	reachIndex      *db.ReachIndex
 	stopTimesByTrip *db.InvertedIndex[model.StopTime]
-	scheduleIndex   *db.ScheduleIndex
 }
 
 func NewScheduler(config *SchedulerConfig) *Scheduler {
 	return &Scheduler{
 		stopIndex:       config.StopIndex,
+		reachIndex:      config.ReachIndex,
 		stopTimesByTrip: config.StopTimesByTrip,
-		scheduleIndex:   config.ScheduleIndex,
 	}
 }
 
@@ -108,8 +108,11 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		}, nil
 	}
 
+	// stop times guaranteed to reach between the origin and destination
+	originSchedule, _ := s.reachIndex.ReachableBetweenWithSchedule(fixed.Origin, fixed.Destination, fixed.RouteId)
+
 	// planned leg by transit
-	next, err := s.scheduleIndex.Get(fixed.Origin, fixed.RouteId).Next(acc)
+	next, err := originSchedule.Next(acc)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +120,7 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	// all stop times next trip
 	all, _ := s.stopTimesByTrip.Get(next.TripId)
 
-	// origin stop times
+	// origin stop time
 	originArrival, err := s.stopTime(fixed.Origin, all)
 	if err != nil {
 		return nil, err
@@ -129,9 +132,8 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	waitDuration := model.TimeDiff(model.NewTimeFromDateTime(acc), originArrival.Time)
-	transitDuration := model.TimeDiff(originArrival.Time, destinationArrival.Time)
-	departure := acc.Add(waitDuration)
+	transitDuration := model.TimeDiff(next.StopTime.Time, destinationArrival.Time)
+	departure := next.Time
 
 	// planned leg
 	return &Leg{
@@ -169,8 +171,10 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		}, nil
 	}
 
+	_, destinationSchedule := s.reachIndex.ReachableBetweenWithSchedule(fixed.Origin, fixed.Destination, fixed.RouteId)
+
 	// planned leg by transit
-	previous, err := s.scheduleIndex.Get(fixed.Destination, fixed.RouteId).Previous(acc)
+	previous, err := destinationSchedule.Previous(acc)
 	if err != nil {
 		return nil, err
 	}
@@ -178,20 +182,20 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	// all stop times next trip
 	all, _ := s.stopTimesByTrip.Get(previous.TripId)
 
-	// origin stop times
+	// origin stop time
 	originArrival, err := s.stopTime(fixed.Origin, all)
 	if err != nil {
 		return nil, err
 	}
 
-	// destination stop times
+	// destination stop time
 	destinationArrival, err := s.stopTime(fixed.Destination, all)
 	if err != nil {
 		return nil, err
 	}
 
-	excess := model.TimeDiff(destinationArrival.Time, model.NewTimeFromDateTime(acc))
-	transitDuration := model.TimeDiff(originArrival.Time, destinationArrival.Time)
+	excess := acc.Sub(previous.Time)
+	transitDuration := model.TimeDiff(originArrival.Time, model.NewTimeFromDateTime(previous.Time))
 
 	// planned leg
 	return &Leg{

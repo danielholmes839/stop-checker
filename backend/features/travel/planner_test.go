@@ -27,16 +27,16 @@ func TestPlanner(t *testing.T) {
 
 	scheduler := NewScheduler(&SchedulerConfig{
 		StopIndex:       database.Stops,
+		ReachIndex:      database.ReachIndex,
 		StopTimesByTrip: database.StopTimesByTrip,
-		ScheduleIndex:   database.ScheduleIndex,
 	})
 
 	t.Run("pleasant park -> uottawa", func(t *testing.T) {
 		depart, _ := time.Parse("2006-01-02T15:04:00Z", "2022-08-25T11:57:00Z") // 8:12 am EST
-		depart = depart.In(database.TZ())
+		depart = depart.In(time.Local)
 
 		arrive, _ := time.Parse("2006-01-02T15:04:00Z", "2022-08-25T12:18:00Z") // 8:28 am EST
-		arrive = arrive.In(database.TZ())
+		arrive = arrive.In(time.Local)
 
 		t.Log(depart)
 		t.Log(arrive)
