@@ -44,6 +44,13 @@ func TestPlanner(t *testing.T) {
 		p1, err := planner.Depart(depart, "AK151", "CD998")
 		assert.NoError(t, err)
 
+		p2, err := planner.Arrive(arrive, "AK151", "CD998")
+		assert.NoError(t, err)
+
+		t.Log(p1)
+		t.Log(p2)
+		assert.Equal(t, p1, p2)
+
 		assert.Equal(t, "AF920", p1[0].Destination) // hurdman B
 		assert.Equal(t, "AF990", p1[1].Destination) //
 		assert.Equal(t, "CD998", p1[2].Destination)

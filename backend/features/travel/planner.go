@@ -90,26 +90,63 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error
 		return nil, err
 	}
 
-	return p.route(solution), nil
+	return p.route(solution, true), nil
 }
 
-func (p *Planner) route(solution *dijkstra.Path[*node]) Route {
+func (p *Planner) Arrive(by time.Time, origin, destination string) (Route, error) {
+	initial := &node{
+		stopId:    destination,
+		arrival:   by,
+		walk:      false,
+		routeId:   "",
+		transfers: 0,
+		blockers:  dijkstra.Set{},
+	}
+
+	solution, err := dijkstra.Algorithm(&dijkstra.Config[*node]{
+		Destination: origin, // the target
+		Initial:     initial,
+		Expand:      p.expandReverse,
+		Compare: func(a, b *node) bool {
+			return a.arrival.After(b.arrival)
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return p.route(solution, false), nil
+}
+
+func (p *Planner) route(solution *dijkstra.Path[*node], depart bool) Route {
 	route := Route{}
 
 	for solution.Prev != nil {
-		route = append(route, &FixedLeg{
-			Origin:      solution.Prev.ID(),
-			Destination: solution.ID(),
-			RouteId:     solution.Node.routeId,
-			Walk:        solution.Node.walk,
-		})
+		if depart {
+			route = append(route, &FixedLeg{
+				Origin:      solution.Prev.ID(),
+				Destination: solution.ID(),
+				RouteId:     solution.Node.routeId,
+				Walk:        solution.Node.walk,
+			})
+		} else {
+			route = append(route, &FixedLeg{
+				Origin:      solution.ID(),
+				Destination: solution.Prev.ID(),
+				RouteId:     solution.Node.routeId,
+				Walk:        solution.Node.walk,
+			})
+		}
 
 		solution = solution.Prev
 	}
 
-	// reverse the route
-	for i, j := 0, len(route)-1; i < j; i, j = i+1, j-1 {
-		route[i], route[j] = route[j], route[i]
+	// reverse the route when the solution was found by Depart
+	if depart {
+		for i, j := 0, len(route)-1; i < j; i, j = i+1, j-1 {
+			route[i], route[j] = route[j], route[i]
+		}
 	}
 
 	return route
@@ -117,11 +154,17 @@ func (p *Planner) route(solution *dijkstra.Path[*node]) Route {
 
 func (p *Planner) expand(n *node) []*node {
 	transit := p.expandTransit(n)
-	walking := p.expandWalk(n)
+	walking := p.expandWalk(n, false)
 	return append(transit, walking...)
 }
 
-func (p *Planner) expandWalk(origin *node) []*node {
+func (p *Planner) expandReverse(n *node) []*node {
+	transit := p.expandTransitReverse(n)
+	walking := p.expandWalk(n, true)
+	return append(transit, walking...)
+}
+
+func (p *Planner) expandWalk(origin *node, reverse bool) []*node {
 	stop, _ := p.stopIndex.Get(origin.ID())
 
 	originRoutes := dijkstra.Set{}
@@ -165,12 +208,16 @@ func (p *Planner) expandWalk(origin *node) []*node {
 	connections := []*node{}
 
 	for _, c := range closest {
+		arrival := origin.arrival.Add(c.duration)
+		if reverse {
+			arrival = origin.arrival.Add(-c.duration)
+		}
 		connections = append(connections, &node{
 			walk:      true,
 			routeId:   "",
 			stopId:    c.stopId,
 			transfers: origin.transfers,
-			arrival:   origin.arrival.Add(c.duration),
+			arrival:   arrival,
 			blockers:  origin.blockers,
 		})
 	}
@@ -198,12 +245,63 @@ func (p *Planner) expandTransit(n *node) []*node {
 		// set fastest transit for each stop
 		for _, result := range p.reachIndex.ReachableForwardWithNext(origin, stopRoute.RouteId, originArrival) {
 			destinationId := result.Destination.Id
-			current, ok := fastest[result.Destination.Id]
+			current, ok := fastest[destinationId]
 
 			if !ok || result.Arrival.Before(current.arrival) {
 				fastest[destinationId] = fastestTransit{
 					routeId: stopRoute.RouteId,
 					arrival: result.Arrival,
+				}
+			}
+		}
+	}
+
+	// build the connections
+	connections := []*node{}
+
+	for stopId, trip := range fastest {
+		connection := &node{
+			stopId:    stopId,
+			arrival:   trip.arrival,
+			transfers: n.transfers + 1,
+			blockers:  blockers,
+			routeId:   trip.routeId,
+			walk:      false,
+		}
+
+		connections = append(connections, connection)
+	}
+
+	return connections
+}
+
+func (p *Planner) expandTransitReverse(n *node) []*node {
+	// origin
+	destination := n.ID()
+	destinationArrival := n.Arrival()
+
+	blockers := dijkstra.Set{}             // blocked routes key:stopid, set of directed routeid
+	fastest := map[string]fastestTransit{} // fastest transit option key:stopid
+
+	// expand on routes
+	for _, stopRoute := range p.stopRouteIndex.Get(n.ID()) {
+		// add stop route to blocked stop routes
+		blockers.Add(stopRoute.DirectedID())
+
+		if n.Blocked(stopRoute.DirectedID()) {
+			continue
+		}
+
+		// set fastest transit for each stop
+		for _, result := range p.reachIndex.ReachableBackwardWithPrevious(destination, stopRoute.RouteId, destinationArrival) {
+			originId := result.Origin.Id
+			current, ok := fastest[originId]
+
+			// you can get from this origin to the destination stop faster
+			if !ok || result.Departure.After(current.arrival) {
+				fastest[originId] = fastestTransit{
+					routeId: stopRoute.RouteId,
+					arrival: result.Departure,
 				}
 			}
 		}
