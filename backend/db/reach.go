@@ -18,9 +18,12 @@ type hashStopInfo struct {
 
 type ReachableResults map[string]map[string]hashStopInfo // { reachable stop id: { trip hash: hash stop info }}
 
-type ReachableScheduleResult struct {
-	Schedule *ScheduleResults
-	model.Stop
+type ReachableSchedule struct {
+	Departure   time.Time  // departure time from the origin
+	Arrival     time.Time  // arrival time at the destination
+	Origin      model.Stop // origin stop
+	Destination model.Stop // destination stop
+	Trip        model.Trip
 }
 
 type ReachIndex struct {
@@ -77,6 +80,7 @@ func NewReachIndex(indexes *BaseIndex, base *model.Base, stopTimesByTrip *Invert
 	}
 
 	return &ReachIndex{
+		trips:                     indexes.Trips,
 		stops:                     indexes.Stops,
 		stopTimesByTrip:           stopTimesByTrip,
 		indexesRequiredBySchedule: indexesRequiredBySchedule,
@@ -86,11 +90,11 @@ func NewReachIndex(indexes *BaseIndex, base *model.Base, stopTimesByTrip *Invert
 	}
 }
 
-/*
-Returns the reachable stops given the origin and route.
-If reverse is true then the function returns the stops that can reach the origin by the route
-*/
 func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []model.Stop {
+	/*
+		Returns the reachable stops given the origin and route.
+		If reverse is true then the function returns the stops that can reach the origin by the route
+	*/
 	reachable := r.reachable(originId, routeId, reverse)
 	order := map[string]int{}
 	stops := make([]model.Stop, len(reachable))
@@ -115,34 +119,72 @@ func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []
 	return stops
 }
 
-func (r *ReachIndex) ReachableWithSchedule(originId, routeId string, at time.Time) []ReachableScheduleResult {
+func (r *ReachIndex) ReachableWithSchedule(originId, routeId string, after time.Time) []ReachableSchedule {
+	/*
+		1. get all stop times (as a *ScheduleResults object) for each hash
+		2. get next stop time for each *ScheduleResults for each hash
+		3. calculate the closest for each
+	*/
+
+	origin, _ := r.stops.Get(originId)
+	originScheduleResultsByHash := r.stopTimesByHash(originId, routeId)
+	originNextByHash := map[string]ScheduleResult{}
+
+	for hash, originScheduleResults := range originScheduleResultsByHash {
+		next, err := originScheduleResults.Next(after)
+		if err != nil {
+			continue
+		}
+		originNextByHash[hash] = next
+	}
+
 	reachable := r.reachable(originId, routeId, false)
-	results := []ReachableScheduleResult{}
+	results := []ReachableSchedule{}
 
-	for destinationId, hashInfo := range reachable {
+	for destinationId, destinationHashInfo := range reachable {
 		destination, _ := r.stops.Get(destinationId)
-		scheduleResults := r.reachableScheduleResult(hashInfo)
 
-		results = append(results, ReachableScheduleResult{
-			Schedule: scheduleResults,
-			Stop:     destination,
-		})
+		set := false
+		result := ReachableSchedule{
+			Origin:      origin,
+			Destination: destination,
+		}
+
+		// find the next stop time for this destination
+		for hash, destinationInfo := range destinationHashInfo {
+
+			// if there's no next stop time for this hash
+			if _, ok := originNextByHash[hash]; !ok {
+				continue
+			}
+
+			originNext := originNextByHash[hash]
+			departure := originNext.Time
+			departureStopTime := originNext.StopTime
+
+			if !set || departure.Before(result.Departure) {
+				// find the arrival time
+				stopTimes, _ := r.stopTimesByTrip.Get(departureStopTime.TripId)
+				arrivalStopTime := stopTimes[destinationInfo.index]
+				arrival := departure.Add(model.TimeDiff(departureStopTime.Time, arrivalStopTime.Time))
+
+				// update result fields
+				result.Departure = departure
+				result.Arrival = arrival
+				result.Trip, _ = r.trips.Get(departureStopTime.TripId)
+
+				set = true
+			}
+		}
+
+		if !set {
+			continue
+		}
+
+		results = append(results, result)
 	}
 
 	return results
-}
-
-func (r *ReachIndex) ReachableStopWithSchedule(originId, destinationId, routeId string, at time.Time) ReachableScheduleResult {
-	reachable := r.reachable(originId, routeId, false)
-	hashInfo := reachable[destinationId]
-	destination, _ := r.stops.Get(destinationId)
-
-	scheduleResults := r.reachableScheduleResult(hashInfo)
-
-	return ReachableScheduleResult{
-		Schedule: scheduleResults,
-		Stop:     destination,
-	}
 }
 
 func (r *ReachIndex) reachable(originId string, routeId string, reverse bool) ReachableResults {
@@ -195,6 +237,33 @@ func (r *ReachIndex) reachableScheduleResult(hashInfo map[string]hashStopInfo) *
 		indexesRequiredBySchedule: r.indexesRequiredBySchedule,
 		results:                   destinationStopTimes,
 	}
+}
+
+// {hash: schedule results}
+func (r *ReachIndex) stopTimesByHash(stopId, routeId string) map[string]*ScheduleResults {
+	stopTimesByHash := map[string]*ScheduleResults{}
+	stopRoute := stopRouteId(stopId, routeId)
+
+	for hash, info := range r.hashesByStopRoute[stopRoute] {
+		stopTimes := []model.StopTime{}
+
+		for tripId := range r.tripsByHash[hash] {
+			tripStopTimes, _ := r.stopTimesByTrip.Get(tripId)
+			stoptime := tripStopTimes[info.index]
+			stopTimes = append(stopTimes, stoptime)
+		}
+
+		sort.Slice(stopTimes, func(i, j int) bool {
+			return stopTimes[i].Time < stopTimes[j].Time
+		})
+
+		stopTimesByHash[hash] = &ScheduleResults{
+			indexesRequiredBySchedule: r.indexesRequiredBySchedule,
+			results:                   stopTimes,
+		}
+	}
+
+	return stopTimesByHash
 }
 
 func stopRouteId(stopId, routeId string) string {
