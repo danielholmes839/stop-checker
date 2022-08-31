@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"time"
+	"sort"
 
 	"stop-checker.com/db/model"
 )
@@ -17,42 +17,32 @@ type ReachableStop struct {
 	Trips map[string]struct{}
 }
 
-type IReachIndex interface {
-	Reachable(stopId, routeId string) []model.Stop
+type hashStopInfo struct {
+	// used to quickly lookup stop times 
+	index    int
 
-	ReachableScheduledAfter(stopId, routeId string, after time.Time)
-	ReachableScheduledBefore(stopId, routeId string, before time.Time)
-}
-
-type tripHashData struct {
+	// used to sort reachable stops compared with other hashes
+	sequence int
 }
 
 type ReachIndex struct {
+	stops           *Index[model.Stop]
 	stopTimesByTrip *InvertedIndex[model.StopTime]
+
 	// {hash: {tripId: nil}}
 	tripsByHash map[string]map[string]struct{}
 
 	// {hash: {stopId: trip stop time index}}
-	stopsByHash map[string]map[string]int
+	stopsByHash map[string]map[string]hashStopInfo
 
 	// {stopId-routeId: {hash: trip stop time index}}
-	hashesByStopRoute map[string]map[string]int
+	hashesByStopRoute map[string]map[string]hashStopInfo
 }
 
 func NewReachIndex(indexes *BaseIndex, base *model.Base, stopTimesByTrip *InvertedIndex[model.StopTime]) *ReachIndex {
-	t0 := time.Now()
-
-	// {hash: {tripId: nil}}
-	tripsByHash := map[string]map[string]struct{}{} // {}
-
-	// {hash: [stopId (in order)]}
-	stopsByHash := map[string]map[string]int{}
-
-	// {stopId: {hash: stop sequence}}
-	hashesByStopRoute := map[string]map[string]int{}
-	// for _, stop := range base.Stops {
-	// 	hashesByStopRoute[stop.Id] = map[string]int{}
-	// }
+	tripsByHash := map[string]map[string]struct{}{}
+	stopsByHash := map[string]map[string]hashStopInfo{}
+	hashesByStopRoute := map[string]map[string]hashStopInfo{}
 
 	for _, trip := range base.Trips {
 		// get trip hash
@@ -66,24 +56,28 @@ func NewReachIndex(indexes *BaseIndex, base *model.Base, stopTimesByTrip *Invert
 		_, seen := tripsByHash[hash]
 		if !seen {
 			tripsByHash[hash] = map[string]struct{}{}
-			stopsByHash[hash] = map[string]int{}
+			stopsByHash[hash] = map[string]hashStopInfo{}
 
 			// add the hash to stops
 			for i, stoptime := range stopTimes {
 				srId := stopRouteId(stoptime.StopId, trip.RouteId)
 				if _, ok := hashesByStopRoute[srId]; !ok {
-					hashesByStopRoute[srId] = map[string]int{}
+					hashesByStopRoute[srId] = map[string]hashStopInfo{}
 				}
-				hashesByStopRoute[srId][hash] = i
-				stopsByHash[hash][stoptime.StopId] = i
+				info := hashStopInfo{
+					index:    i,
+					sequence: stoptime.StopSeq,
+				}
+				hashesByStopRoute[srId][hash] = info
+				stopsByHash[hash][stoptime.StopId] = info
 			}
 		}
 
 		tripsByHash[hash][trip.ID()] = struct{}{}
 	}
 
-	fmt.Println("created reach index in", time.Since(t0))
 	return &ReachIndex{
+		stops:             indexes.Stops,
 		stopTimesByTrip:   stopTimesByTrip,
 		tripsByHash:       tripsByHash,
 		stopsByHash:       stopsByHash,
@@ -91,17 +85,55 @@ func NewReachIndex(indexes *BaseIndex, base *model.Base, stopTimesByTrip *Invert
 	}
 }
 
-func (r *ReachIndex) Reachable(originId string, routeId string) map[string]map[string]struct{} {
+func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []model.Stop {
+	reachable := r.reachable(originId, routeId, reverse)
+	order := map[string]int{}
+	stops := make([]model.Stop, len(reachable))
+
+	counter := 0
+	for stopId, options := range reachable {
+		stop, _ := r.stops.Get(stopId)
+		stops[counter] = stop
+		counter++
+
+		for _, info := range options {
+			order[stopId] = info.sequence
+		}
+	}
+
+	sort.Slice(stops, func(i, j int) bool {
+		si := order[stops[i].Id]
+		sj := order[stops[j].Id]
+		return si < sj
+	})
+
+	return stops
+}
+
+func (r *ReachIndex) reachable(originId string, routeId string, reverse bool) map[string]map[string]hashStopInfo {
 	originHashes := r.hashesByStopRoute[stopRouteId(originId, routeId)]
 
-	reachable := map[string]struct{}{}
+	reachable := map[string]map[string]hashStopInfo{}
 
-	for originHash, originSequence := range originHashes {
-		for destination, destinationSequence := range r.stopsByHash[originHash] {
-			if originSequence >= destinationSequence || destination == originId {
+	for originHash, originInfo := range originHashes {
+		for destination, destinationInfo := range r.stopsByHash[originHash] {
+			if destination == originId {
 				continue
 			}
-			reachable[destination] = struct{}{}
+
+			if !reverse && originInfo.sequence >= destinationInfo.sequence {
+				continue
+			}
+
+			if reverse && originInfo.sequence <= destinationInfo.sequence {
+				continue
+			}
+
+			if _, ok := reachable[destination]; !ok {
+				reachable[destination] = map[string]hashStopInfo{}
+			}
+
+			reachable[destination][originHash] = destinationInfo
 		}
 	}
 
