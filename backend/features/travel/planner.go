@@ -81,6 +81,9 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error
 		Destination: destination,
 		Initial:     initial,
 		Expand:      p.expand,
+		Compare: func(a, b *node) bool {
+			return a.arrival.Before(b.arrival)
+		},
 	})
 
 	if err != nil {

@@ -7,7 +7,9 @@ import (
 )
 
 func TestPriorityQueue(t *testing.T) {
-	queue := NewPriorityQueue[path]()
+	queue := NewPriorityQueue(func(a, b path) bool {
+		return a.weight < b.weight
+	})
 	queue.Push(path{weight: 1})
 	queue.Push(path{weight: 4})
 	queue.Push(path{weight: 2})

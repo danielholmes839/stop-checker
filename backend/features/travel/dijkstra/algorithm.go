@@ -6,7 +6,6 @@ import (
 
 type Node interface {
 	ID() string
-	Weighted
 }
 
 type Expand[N Node] func(n N) []N
@@ -20,19 +19,18 @@ func (p *Path[N]) ID() string {
 	return p.Node.ID()
 }
 
-func (p *Path[N]) Weight() int {
-	return p.Node.Weight()
-}
-
 type Config[N Node] struct {
 	Destination string
 	Initial     N
 	Expand      Expand[N]
+	Compare     func(a, b N) bool
 }
 
 func Algorithm[N Node](config *Config[N]) (*Path[N], error) {
 	seen := Set{}
-	pq := NewPriorityQueue[*Path[N]]()
+	pq := NewPriorityQueue(func(a, b *Path[N]) bool {
+		return config.Compare(a.Node, b.Node)
+	})
 
 	// push initial path
 	pq.Push(&Path[N]{

@@ -3,51 +3,53 @@ package dijkstra
 import "container/heap"
 
 // An IntHeap is a min-heap of ints.
-type nHeap []Node
-
-func (h nHeap) Len() int { return len(h) }
-func (h nHeap) Less(i, j int) bool {
-	return h[i].Weight() < h[j].Weight()
+type nHeap[N any] struct {
+	Nodes   []N
+	Compare func(a, b N) bool
 }
 
-func (h nHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+func (h nHeap[N]) Len() int { return len(h.Nodes) }
+func (h nHeap[N]) Less(i, j int) bool {
+	return h.Compare(h.Nodes[i], h.Nodes[j])
+}
 
-func (h *nHeap) Push(x any) {
+func (h nHeap[N]) Swap(i, j int) { h.Nodes[i], h.Nodes[j] = h.Nodes[j], h.Nodes[i] }
+
+func (h *nHeap[N]) Push(x any) {
 	// Push and Pop use pointer receivers because they modify the slice's length,
 	// not just its contents.
-	*h = append(*h, x.(Node))
+	h.Nodes = append(h.Nodes, x.(N))
 }
 
-func (h *nHeap) Pop() any {
-	old := *h
+func (h *nHeap[N]) Pop() any {
+	old := h.Nodes
 	n := len(old)
 	x := old[n-1]
-	*h = old[0 : n-1] // removing the top node
+	h.Nodes = old[0 : n-1] // removing the top node
 	return x
 }
 
-type Weighted interface {
-	Weight() int
+type PriorityQueue[N Node] struct {
+	heap *nHeap[N]
 }
 
-type PriorityQueue[W Weighted] struct {
-	heap *nHeap
-}
-
-func NewPriorityQueue[W Weighted]() *PriorityQueue[W] {
-	return &PriorityQueue[W]{
-		heap: &nHeap{},
+func NewPriorityQueue[N Node](compare func(a, b N) bool) *PriorityQueue[N] {
+	return &PriorityQueue[N]{
+		heap: &nHeap[N]{
+			Nodes:   []N{},
+			Compare: compare,
+		},
 	}
 }
 
-func (pq *PriorityQueue[W]) Push(w W) {
-	heap.Push(pq.heap, w)
+func (pq *PriorityQueue[N]) Push(n N) {
+	heap.Push(pq.heap, n)
 }
 
-func (pq *PriorityQueue[W]) Pop() W {
-	return heap.Pop(pq.heap).(W)
+func (pq *PriorityQueue[N]) Pop() N {
+	return heap.Pop(pq.heap).(N)
 }
 
-func (pq *PriorityQueue[W]) Empty() bool {
-	return len(*pq.heap) == 0
+func (pq *PriorityQueue[N]) Empty() bool {
+	return len(pq.heap.Nodes) == 0
 }

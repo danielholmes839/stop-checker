@@ -25,10 +25,6 @@ type path struct {
 	weight int
 }
 
-func (p path) Weight() int {
-	return p.weight
-}
-
 func TestAlgorithm(t *testing.T) {
 	/*
 		A--1-->B---3
@@ -71,9 +67,12 @@ func TestAlgorithm(t *testing.T) {
 			}
 			return expanded
 		},
+		Compare: func(a, b *path) bool {
+			return a.weight < b.weight
+		},
 	}
 
 	solution, _ := Algorithm(config)
 
-	assert.Equal(t, 3, solution.Weight())
+	assert.Equal(t, 3, solution.Node.weight)
 }
