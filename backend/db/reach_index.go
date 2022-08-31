@@ -233,24 +233,24 @@ func (r *ReachIndex) ReachableForwardWithNext(originId, routeId string, after ti
 	return results
 }
 
-func (r *ReachIndex) ReachableBackwardWithPrevious(originId, routeId string, before time.Time) []ReachableSchedule {
-	origin, _ := r.stops.Get(originId)
-	originScheduleResultsByHash := r.stopTimesByHash(originId, routeId)
-	originPreviousByHash := map[string]ScheduleResult{}
+func (r *ReachIndex) ReachableBackwardWithPrevious(destinationId, routeId string, before time.Time) []ReachableSchedule {
+	destination, _ := r.stops.Get(destinationId)
+	destinationScheduleResultsByHash := r.stopTimesByHash(destinationId, routeId)
+	destinationPreviousByHash := map[string]ScheduleResult{}
 
-	for hash, originScheduleResults := range originScheduleResultsByHash {
-		next, err := originScheduleResults.Previous(before)
+	for hash, destinationScheduleResults := range destinationScheduleResultsByHash {
+		next, err := destinationScheduleResults.Previous(before)
 		if err != nil {
 			continue
 		}
-		originPreviousByHash[hash] = next
+		destinationPreviousByHash[hash] = next
 	}
 
-	reachable := r.reachable(originId, routeId, true)
+	reachableBackward := r.reachable(destinationId, routeId, true)
 	results := []ReachableSchedule{}
 
-	for destinationId, destinationHashInfo := range reachable {
-		destination, _ := r.stops.Get(destinationId)
+	for originId, originHashInfo := range reachableBackward {
+		origin, _ := r.stops.Get(originId)
 
 		set := false
 		result := ReachableSchedule{
@@ -259,21 +259,21 @@ func (r *ReachIndex) ReachableBackwardWithPrevious(originId, routeId string, bef
 		}
 
 		// find the next stop time for this destination
-		for hash, destinationInfo := range destinationHashInfo {
+		for hash, originInfo := range originHashInfo {
 
 			// if there's no next stop time for this hash
-			if _, ok := originPreviousByHash[hash]; !ok {
+			if _, ok := destinationPreviousByHash[hash]; !ok {
 				continue
 			}
 
-			originPrevious := originPreviousByHash[hash]
-			arrival := originPrevious.Time
-			arrivalStopTime := originPrevious.StopTime
+			destinationPrevious := destinationPreviousByHash[hash]
+			arrival := destinationPrevious.Time
+			arrivalStopTime := destinationPrevious.StopTime
 
 			if !set || arrival.After(result.Arrival) {
 				// find the arrival time
 				stopTimes, _ := r.stopTimesByTrip.Get(arrivalStopTime.TripId)
-				departureStopTime := stopTimes[destinationInfo.index]
+				departureStopTime := stopTimes[originInfo.index]
 				departure := arrival.Add(-model.TimeDiff(departureStopTime.Time, arrivalStopTime.Time))
 
 				// update result fields

@@ -23,6 +23,16 @@ func main() {
 	}
 
 	t0 = time.Now()
+	scheduleResults = database.ReachIndex.ReachableBackwardWithPrevious("AK151", "49-340", now)
+
+	fmt.Println("-------------")
+	fmt.Println(time.Since(t0))
+
+	for _, result := range scheduleResults {
+		fmt.Println(result.Origin.Name, result.Departure.Format(time.Kitchen), "->", result.Destination.Name, result.Arrival.Format(time.Kitchen))
+	}
+
+	t0 = time.Now()
 	results := database.ReachIndex.Reachable("AK151", "49-340", true)
 
 	fmt.Println("-------------")
