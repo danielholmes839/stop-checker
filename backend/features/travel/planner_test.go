@@ -58,4 +58,22 @@ func TestPlanner(t *testing.T) {
 
 		assertEqualSchedule(t, s1, s2)
 	})
+
+	t.Run("pleasant park -> carling", func(t *testing.T) {
+		depart, _ := time.Parse("2006-01-02T15:04:00Z", "2022-08-25T12:00:00Z") // 10:00 am EST
+		depart = depart.In(time.Local)
+
+		arrive, _ := time.Parse("2006-01-02T15:04:00Z", "2022-08-25T14:00:00Z") // 10:00 am EST
+		arrive = arrive.In(time.Local)
+
+		p1, err := planner.Depart(depart, "AK151", "NO521")
+		assert.NoError(t, err)
+
+		s1, err := scheduler.Arrive(arrive, p1)
+		assert.NoError(t, err)
+
+		for _, leg := range s1 {
+			t.Log(leg)
+		}
+	})
 }
