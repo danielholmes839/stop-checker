@@ -33,11 +33,9 @@ func (s *Server) HandleGraphQL() {
 				}),
 				Database: database,
 				Planner: travel.NewPlanner(&travel.PlannerConfig{
-					ScheduleIndex:     database.ScheduleIndex,
 					StopLocationIndex: database.StopLocationIndex,
 					StopRouteIndex:    database.StopRouteIndex,
 					StopIndex:         database.Stops,
-					StopTimesFromTrip: database.StopTimesByTrip,
 				}),
 				Scheduler: travel.NewScheduler(&travel.SchedulerConfig{
 					StopIndex:       database.Stops,

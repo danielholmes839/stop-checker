@@ -9,13 +9,12 @@ import (
 )
 
 func BenchmarkPlanComplete(b *testing.B) {
-	database, base := db.NewDatabaseFromFilesystem("../db/data")
+	database, base := db.NewDatabaseFromFilesystem("../../db/data")
 	planner := NewPlanner(&PlannerConfig{
-		ScheduleIndex:     database.ScheduleIndex,
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,
-		StopTimesFromTrip: database.StopTimesByTrip,
+		ReachIndex:        database.ReachIndex,
 	})
 
 	departure, _ := time.ParseInLocation("2006-01-02 15:04", "2022-07-25 11:55", database.TZ())

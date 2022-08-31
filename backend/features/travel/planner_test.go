@@ -19,11 +19,9 @@ func assertEqualSchedule(t *testing.T, s1, s2 Schedule) {
 func TestPlanner(t *testing.T) {
 	database, _ := db.NewDatabaseFromFilesystem("../../db/data")
 	planner := NewPlanner(&PlannerConfig{
-		ScheduleIndex:     database.ScheduleIndex,
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,
-		StopTimesFromTrip: database.StopTimesByTrip,
 		ReachIndex:        database.ReachIndex,
 	})
 

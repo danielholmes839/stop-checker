@@ -45,30 +45,24 @@ func (n *node) Blocked(routeId string) bool {
 }
 
 type PlannerConfig struct {
-	ScheduleIndex     *db.ScheduleIndex
 	StopLocationIndex *db.StopLocationIndex
 	StopRouteIndex    *db.StopRouteIndex
 	StopIndex         *db.Index[model.Stop]
-	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
 	ReachIndex        *db.ReachIndex
 }
 
 type Planner struct {
-	scheduleIndex     *db.ScheduleIndex
 	stopLocationIndex *db.StopLocationIndex
 	stopRouteIndex    *db.StopRouteIndex
 	stopIndex         *db.Index[model.Stop]
-	stopTimesFromTrip *db.InvertedIndex[model.StopTime]
 	reachIndex        *db.ReachIndex
 }
 
 func NewPlanner(config *PlannerConfig) *Planner {
 	return &Planner{
-		scheduleIndex:     config.ScheduleIndex,
 		stopLocationIndex: config.StopLocationIndex,
 		stopRouteIndex:    config.StopRouteIndex,
 		stopIndex:         config.StopIndex,
-		stopTimesFromTrip: config.StopTimesFromTrip,
 		reachIndex:        config.ReachIndex,
 	}
 }
