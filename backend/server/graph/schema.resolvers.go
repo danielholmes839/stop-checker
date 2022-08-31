@@ -455,7 +455,8 @@ func (r *tripResolver) Route(ctx context.Context, obj *model.Trip) (*model.Route
 
 // Stoptimes is the resolver for the stoptimes field.
 func (r *tripResolver) Stoptimes(ctx context.Context, obj *model.Trip) ([]*model.StopTime, error) {
-	panic(fmt.Errorf("not implemented: Stoptimes - stoptimes"))
+	stoptimes, _ := r.StopTimesByTrip.Get(obj.ID())
+	return ref(stoptimes), nil
 }
 
 // Service is the resolver for the service field.
