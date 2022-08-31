@@ -2,8 +2,15 @@ package model
 
 import (
 	"fmt"
+	"sort"
 	"time"
 )
+
+func StopTimeSort(stopTimes []StopTime) {
+	sort.Slice(stopTimes, func(i, j int) bool {
+		return stopTimes[i].Time < stopTimes[j].Time
+	})
+}
 
 type Time int
 
