@@ -26,4 +26,5 @@ type SchedulePlanner interface {
 
 type RoutePlanner interface {
 	Depart(at time.Time, origin, destination string) (Route, error)
+	Arrive(by time.Time, origin, destination string) (Route, error)
 }

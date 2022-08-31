@@ -22,7 +22,7 @@ func NewTravelRoute(route []*TravelLegInput) travel.Route {
 
 func PlannerWrapper(planner travel.RoutePlanner, origin, destination string, options TravelOptions) (travel.Route, error) {
 	if options.Mode == ScheduleModeArriveBy {
-		return planner.Depart(*options.Datetime, origin, destination)
+		return planner.Arrive(*options.Datetime, origin, destination)
 	}
 	return planner.Depart(*options.Datetime, origin, destination)
 }
