@@ -8,6 +8,8 @@ import (
 	"stop-checker.com/features/travel/dijkstra"
 )
 
+const TRANSFER_PENALTY = 5 * time.Minute
+
 type closestWalk struct {
 	distance float64
 	stopId   string
@@ -30,10 +32,6 @@ type node struct {
 
 func (n *node) ID() string {
 	return n.stopId
-}
-
-func (n *node) Weight() int {
-	return int(n.arrival.Unix()) + n.transfers*60*5 // 5 minute penalty per transfer
 }
 
 func (n *node) Arrival() time.Time {
@@ -82,7 +80,9 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error
 		Initial:     initial,
 		Expand:      p.expand,
 		Compare: func(a, b *node) bool {
-			return a.arrival.Before(b.arrival)
+			aPen := time.Duration(a.transfers) * TRANSFER_PENALTY
+			bPen := time.Duration(b.transfers) * TRANSFER_PENALTY
+			return a.arrival.Add(aPen).Before(b.arrival.Add(bPen))
 		},
 	})
 
@@ -108,7 +108,9 @@ func (p *Planner) Arrive(by time.Time, origin, destination string) (Route, error
 		Initial:     initial,
 		Expand:      p.expandReverse,
 		Compare: func(a, b *node) bool {
-			return a.arrival.After(b.arrival)
+			aPen := time.Duration(a.transfers) * -TRANSFER_PENALTY
+			bPen := time.Duration(b.transfers) * -TRANSFER_PENALTY
+			return a.arrival.Add(aPen).After(b.arrival.Add(bPen))
 		},
 	})
 
