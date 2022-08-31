@@ -119,7 +119,7 @@ func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []
 	return stops
 }
 
-/* ReachableBetweenWithSchedule 
+/* ReachableBetweenWithSchedule
 returns the *ScheduleResults for the all stop times that run between the origin and destination
 (origin, destination)
 - used by the travel.Scheduler
@@ -165,8 +165,7 @@ func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, route
 	return originResults, destinationResults
 }
 
-
-func (r *ReachIndex) ReachableWithNext(originId, routeId string, after time.Time) []ReachableSchedule {
+func (r *ReachIndex) ReachableForwardWithNext(originId, routeId string, after time.Time) []ReachableSchedule {
 	/*
 		1. get all stop times (as a *ScheduleResults object) for each hash
 		2. get next stop time for each *ScheduleResults for each hash
@@ -185,10 +184,10 @@ func (r *ReachIndex) ReachableWithNext(originId, routeId string, after time.Time
 		originNextByHash[hash] = next
 	}
 
-	reachable := r.reachable(originId, routeId, false)
+	reachableForward := r.reachable(originId, routeId, false)
 	results := []ReachableSchedule{}
 
-	for destinationId, destinationHashInfo := range reachable {
+	for destinationId, destinationHashInfo := range reachableForward {
 		destination, _ := r.stops.Get(destinationId)
 
 		set := false
@@ -234,7 +233,69 @@ func (r *ReachIndex) ReachableWithNext(originId, routeId string, after time.Time
 	return results
 }
 
-/* reachable 
+func (r *ReachIndex) ReachableBackwardWithPrevious(originId, routeId string, before time.Time) []ReachableSchedule {
+	origin, _ := r.stops.Get(originId)
+	originScheduleResultsByHash := r.stopTimesByHash(originId, routeId)
+	originPreviousByHash := map[string]ScheduleResult{}
+
+	for hash, originScheduleResults := range originScheduleResultsByHash {
+		next, err := originScheduleResults.Previous(before)
+		if err != nil {
+			continue
+		}
+		originPreviousByHash[hash] = next
+	}
+
+	reachable := r.reachable(originId, routeId, true)
+	results := []ReachableSchedule{}
+
+	for destinationId, destinationHashInfo := range reachable {
+		destination, _ := r.stops.Get(destinationId)
+
+		set := false
+		result := ReachableSchedule{
+			Origin:      origin,
+			Destination: destination,
+		}
+
+		// find the next stop time for this destination
+		for hash, destinationInfo := range destinationHashInfo {
+
+			// if there's no next stop time for this hash
+			if _, ok := originPreviousByHash[hash]; !ok {
+				continue
+			}
+
+			originPrevious := originPreviousByHash[hash]
+			arrival := originPrevious.Time
+			arrivalStopTime := originPrevious.StopTime
+
+			if !set || arrival.After(result.Arrival) {
+				// find the arrival time
+				stopTimes, _ := r.stopTimesByTrip.Get(arrivalStopTime.TripId)
+				departureStopTime := stopTimes[destinationInfo.index]
+				departure := arrival.Add(-model.TimeDiff(departureStopTime.Time, arrivalStopTime.Time))
+
+				// update result fields
+				result.Departure = departure
+				result.Arrival = arrival
+				result.Trip, _ = r.trips.Get(departureStopTime.TripId)
+
+				set = true
+			}
+		}
+
+		if !set {
+			continue
+		}
+
+		results = append(results, result)
+	}
+
+	return results
+}
+
+/* reachable
 returns what trip hashes can be used to reach each stop
 */
 func (r *ReachIndex) reachable(originId string, routeId string, reverse bool) reachableResults {
