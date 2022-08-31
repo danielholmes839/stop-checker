@@ -41,9 +41,9 @@ const MoreDepartures: React.FC<{ input: MoreDepartureInput }> = ({ input }) => {
       <p className="text-xs">
         {data.stopRoute.schedule.next
           .filter((_, i) => i > 0)
-          .map(({ id, time }) => (
-            <span key={id} className="mr-2">
-              {time}
+          .map(({ stoptime }) => (
+            <span key={stoptime.id} className="mr-2">
+              {stoptime.time}
             </span>
           ))}
       </p>
@@ -109,7 +109,7 @@ export const RideInstructions: React.FC<InstructionProps> = ({ leg }) => {
     }
 
     // all previous stop times
-    let prev = transit.trip.stopTimes.filter((st) => {
+    let prev = transit.trip.stoptimes.filter((st) => {
       return st.sequence < transit.arrival.sequence;
     });
 
@@ -153,17 +153,17 @@ export const RideInstructions: React.FC<InstructionProps> = ({ leg }) => {
         </button>
         {showStopTimes && (
           <div className="border-t mt-1 pt-1">
-            {transit.trip.stopTimes
-              .filter((st) => {
+            {transit.trip.stoptimes
+              .filter((stoptime) => {
                 return (
-                  st.sequence >= transit.departure.sequence &&
-                  st.sequence <= transit.arrival.sequence
+                  stoptime.sequence >= transit.departure.sequence &&
+                  stoptime.sequence <= transit.arrival.sequence
                 );
               })
-              .map((st) => {
+              .map((stoptime) => {
                 return (
-                  <p className="text-sm mt-1">
-                    {st.time} - {st.stop.name}
+                  <p key={stoptime.id} className="text-sm mt-1">
+                    {stoptime.time} - {stoptime.stop.name}
                   </p>
                 );
               })}

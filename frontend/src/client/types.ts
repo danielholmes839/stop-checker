@@ -89,14 +89,14 @@ export type QueryStopRouteArgs = {
 
 export type QueryTravelPlannerArgs = {
   destination: Scalars['ID'];
-  options: TravelScheduleOptions;
+  options: TravelOptions;
   origin: Scalars['ID'];
 };
 
 
 export type QueryTravelPlannerFixedRouteArgs = {
   input: Array<TravelLegInput>;
-  options: TravelScheduleOptions;
+  options: TravelOptions;
 };
 
 export type Route = {
@@ -117,6 +117,12 @@ export enum ScheduleMode {
   ArriveBy = 'ARRIVE_BY',
   DepartAt = 'DEPART_AT'
 }
+
+export type ScheduleResult = {
+  __typename?: 'ScheduleResult';
+  datetime: Scalars['DateTime'];
+  stoptime: StopTime;
+};
 
 export type Service = {
   __typename?: 'Service';
@@ -153,15 +159,27 @@ export type StopRoute = {
   headsign: Scalars['String'];
   liveBuses: Array<Bus>;
   liveMap?: Maybe<Scalars['String']>;
+  reaches: Array<Stop>;
   route: Route;
   schedule: StopRouteSchedule;
+  scheduleReaches?: Maybe<StopRouteSchedule>;
   stop: Stop;
+};
+
+
+export type StopRouteReachesArgs = {
+  forward: Scalars['Boolean'];
+};
+
+
+export type StopRouteScheduleReachesArgs = {
+  destination: Scalars['ID'];
 };
 
 export type StopRouteSchedule = {
   __typename?: 'StopRouteSchedule';
-  next: Array<StopTime>;
-  on: Array<StopTime>;
+  next: Array<ScheduleResult>;
+  on: Array<ScheduleResult>;
 };
 
 
@@ -205,6 +223,11 @@ export type TravelLegInput = {
   route?: InputMaybe<Scalars['ID']>;
 };
 
+export type TravelOptions = {
+  datetime?: InputMaybe<Scalars['DateTime']>;
+  mode: ScheduleMode;
+};
+
 export type TravelPayload = {
   __typename?: 'TravelPayload';
   errors: Array<UserError>;
@@ -233,11 +256,6 @@ export type TravelScheduleLeg = {
   walk: Scalars['Boolean'];
 };
 
-export type TravelScheduleOptions = {
-  datetime?: InputMaybe<Scalars['DateTime']>;
-  mode: ScheduleMode;
-};
-
 export type Trip = {
   __typename?: 'Trip';
   direction: Scalars['ID'];
@@ -245,7 +263,7 @@ export type Trip = {
   id: Scalars['ID'];
   route: Route;
   service: Service;
-  stopTimes: Array<StopTime>;
+  stoptimes: Array<StopTime>;
 };
 
 export type UserError = {
@@ -267,7 +285,7 @@ export type StopPageQueryVariables = Exact<{
 }>;
 
 
-export type StopPageQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> }, liveBuses: Array<{ __typename?: 'Bus', headsign: string }> }> } | null };
+export type StopPageQuery = { __typename?: 'Query', stop?: { __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'ScheduleResult', stoptime: { __typename?: 'StopTime', id: string, time: any } }> }, liveBuses: Array<{ __typename?: 'Bus', headsign: string }> }> } | null };
 
 export type StopPreviewQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -284,7 +302,7 @@ export type StopRouteQueryVariables = Exact<{
 }>;
 
 
-export type StopRouteQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', headsign: string, liveMap?: string | null, stop: { __typename?: 'Stop', id: string, name: string, code: string }, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any, overflow: boolean, trip: { __typename?: 'Trip', service: { __typename?: 'Service', saturday: boolean, sunday: boolean, monday: boolean, start: any, end: any } } }> }, liveBuses: Array<{ __typename?: 'Bus', headsign: string, arrival: any, lastUpdated: any, lastUpdatedMessage: string, lastUpdatedMinutes: number, distance?: number | null, location?: { __typename?: 'Location', latitude: number, longitude: number } | null }> } | null };
+export type StopRouteQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', headsign: string, liveMap?: string | null, stop: { __typename?: 'Stop', id: string, name: string, code: string }, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'StopRouteSchedule', today: Array<{ __typename?: 'ScheduleResult', stoptime: { __typename?: 'StopTime', id: string, time: any } }>, tomorrow: Array<{ __typename?: 'ScheduleResult', stoptime: { __typename?: 'StopTime', id: string, time: any } }>, next: Array<{ __typename?: 'ScheduleResult', stoptime: { __typename?: 'StopTime', id: string, time: any, overflow: boolean, trip: { __typename?: 'Trip', service: { __typename?: 'Service', saturday: boolean, sunday: boolean, monday: boolean, start: any, end: any } } } }> }, liveBuses: Array<{ __typename?: 'Bus', headsign: string, arrival: any, lastUpdated: any, lastUpdatedMessage: string, lastUpdatedMinutes: number, distance?: number | null, location?: { __typename?: 'Location', latitude: number, longitude: number } | null }> } | null };
 
 export type LiveDataFragment = { __typename?: 'StopRoute', liveMap?: string | null, liveBuses: Array<{ __typename?: 'Bus', headsign: string, arrival: any, lastUpdated: any, lastUpdatedMessage: string, lastUpdatedMinutes: number, distance?: number | null, location?: { __typename?: 'Location', latitude: number, longitude: number } | null }> };
 
@@ -299,13 +317,13 @@ export type TextSearchQuery = { __typename?: 'Query', searchStopText: { __typena
 export type TravelPlannerQueryVariables = Exact<{
   origin: Scalars['ID'];
   destination: Scalars['ID'];
-  options: TravelScheduleOptions;
+  options: TravelOptions;
 }>;
 
 
-export type TravelPlannerQuery = { __typename?: 'Query', travelPlanner: { __typename?: 'TravelPayload', errors: Array<{ __typename?: 'UserError', field: string, message: string }>, schedule?: { __typename?: 'TravelSchedule', departure: any, arrival: any, duration: number, legs: Array<{ __typename?: 'TravelScheduleLeg', departure: any, arrival: any, duration: number, walk: boolean, distance: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', id: string, name: string, type: RouteType, text: any, background: any }, trip: { __typename?: 'Trip', headsign: string, stopTimes: Array<{ __typename?: 'StopTime', id: string, sequence: number, time: any, stop: { __typename?: 'Stop', name: string } }> }, arrival: { __typename?: 'StopTime', sequence: number }, departure: { __typename?: 'StopTime', sequence: number } } | null }> } | null } };
+export type TravelPlannerQuery = { __typename?: 'Query', travelPlanner: { __typename?: 'TravelPayload', errors: Array<{ __typename?: 'UserError', field: string, message: string }>, schedule?: { __typename?: 'TravelSchedule', departure: any, arrival: any, duration: number, legs: Array<{ __typename?: 'TravelScheduleLeg', departure: any, arrival: any, duration: number, walk: boolean, distance: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', id: string, name: string, type: RouteType, text: any, background: any }, trip: { __typename?: 'Trip', headsign: string, stoptimes: Array<{ __typename?: 'StopTime', id: string, sequence: number, time: any, stop: { __typename?: 'Stop', name: string } }> }, arrival: { __typename?: 'StopTime', sequence: number }, departure: { __typename?: 'StopTime', sequence: number } } | null }> } | null } };
 
-export type TravelScheduleLegDefaultFragment = { __typename?: 'TravelScheduleLeg', departure: any, arrival: any, duration: number, walk: boolean, distance: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', id: string, name: string, type: RouteType, text: any, background: any }, trip: { __typename?: 'Trip', headsign: string, stopTimes: Array<{ __typename?: 'StopTime', id: string, sequence: number, time: any, stop: { __typename?: 'Stop', name: string } }> }, arrival: { __typename?: 'StopTime', sequence: number }, departure: { __typename?: 'StopTime', sequence: number } } | null };
+export type TravelScheduleLegDefaultFragment = { __typename?: 'TravelScheduleLeg', departure: any, arrival: any, duration: number, walk: boolean, distance: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', id: string, name: string, type: RouteType, text: any, background: any }, trip: { __typename?: 'Trip', headsign: string, stoptimes: Array<{ __typename?: 'StopTime', id: string, sequence: number, time: any, stop: { __typename?: 'Stop', name: string } }> }, arrival: { __typename?: 'StopTime', sequence: number }, departure: { __typename?: 'StopTime', sequence: number } } | null };
 
 export type TravelPlannerDeparturesQueryVariables = Exact<{
   stop: Scalars['ID'];
@@ -315,7 +333,7 @@ export type TravelPlannerDeparturesQueryVariables = Exact<{
 }>;
 
 
-export type TravelPlannerDeparturesQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'StopTime', id: string, time: any }> } } | null };
+export type TravelPlannerDeparturesQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', schedule: { __typename?: 'StopRouteSchedule', next: Array<{ __typename?: 'ScheduleResult', stoptime: { __typename?: 'StopTime', id: string, time: any } }> } } | null };
 
 export const StopPreviewFragmentDoc = gql`
     fragment StopPreview on Stop {
@@ -377,7 +395,7 @@ export const TravelScheduleLegDefaultFragmentDoc = gql`
     }
     trip {
       headsign
-      stopTimes {
+      stoptimes {
         id
         sequence
         time
@@ -430,8 +448,10 @@ export const StopPageDocument = gql`
       }
       schedule {
         next(limit: 3) {
-          id
-          time
+          stoptime {
+            id
+            time
+          }
         }
       }
       liveBuses {
@@ -473,17 +493,31 @@ export const StopRouteDocument = gql`
     headsign
     ...LiveData
     schedule {
+      today: on(date: "2022-08-30") {
+        stoptime {
+          id
+          time
+        }
+      }
+      tomorrow: on(date: "2022-08-31") {
+        stoptime {
+          id
+          time
+        }
+      }
       next(limit: 3) {
-        id
-        time
-        overflow
-        trip {
-          service {
-            saturday
-            sunday
-            monday
-            start
-            end
+        stoptime {
+          id
+          time
+          overflow
+          trip {
+            service {
+              saturday
+              sunday
+              monday
+              start
+              end
+            }
           }
         }
       }
@@ -509,7 +543,7 @@ export function useTextSearchQuery(options: Omit<Urql.UseQueryArgs<TextSearchQue
   return Urql.useQuery<TextSearchQuery, TextSearchQueryVariables>({ query: TextSearchDocument, ...options });
 };
 export const TravelPlannerDocument = gql`
-    query TravelPlanner($origin: ID!, $destination: ID!, $options: TravelScheduleOptions!) {
+    query TravelPlanner($origin: ID!, $destination: ID!, $options: TravelOptions!) {
   travelPlanner(origin: $origin, destination: $destination, options: $options) {
     errors {
       field
@@ -535,8 +569,10 @@ export const TravelPlannerDeparturesDocument = gql`
   stopRoute(stop: $stop, route: $route) {
     schedule {
       next(limit: $limit, after: $after) {
-        id
-        time
+        stoptime {
+          id
+          time
+        }
       }
     }
   }

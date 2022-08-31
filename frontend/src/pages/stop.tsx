@@ -16,10 +16,10 @@ const StopPageResponse: React.FC<{ data: StopPageQuery }> = ({ data }) => {
       <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 mt-3">
         {stop.routes
           .sort((a, b) => a.route.name.localeCompare(b.route.name))
-          .map((stopRoute) => {
+          .map((stopRoute, i) => {
             const { route, headsign, schedule, liveBuses } = stopRoute;
             return (
-              <Card>
+              <Card key={i}>
                 <h1 className="text-xs">
                   <Sign
                     props={{
@@ -33,9 +33,9 @@ const StopPageResponse: React.FC<{ data: StopPageQuery }> = ({ data }) => {
                 <div>
                   <div className="mt-1">
                     {schedule.next.length > 0 ? (
-                      schedule.next.map((stopTime) => (
-                        <span className="mr-2 text-sm inline-block">
-                          {stopTime.time}
+                      schedule.next.map(({ stoptime }, i) => (
+                        <span key={i} className="mr-2 text-sm inline-block">
+                          {stoptime.time}
                         </span>
                       ))
                     ) : (

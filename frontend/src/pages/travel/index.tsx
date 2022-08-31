@@ -14,8 +14,8 @@ const TravelPlanner: React.FC = () => {
       origin: "AK151",
       destination: "CD998",
       options: {
-        datetime: "2022-08-25T11:57:00Z",
-        mode: ScheduleMode.DepartAt,
+        datetime: "2022-08-31T12:00:00Z",
+        mode: ScheduleMode.ArriveBy,
       },
     },
   });

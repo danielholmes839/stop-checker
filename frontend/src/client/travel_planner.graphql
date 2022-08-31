@@ -1,8 +1,4 @@
-query TravelPlanner(
-  $origin: ID!
-  $destination: ID!
-  $options: TravelScheduleOptions!
-) {
+query TravelPlanner($origin: ID!, $destination: ID!, $options: TravelOptions!) {
   travelPlanner(origin: $origin, destination: $destination, options: $options) {
     errors {
       field
@@ -45,7 +41,7 @@ fragment TravelScheduleLegDefault on TravelScheduleLeg {
     }
     trip {
       headsign
-      stopTimes {
+      stoptimes {
         id
         sequence
         time

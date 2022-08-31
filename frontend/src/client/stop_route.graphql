@@ -14,17 +14,31 @@ query StopRoute($stop: ID!, $route: ID!) {
     headsign
     ...LiveData
     schedule {
+      today: on(date: "2022-08-30") {
+        stoptime {
+          id
+          time
+        }
+      }
+      tomorrow: on(date: "2022-08-31") {
+        stoptime {
+          id
+          time
+        }
+      }
       next(limit: 3) {
-        id
-        time
-        overflow
-        trip {
-          service {
-            saturday
-            sunday
-            monday
-            start
-            end
+        stoptime {
+          id
+          time
+          overflow
+          trip {
+            service {
+              saturday
+              sunday
+              monday
+              start
+              end
+            }
           }
         }
       }

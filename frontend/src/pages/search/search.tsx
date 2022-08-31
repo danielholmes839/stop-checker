@@ -48,8 +48,8 @@ const StopPreview: React.FC<{
       </h1>
 
       <div>
-        {routes.map(({ headsign, route }) => (
-          <span className="text-sm mr-3 inline-block">
+        {routes.map(({ headsign, route }, i) => (
+          <span key={i} className="text-sm mr-3 inline-block">
             <FlagLink
               enabled={enableStopRouteLinks}
               to={`/stop/${stop.id}/route/${route.id}`}
@@ -131,7 +131,7 @@ const SearchResults: React.FC<{
       {data &&
         data.searchStopText.results.map((stop) => {
           return (
-            <div className="mb-3">
+            <div key={stop.id} className="mb-3">
               <StopPreview stop={stop as Stop} config={config} />
             </div>
           );

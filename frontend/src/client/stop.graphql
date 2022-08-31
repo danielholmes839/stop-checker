@@ -13,8 +13,10 @@ query StopPage($id: ID!) {
       }
       schedule {
         next(limit: 3) {
-          id
-          time
+          stoptime {
+            id
+            time
+          }
         }
       }
       liveBuses {

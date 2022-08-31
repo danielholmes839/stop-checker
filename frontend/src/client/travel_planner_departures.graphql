@@ -7,8 +7,10 @@ query TravelPlannerDepartures(
   stopRoute(stop: $stop, route: $route) {
     schedule {
       next(limit: $limit, after: $after) {
-        id
-        time
+        stoptime {
+          id
+          time
+        }
       }
     }
   }

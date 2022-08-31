@@ -18,28 +18,31 @@ export const StopRoutePage: React.FC = () => {
     return <></>;
   }
 
-  const { stop, route, headsign, liveMap, liveBuses } = data.stopRoute;
+  const { stop, route, headsign, liveMap, liveBuses, schedule } =
+    data.stopRoute;
 
   return (
     <Container>
-      <h1 className="text-xl font-semibold mt-3">
-        {stop.name} <span className="mx-1">/</span> <Sign props={route} />{" "}
+      <h1 className="mb-1 mt-3 text-3xl">
+        <span className="text-xl">
+          <Sign props={route} />{" "}
+        </span>{" "}
         {headsign}
       </h1>
+      <h2 className="text-sm font-semibold text-gray-700">
+        {stop.name} #{stop.code}
+      </h2>
 
       <div>
-        {liveMap && (
-          <>
-            <img className="mt-3" src={liveMap} />
-          </>
-        )}
-
         {liveBuses.length > 0 && (
-          <div>
-            <h1 className="mt-3 text-2xl">Live Data</h1>
+          <div className="mt-3">
+            <p className="mb-3 text-sm border-l-2 pl-1 border-primary-500">
+              Estimated arrival times and GPS data from OC Transpo updated every
+              30 seconds
+            </p>
             {liveBuses.map((bus, i) => {
               return (
-                <div className="mt-3 pt-3 border-t">
+                <div key={i} className="mb-3 pb-3 border-b">
                   <h1 className="font-semibold">
                     <span className="mr-2">Bus #{i + 1} </span>
                     <span className="text-sm">
@@ -55,11 +58,24 @@ export const StopRoutePage: React.FC = () => {
                 </div>
               );
             })}
+            {liveMap && <img className="mt-3 shadow" src={liveMap} />}
           </div>
         )}
       </div>
 
-      <pre>{JSON.stringify(data, undefined, 4)}</pre>
+      <div>
+        <h1 className="mb-1 text-2xl">Schedule</h1>
+        <div className="pb-10">
+          <h2>Today</h2>
+          <p className="text-xs">
+            {schedule.today.map(({ stoptime }) => (
+              <span key={stoptime.id} className="mr-3 inline-block">
+                {stoptime.time}
+              </span>
+            ))}
+          </p>
+        </div>
+      </div>
     </Container>
   );
 };
