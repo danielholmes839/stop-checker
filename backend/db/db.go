@@ -54,6 +54,7 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 	stopTimesByTrip := NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
 		return record.TripId
 	})
+	scheduleIndex := NewScheduleIndex(baseIndex, base)
 
 	return &Database{
 		timezone: timezone,
@@ -64,13 +65,13 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 		// specialized indexes
 		BaseIndex:      baseIndex,
 		StopRouteIndex: stopRoutesIndex,
-		ScheduleIndex:  NewScheduleIndex(baseIndex, base),
+		ScheduleIndex:  scheduleIndex,
 		StopLocationIndex: NewStopLocationIndex(baseIndex, base, ResolutionConfig{
 			Level:      9,
 			EdgeLength: 174.375668,
 		}),
 		StopTextIndex: NewStopTextIndex(base.Stops, stopRoutesIndex),
-		ReachIndex:    NewReachIndex(baseIndex, base, stopTimesByTrip),
+		ReachIndex:    NewReachIndex(baseIndex, base, stopTimesByTrip, scheduleIndex.indexesRequiredBySchedule),
 	}
 }
 
