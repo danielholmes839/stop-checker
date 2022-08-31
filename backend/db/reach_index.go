@@ -128,7 +128,7 @@ returns the *ScheduleResults for the all stop times that run between the origin 
 func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, routeId string) (*ScheduleResults, *ScheduleResults) {
 	// hashes that visit the origin and destination
 	originHashes := r.hashesByStopRoute[stopRouteId(originId, routeId)]
-	destinationHashes := r.hashesByStopRoute[stopRouteId(originId, routeId)]
+	destinationHashes := r.hashesByStopRoute[stopRouteId(destinationId, routeId)]
 
 	// origin and destination stop times that are part of a trip that reaches both stops
 	originStopTimes := []model.StopTime{}
@@ -159,7 +159,7 @@ func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, route
 
 	destinationResults := &ScheduleResults{
 		indexesRequiredBySchedule: r.indexesRequiredBySchedule,
-		results:                   originStopTimes,
+		results:                   destinationStopTimes,
 	}
 
 	return originResults, destinationResults

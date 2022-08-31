@@ -194,15 +194,14 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		return nil, err
 	}
 
-	excess := acc.Sub(previous.Time)
-	transitDuration := model.TimeDiff(originArrival.Time, model.NewTimeFromDateTime(previous.Time))
+	transitDuration := model.TimeDiff(originArrival.Time, destinationArrival.Time)
 
 	// planned leg
 	return &Leg{
 		Origin:      fixed.Origin,
 		Destination: fixed.Destination,
 		Walk:        false,
-		Departure:   acc.Add(-(transitDuration + excess)),
+		Departure:   previous.Add(-transitDuration),
 		Duration:    transitDuration,
 		Transit: &transit{
 			TripId:                previous.TripId,
