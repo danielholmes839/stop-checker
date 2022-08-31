@@ -2,6 +2,7 @@ package model
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"stop-checker.com/db/model/gtfs"
@@ -124,7 +125,7 @@ func (p *DatasetParser) NewStopFromGTFS(data gtfs.Stop) Stop {
 	return Stop{
 		Id:   data.ID,
 		Code: data.Code,
-		Name: data.Name,
+		Name: strings.Title(strings.ToLower(data.Name)),
 		Type: data.Type,
 		Location: Location{
 			Latitude:  data.Latitude,
