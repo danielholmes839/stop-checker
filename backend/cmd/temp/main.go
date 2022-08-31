@@ -13,7 +13,7 @@ func main() {
 	now := time.Now().Local()
 
 	t0 := time.Now()
-	scheduleResults := database.ReachIndex.ReachableWithSchedule("AK151", "49-340", now)
+	scheduleResults := database.ReachIndex.ReachableWithNext("AK151", "49-340", now)
 
 	fmt.Println("-------------")
 	fmt.Println(time.Since(t0))
@@ -44,7 +44,7 @@ func main() {
 	}
 
 	t0 = time.Now()
-	scheduleResults = database.ReachIndex.ReachableWithSchedule("AF940", "88-340", now)
+	scheduleResults = database.ReachIndex.ReachableWithNext("AF940", "88-340", now)
 	fmt.Println("-------------")
 	fmt.Println(time.Since(t0))
 

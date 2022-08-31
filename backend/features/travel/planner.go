@@ -193,7 +193,7 @@ func (p *Planner) expandTransit(n *node) []*node {
 		blockers.Add(stopRoute.DirectedID())
 
 		// set fastest transit for each stop
-		for _, result := range p.reachIndex.ReachableWithSchedule(origin, stopRoute.RouteId, originArrival) {
+		for _, result := range p.reachIndex.ReachableWithNext(origin, stopRoute.RouteId, originArrival) {
 			destinationId := result.Destination.Id
 			current, ok := fastest[result.Destination.Id]
 

@@ -16,7 +16,7 @@ type hashStopInfo struct {
 	sequence int
 }
 
-type ReachableResults map[string]map[string]hashStopInfo // { reachable stop id: { trip hash: hash stop info }}
+type reachableResults map[string]map[string]hashStopInfo // { reachable stop id: { trip hash: hash stop info }}
 
 type ReachableSchedule struct {
 	Departure   time.Time  // departure time from the origin
@@ -92,8 +92,8 @@ func NewReachIndex(indexes *BaseIndex, base *model.Base, stopTimesByTrip *Invert
 
 func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []model.Stop {
 	/*
-		Returns the reachable stops given the origin and route.
-		If reverse is true then the function returns the stops that can reach the origin by the route
+		Returns the reachable stops given the origin and route sorted by stop sequence (always ascending)
+		If reverse is true then the function returns the incident stops using this route
 	*/
 	reachable := r.reachable(originId, routeId, reverse)
 	order := map[string]int{}
@@ -119,19 +119,28 @@ func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []
 	return stops
 }
 
+/* ReachableBetweenWithSchedule 
+returns the *ScheduleResults for the all stop times that run between the origin and destination
+(origin, destination)
+- used by the travel.Scheduler
+- used to provide alternative stop times for travel plans
+*/
 func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, routeId string) (*ScheduleResults, *ScheduleResults) {
+	// hashes that visit the origin and destination
 	originHashes := r.hashesByStopRoute[stopRouteId(originId, routeId)]
 	destinationHashes := r.hashesByStopRoute[stopRouteId(originId, routeId)]
 
+	// origin and destination stop times that are part of a trip that reaches both stops
 	originStopTimes := []model.StopTime{}
 	destinationStopTimes := []model.StopTime{}
 
 	for hash, originInfo := range originHashes {
-		destinationInfo, ok := destinationHashes[hash]
-		if !ok {
+		destinationInfo, shared := destinationHashes[hash]
+		if !shared {
 			continue
 		}
 
+		// add stop times from each trip
 		for tripId := range r.tripsByHash[hash] {
 			stopTimes, _ := r.stopTimesByTrip.Get(tripId)
 			originStopTimes = append(originStopTimes, stopTimes[originInfo.index])
@@ -139,6 +148,7 @@ func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, route
 		}
 	}
 
+	// sort stop times and create schedule results
 	model.StopTimeSort(originStopTimes)
 	model.StopTimeSort(destinationStopTimes)
 
@@ -153,10 +163,10 @@ func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, route
 	}
 
 	return originResults, destinationResults
-
 }
 
-func (r *ReachIndex) ReachableWithSchedule(originId, routeId string, after time.Time) []ReachableSchedule {
+
+func (r *ReachIndex) ReachableWithNext(originId, routeId string, after time.Time) []ReachableSchedule {
 	/*
 		1. get all stop times (as a *ScheduleResults object) for each hash
 		2. get next stop time for each *ScheduleResults for each hash
@@ -224,7 +234,10 @@ func (r *ReachIndex) ReachableWithSchedule(originId, routeId string, after time.
 	return results
 }
 
-func (r *ReachIndex) reachable(originId string, routeId string, reverse bool) ReachableResults {
+/* reachable 
+returns what trip hashes can be used to reach each stop
+*/
+func (r *ReachIndex) reachable(originId string, routeId string, reverse bool) reachableResults {
 	originHashes := r.hashesByStopRoute[stopRouteId(originId, routeId)]
 
 	reachable := map[string]map[string]hashStopInfo{}
@@ -252,26 +265,6 @@ func (r *ReachIndex) reachable(originId string, routeId string, reverse bool) Re
 	}
 
 	return reachable
-}
-
-func (r *ReachIndex) reachableScheduleResult(hashInfo map[string]hashStopInfo) *ScheduleResults {
-	destinationStopTimes := []model.StopTime{}
-
-	for hash, info := range hashInfo {
-		for tripId := range r.tripsByHash[hash] {
-			stoptimes, _ := r.stopTimesByTrip.Get(tripId)
-			destinationStopTime := stoptimes[info.index]
-			destinationStopTimes = append(destinationStopTimes, destinationStopTime)
-		}
-	}
-
-	// sort the stop times - TODO it should be possible to make scheduleResults.Next(after) linear and not need a sort
-	model.StopTimeSort(destinationStopTimes)
-
-	return &ScheduleResults{
-		indexesRequiredBySchedule: r.indexesRequiredBySchedule,
-		results:                   destinationStopTimes,
-	}
 }
 
 // {hash: schedule results}
