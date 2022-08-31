@@ -7,16 +7,6 @@ import (
 	"stop-checker.com/db/model"
 )
 
-type Reach struct {
-	model.Stop
-	Trips map[string]struct{}
-}
-
-type ReachableStop struct {
-	model.Stop
-	Trips map[string]struct{}
-}
-
 type hashStopInfo struct {
 	// used to quickly lookup stop times 
 	index    int
