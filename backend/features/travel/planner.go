@@ -50,6 +50,7 @@ type PlannerConfig struct {
 	StopRouteIndex    *db.StopRouteIndex
 	StopIndex         *db.Index[model.Stop]
 	StopTimesFromTrip *db.InvertedIndex[model.StopTime]
+	ReachIndex        *db.ReachIndex
 }
 
 type Planner struct {
@@ -58,6 +59,7 @@ type Planner struct {
 	stopRouteIndex    *db.StopRouteIndex
 	stopIndex         *db.Index[model.Stop]
 	stopTimesFromTrip *db.InvertedIndex[model.StopTime]
+	reachIndex        *db.ReachIndex
 }
 
 func NewPlanner(config *PlannerConfig) *Planner {
@@ -67,6 +69,7 @@ func NewPlanner(config *PlannerConfig) *Planner {
 		stopRouteIndex:    config.StopRouteIndex,
 		stopIndex:         config.StopIndex,
 		stopTimesFromTrip: config.StopTimesFromTrip,
+		reachIndex:        config.ReachIndex,
 	}
 }
 
@@ -183,47 +186,29 @@ func (p *Planner) expandTransit(n *node) []*node {
 	origin := n.ID()
 	originArrival := n.Arrival()
 
-	blockers := map[string]dijkstra.Set{}  // blocked routes key:stopid, set of routeid
+	blockers := dijkstra.Set{}             // blocked routes key:stopid, set of directed routeid
 	fastest := map[string]fastestTransit{} // fastest transit option key:stopid
 
 	// expand on routes
-	for _, route := range p.stopRouteIndex.Get(n.ID()) {
-		if n.Blocked(route.DirectedID()) {
+	for _, stopRoute := range p.stopRouteIndex.Get(n.ID()) {
+		if n.Blocked(stopRoute.DirectedID()) {
 			continue
 		}
 
-		// lookup the trip and "tripOrigin" stop time
-		tripOrigin, err := p.scheduleIndex.Get(origin, route.RouteId).Next(originArrival)
-		if err != nil {
-			continue
-		}
+		// add stop route to blocked stop routes
+		blockers.Add(stopRoute.DirectedID())
 
-		// calculate the time spent waiting for the trip
-		waitDuration := tripOrigin.Sub(originArrival)
+		// set fastest transit for each stop
+		for _, result := range p.reachIndex.ReachableWithSchedule(origin, stopRoute.RouteId, originArrival) {
+			destinationId := result.Destination.Id
+			current, ok := fastest[result.Destination.Id]
 
-		for _, tripDestination := range p.expandTrip(tripOrigin.StopTime) {
-			// calculate the time spent in transit and the destination arrival time
-			transitDuration := model.TimeDiff(model.NewTimeFromDateTime(tripOrigin.Time), tripDestination.Time)
-			tripDestinationArrival := n.arrival.Add(waitDuration + transitDuration)
-
-			// the current fastest trip
-			current, seen := fastest[tripDestination.StopId]
-
-			// the current fastest trip should be replaced
-			if !seen || tripDestinationArrival.Before(current.arrival) {
-				fastest[tripDestination.StopId] = fastestTransit{
-					arrival: tripDestinationArrival,
-					routeId: route.RouteId,
+			if !ok || result.Arrival.Before(current.arrival) {
+				fastest[destinationId] = fastestTransit{
+					routeId: stopRoute.RouteId,
+					arrival: result.Arrival,
 				}
 			}
-
-			// add key to blocked route
-			if _, ok := blockers[tripDestination.StopId]; !ok {
-				blockers[tripDestination.StopId] = dijkstra.Set{}
-			}
-
-			stopBlockers := blockers[tripDestination.StopId]
-			stopBlockers.Add(route.DirectedID())
 		}
 	}
 
@@ -235,26 +220,12 @@ func (p *Planner) expandTransit(n *node) []*node {
 			stopId:    stopId,
 			arrival:   trip.arrival,
 			transfers: n.transfers + 1,
-			blockers:  blockers[stopId],
+			blockers:  blockers,
 			routeId:   trip.routeId,
 			walk:      false,
 		}
 
 		connections = append(connections, connection)
-	}
-
-	return connections
-}
-
-func (p *Planner) expandTrip(origin model.StopTime) []model.StopTime {
-	// all stop times after the origin stop time
-	all, _ := p.stopTimesFromTrip.Get(origin.TripId)
-	connections := []model.StopTime{}
-
-	for _, stopTime := range all {
-		if stopTime.StopSeq > origin.StopSeq {
-			connections = append(connections, stopTime)
-		}
 	}
 
 	return connections

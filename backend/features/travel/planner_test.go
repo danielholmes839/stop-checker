@@ -24,6 +24,7 @@ func TestPlanner(t *testing.T) {
 		StopRouteIndex:    database.StopRouteIndex,
 		StopIndex:         database.Stops,
 		StopTimesFromTrip: database.StopTimesByTrip,
+		ReachIndex:        database.ReachIndex,
 	})
 
 	scheduler := NewScheduler(&SchedulerConfig{
