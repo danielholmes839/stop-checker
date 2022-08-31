@@ -41,14 +41,21 @@ type StopRoute {
     route: Route!
     direction: ID!
     headsign: String!
-    schedule: StopRouteSchedule!
+    schedule: StopRouteSchedule!                            # schedule all stop times               
+    scheduleReaches(destination: ID!): StopRouteSchedule    # schedule to reach the destination
+    reaches(forward: Boolean!): [Stop!]!                    # stops that this stop route reaches
     liveMap: String
     liveBuses: [Bus!]!
 }
 
 type StopRouteSchedule {
-    next(limit: Int!, after: DateTime): [StopTime!]!
-    on(date: Date!): [StopTime!]!
+    next(limit: Int!, after: DateTime): [ScheduleResult!]!
+    on(date: Date!): [ScheduleResult!]!
+}
+
+type ScheduleResult {
+    stoptime: StopTime!
+    datetime: DateTime!
 }
 
 type Route {
@@ -62,7 +69,7 @@ type Route {
 type Trip {
     id: ID!
     route: Route!
-    stopTimes: [StopTime!]!
+    stoptimes: [StopTime!]!
     service: Service!
     direction: ID!
     headsign: String!
@@ -129,7 +136,7 @@ input TravelLegInput {
     route: ID # if the route id is null then walk
 }
 
-input TravelScheduleOptions {
+input TravelOptions {
     datetime: DateTime # default is the current time
     mode: ScheduleMode!
 }
@@ -159,10 +166,10 @@ type Query {
     searchStopLocation(location: LocationInput!, radius: Float!, page: PageInput!): StopSearchPayload! 
     
     # travel planner that creates a route and schedule
-    travelPlanner(origin: ID!, destination: ID!, options: TravelScheduleOptions!): TravelPayload!
+    travelPlanner(origin: ID!, destination: ID!, options: TravelOptions!): TravelPayload!
 
     # travel planner that creates a schedule from a route
-    travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelScheduleOptions!): TravelPayload!
+    travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelOptions!): TravelPayload!
 }
 
 type UserError {

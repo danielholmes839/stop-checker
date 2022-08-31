@@ -33,14 +33,14 @@ type TravelLegInput struct {
 	Route       *string `json:"route"`
 }
 
+type TravelOptions struct {
+	Datetime *time.Time   `json:"datetime"`
+	Mode     ScheduleMode `json:"mode"`
+}
+
 type TravelPayload struct {
 	Schedule travel.Schedule `json:"schedule"`
 	Errors   []*UserError    `json:"errors"`
-}
-
-type TravelScheduleOptions struct {
-	Datetime *time.Time   `json:"datetime"`
-	Mode     ScheduleMode `json:"mode"`
 }
 
 type UserError struct {

@@ -101,7 +101,7 @@ func (r *queryResolver) SearchStopLocation(ctx context.Context, location model.L
 }
 
 // TravelPlanner is the resolver for the travelPlanner field.
-func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destination string, options sdl.TravelScheduleOptions) (*sdl.TravelPayload, error) {
+func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destination string, options sdl.TravelOptions) (*sdl.TravelPayload, error) {
 	errs := []*sdl.UserError{}
 	failed := &sdl.TravelPayload{Schedule: nil, Errors: errs}
 
@@ -148,7 +148,7 @@ func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destin
 }
 
 // TravelPlannerFixedRoute is the resolver for the travelPlannerFixedRoute field.
-func (r *queryResolver) TravelPlannerFixedRoute(ctx context.Context, input []*sdl.TravelLegInput, options sdl.TravelScheduleOptions) (*sdl.TravelPayload, error) {
+func (r *queryResolver) TravelPlannerFixedRoute(ctx context.Context, input []*sdl.TravelLegInput, options sdl.TravelOptions) (*sdl.TravelPayload, error) {
 	fixed := sdl.NewTravelRoute(input)
 	schedule, _ := sdl.ScheduleWrapper(r.Scheduler, fixed, options)
 	return &sdl.TravelPayload{Schedule: schedule, Errors: []*sdl.UserError{}}, nil
@@ -176,6 +176,11 @@ func (r *routeResolver) Type(ctx context.Context, obj *model.Route) (sdl.RouteTy
 	}
 
 	return sdl.RouteTypeBus, nil
+}
+
+// Datetime is the resolver for the datetime field.
+func (r *scheduleResultResolver) Datetime(ctx context.Context, obj *db.ScheduleResult) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: Datetime - datetime"))
 }
 
 // Sunday is the resolver for the sunday field.
@@ -251,6 +256,18 @@ func (r *stopRouteResolver) Schedule(ctx context.Context, obj *model.StopRoute) 
 	return r.ScheduleIndex.Get(obj.StopId, obj.RouteId), nil
 }
 
+// ScheduleReaches is the resolver for the scheduleReaches field.
+func (r *stopRouteResolver) ScheduleReaches(ctx context.Context, obj *model.StopRoute, destination string) (*db.ScheduleResults, error) {
+	schedule, _ := r.ReachableBetweenWithSchedule(obj.StopId, destination, obj.RouteId)
+	return schedule, nil
+}
+
+// Reaches is the resolver for the reaches field.
+func (r *stopRouteResolver) Reaches(ctx context.Context, obj *model.StopRoute, forward bool) ([]*model.Stop, error) {
+	stops := r.ReachIndex.Reachable(obj.StopId, obj.RouteId, !forward)
+	return ref(stops), nil
+}
+
 // LiveMap is the resolver for the liveMap field.
 func (r *stopRouteResolver) LiveMap(ctx context.Context, obj *model.StopRoute) (*string, error) {
 	stop, _ := r.Stops.Get(obj.StopId)
@@ -284,24 +301,20 @@ func (r *stopRouteResolver) LiveBuses(ctx context.Context, obj *model.StopRoute)
 }
 
 // Next is the resolver for the next field.
-func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *db.ScheduleResults, limit int, after time.Time) ([]*model.StopTime, error) {
+func (r *stopRouteScheduleResolver) Next(ctx context.Context, obj *db.ScheduleResults, limit int, after time.Time) ([]*db.ScheduleResult, error) {
 	t := time.Now().In(r.TZ())
 	if !after.IsZero() {
 		t = after
 	}
 
 	stopTimes := obj.After(t, limit)
-	return apply(stopTimes, func(r db.ScheduleResult) *model.StopTime {
-		return &r.StopTime
-	}), nil
+	return ref(stopTimes), nil
 }
 
 // On is the resolver for the on field.
-func (r *stopRouteScheduleResolver) On(ctx context.Context, obj *db.ScheduleResults, date time.Time) ([]*model.StopTime, error) {
+func (r *stopRouteScheduleResolver) On(ctx context.Context, obj *db.ScheduleResults, date time.Time) ([]*db.ScheduleResult, error) {
 	stopTimes := obj.Day(date)
-	return apply(stopTimes, func(r db.ScheduleResult) *model.StopTime {
-		return &r.StopTime
-	}), nil
+	return ref(stopTimes), nil
 }
 
 // Stop is the resolver for the stop field.
@@ -440,10 +453,9 @@ func (r *tripResolver) Route(ctx context.Context, obj *model.Trip) (*model.Route
 	return &route, nil
 }
 
-// StopTimes is the resolver for the stopTimes field.
-func (r *tripResolver) StopTimes(ctx context.Context, obj *model.Trip) ([]*model.StopTime, error) {
-	stopTimes, _ := r.StopTimesByTrip.Get(obj.Id)
-	return ref(stopTimes), nil
+// Stoptimes is the resolver for the stoptimes field.
+func (r *tripResolver) Stoptimes(ctx context.Context, obj *model.Trip) ([]*model.StopTime, error) {
+	panic(fmt.Errorf("not implemented: Stoptimes - stoptimes"))
 }
 
 // Service is the resolver for the service field.
@@ -465,6 +477,11 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 // Route returns generated.RouteResolver implementation.
 func (r *Resolver) Route() generated.RouteResolver { return &routeResolver{r} }
+
+// ScheduleResult returns generated.ScheduleResultResolver implementation.
+func (r *Resolver) ScheduleResult() generated.ScheduleResultResolver {
+	return &scheduleResultResolver{r}
+}
 
 // Service returns generated.ServiceResolver implementation.
 func (r *Resolver) Service() generated.ServiceResolver { return &serviceResolver{r} }
@@ -502,6 +519,7 @@ func (r *Resolver) Trip() generated.TripResolver { return &tripResolver{r} }
 type busResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type routeResolver struct{ *Resolver }
+type scheduleResultResolver struct{ *Resolver }
 type serviceResolver struct{ *Resolver }
 type stopResolver struct{ *Resolver }
 type stopRouteResolver struct{ *Resolver }
@@ -511,3 +529,14 @@ type transitResolver struct{ *Resolver }
 type travelScheduleResolver struct{ *Resolver }
 type travelScheduleLegResolver struct{ *Resolver }
 type tripResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *tripResolver) StopTimes(ctx context.Context, obj *model.Trip) ([]*model.StopTime, error) {
+	stopTimes, _ := r.StopTimesByTrip.Get(obj.Id)
+	return ref(stopTimes), nil
+}
