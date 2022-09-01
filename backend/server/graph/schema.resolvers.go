@@ -129,12 +129,8 @@ func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destin
 	// determine the route
 	route, err := sdl.PlannerWrapper(r.Planner, origin, destination, options)
 	if err != nil {
-		fmt.Println("failed to route schedule", err)
+		fmt.Println("failed to create route", err)
 		return failed, nil
-	}
-
-	for _, leg := range route {
-		fmt.Printf("%#v\n", leg)
 	}
 
 	// determine the schedule
@@ -530,14 +526,3 @@ type transitResolver struct{ *Resolver }
 type travelScheduleResolver struct{ *Resolver }
 type travelScheduleLegResolver struct{ *Resolver }
 type tripResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *tripResolver) StopTimes(ctx context.Context, obj *model.Trip) ([]*model.StopTime, error) {
-	stopTimes, _ := r.StopTimesByTrip.Get(obj.Id)
-	return ref(stopTimes), nil
-}
