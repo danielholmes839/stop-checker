@@ -1,0 +1,33 @@
+query StopExplore($origin: ID!) {
+  stop(id: $origin) {
+    ...StopExplore
+    routes {
+      ...StopRouteExplore
+    }
+  }
+}
+
+fragment StopExplore on Stop {
+  id
+  name
+  code
+  location {
+    latitude
+    longitude
+  }
+}
+
+fragment StopRouteExplore on StopRoute {
+  headsign
+  route {
+    id
+    name
+    text
+    background
+  }
+  destinations: reaches(forward: true) {
+    id
+    name
+    code
+  }
+}

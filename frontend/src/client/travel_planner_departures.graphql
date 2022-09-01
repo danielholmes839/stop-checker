@@ -1,11 +1,12 @@
 query TravelPlannerDepartures(
-  $stop: ID!
+  $origin: ID!
+  $destination: ID!
   $route: ID!
   $after: DateTime!
   $limit: Int!
 ) {
-  stopRoute(stop: $stop, route: $route) {
-    schedule {
+  stopRoute(stop: $origin, route: $route) {
+    schedule: scheduleReaches(destination: $destination) {
       next(limit: $limit, after: $after) {
         stoptime {
           id

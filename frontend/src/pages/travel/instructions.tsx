@@ -1,4 +1,5 @@
 import {
+  TravelPlannerDeparturesQueryVariables,
   TravelScheduleLegDefaultFragment,
   useTravelPlannerDeparturesQuery,
 } from "client/types";
@@ -20,38 +21,34 @@ export const InstructionSubtitle: React.FC = ({ children }) => {
   return <h2 className="text-xs text-gray-800 font-semibold">{children}</h2>;
 };
 
-type MoreDepartureInput = {
-  stop: string;
-  route: string;
-  after: string;
-  limit: number;
-};
-
-const MoreDepartures: React.FC<{ input: MoreDepartureInput }> = ({ input }) => {
+const MoreDepartures: React.FC<{
+  input: TravelPlannerDeparturesQueryVariables;
+}> = ({ input }) => {
   const [{ data }, _] = useTravelPlannerDeparturesQuery({
     variables: input,
   });
 
   if (!data || !data.stopRoute) {
-    return <></>;
+    return <>{JSON.stringify(data, undefined, 4)}</>;
   }
 
   return (
     <div className="border-t mt-1 pt-1">
       <p className="text-xs">
-        {data.stopRoute.schedule.next
-          .filter((_, i) => i > 0)
-          .map(({ stoptime }) => (
-            <span key={stoptime.id} className="mr-2">
-              {stoptime.time}
-            </span>
-          ))}
+        {data.stopRoute.schedule &&
+          data.stopRoute.schedule.next
+            .filter((_, i) => i > 0)
+            .map(({ stoptime }) => (
+              <span key={stoptime.id} className="mr-2">
+                {stoptime.time}
+              </span>
+            ))}
       </p>
     </div>
   );
 };
 export const BoardInstructions: React.FC<InstructionProps> = ({ leg }) => {
-  const { origin, departure, transit } = leg;
+  const { origin, destination, departure, transit } = leg;
   const [showMoreDepartures, setShowMoreDepartures] = useState(false);
 
   if (!transit) {
@@ -90,7 +87,8 @@ export const BoardInstructions: React.FC<InstructionProps> = ({ leg }) => {
               after: departure,
               limit: 4,
               route: transit.route.id,
-              stop: origin.id,
+              origin: origin.id,
+              destination: destination.id,
             }}
           />
         )}

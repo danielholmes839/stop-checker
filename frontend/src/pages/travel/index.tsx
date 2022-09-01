@@ -1,37 +1,31 @@
 import { Container } from "components";
 import React from "react";
-import { ScheduleMode, useTravelPlannerQuery } from "client/types";
+import {
+  ScheduleMode,
+  TravelScheduleFragment,
+  useTravelPlannerQuery,
+} from "client/types";
 import { formatTime } from "helper";
 import {
   BoardInstructions,
   RideInstructions,
   WalkInstructions,
 } from "./instructions";
+import { Link } from "react-router-dom";
+import { Manual } from "./manual";
 
-const TravelPlanner: React.FC = () => {
-  const [{ data }, _] = useTravelPlannerQuery({
-    variables: {
-      origin: "AK151",
-      destination: "CD998",
-      options: {
-        datetime: "2022-08-31T12:00:00Z",
-        mode: ScheduleMode.ArriveBy,
-      },
-    },
-  });
+export const Travel: React.FC = () => {
+  return <></>;
+};
 
-  if (!data) {
-    return <></>;
-  }
-
-  const { schedule, errors } = data.travelPlanner;
-
-  if (errors.length > 0) {
-    return <pre>{JSON.stringify(errors, undefined, 4)}</pre>;
-  }
-
+const TravelSchedule: React.FC<TravelScheduleFragment> = ({ schedule }) => {
   if (!schedule) {
-    return <p>Failed to create a schedule...</p>;
+    return (
+      <div>
+        Failed to create a travel schedule. This can occur when there's no way
+        to create a travel schedule within 3 days of the departure/arrival time
+      </div>
+    );
   }
 
   const { arrival, departure, duration } = schedule;
@@ -59,21 +53,57 @@ const TravelPlanner: React.FC = () => {
   );
 };
 
+const TravelPlanner: React.FC = () => {
+  const [{ data }, _] = useTravelPlannerQuery({
+    variables: {
+      origin: "AK151",
+      destination: "CD998",
+      options: {
+        datetime: "2022-08-31T11:03:00Z",
+        mode: ScheduleMode.ArriveBy,
+      },
+    },
+  });
+
+  if (!data) {
+    return <>Loading...</>;
+  }
+
+  return <TravelSchedule schedule={data.travelPlanner.schedule} />;
+};
+
 export const TravelPage: React.FC = () => {
   return (
     <Container>
       <h1 className="text-4xl mt-3">Travel Planner</h1>
-      {/* <Wizard
-        header={<WizardHeader destination={destination} origin={origin} />}
-      >
-        <SelectStop name="Origin" setter={setOrigin} />
-        <SelectStop name="Destination" setter={setDestination} />
-        {origin && destination && (
-          <div>
-            You selected {origin.name} and {destination.name}
-          </div>
-        )}
-      </Wizard> */}
+      <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="p-3 rounded-sm border">
+          <h2 className="text-lg font-semibold">Automatic</h2>
+          <p className="text-sm text-gray-600 mb-3">
+            Let stop-checker plan your route automatically. Just enter the
+            origin and destination stops.
+          </p>
+          <Link
+            to="/travel/manual"
+            className="text-white bg-primary-500 px-5 py-1 rounded-sm text-sm font-semibold tracking-wide"
+          >
+            Start!
+          </Link>
+        </div>
+        <div className="p-3 rounded-sm border">
+          <h2 className="text-lg font-semibold">Manual</h2>
+          <p className="text-sm text-gray-600 mb-3">
+            Plan your route yourself! Just enter the origin the stop.
+          </p>
+          <Link
+            to="/travel/manual"
+            className="text-gray-800 bg-gray-200 px-5 py-1 rounded-sm text-sm font-semibold tracking-wide"
+          >
+            Select
+          </Link>
+        </div>
+      </div>
+      <Manual origin="AG930" />
       <TravelPlanner />
     </Container>
   );

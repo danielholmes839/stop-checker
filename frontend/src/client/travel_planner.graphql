@@ -4,14 +4,28 @@ query TravelPlanner($origin: ID!, $destination: ID!, $options: TravelOptions!) {
       field
       message
     }
-    schedule {
-      legs {
-        ...TravelScheduleLegDefault
-      }
-      departure
-      arrival
-      duration
+    ...TravelSchedule
+  }
+}
+
+query TravelPlannerFixedRoute($input: [TravelLegInput!]!, $options: TravelOptions!) {
+  travelPlannerFixedRoute(input: $input, options: $options) {
+    errors {
+      field
+      message
     }
+    ...TravelSchedule
+  }
+}
+
+fragment TravelSchedule on TravelPayload {
+  schedule {
+    legs {
+      ...TravelScheduleLegDefault
+    }
+    departure
+    arrival
+    duration
   }
 }
 
