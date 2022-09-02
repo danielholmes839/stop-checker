@@ -106,7 +106,10 @@ func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []
 		counter++
 
 		for _, info := range options {
-			order[stopId] = info.sequence
+			sequence, ok := order[stopId]
+			if !ok || sequence < info.sequence {
+				order[stopId] = info.sequence
+			}
 		}
 	}
 
