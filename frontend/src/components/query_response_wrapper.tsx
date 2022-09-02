@@ -1,5 +1,4 @@
 import { UseQueryState } from "urql";
-import { useDebounce } from "use-debounce";
 
 export const QueryResponseWrapper: React.FC<{ response: UseQueryState }> = ({
   response,

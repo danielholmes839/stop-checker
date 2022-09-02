@@ -1,5 +1,6 @@
 import {
   TravelPlannerDeparturesQueryVariables,
+  TravelScheduleFragment,
   TravelScheduleLegDefaultFragment,
   useTravelPlannerDeparturesQuery,
 } from "client/types";
@@ -186,5 +187,47 @@ export const WalkInstructions: React.FC<InstructionProps> = ({ leg }) => {
         </InstructionSubtitle>
       </div>
     </Instruction>
+  );
+};
+
+export const Instructions: React.FC<{
+  data: TravelScheduleFragment;
+}> = ({ data }) => {
+  const { schedule, error } = data;
+  if (!schedule) {
+    return (
+      <div>
+        <p>
+          Failed to create a travel schedule. This can occur when there's no way
+          to create a travel schedule within 3 days of the departure/arrival
+          time.
+          {error && <span>Error: {error}</span>}
+        </p>
+      </div>
+    );
+  }
+
+  const { arrival, departure, duration } = schedule;
+
+  return (
+    <div>
+      {schedule.legs.map((leg, i) => {
+        return leg.walk ? (
+          <WalkInstructions key={i} leg={leg} />
+        ) : (
+          <div key={i}>
+            <BoardInstructions leg={leg} />
+            <RideInstructions leg={leg} />
+          </div>
+        );
+      })}
+      <div>
+        <h1 className="font-semibold mt-3">You've reached your destination</h1>
+        <h2 className="text-xs text-gray-700 font-semibold">
+          Departure {formatTime(departure)} - Arrival {formatTime(arrival)} (
+          {duration} min)
+        </h2>
+      </div>
+    </div>
   );
 };

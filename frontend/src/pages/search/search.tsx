@@ -18,7 +18,7 @@ type Config = {
   Actions: StopPreviewActions;
 };
 
-type StopPreviewActions = React.FC<{ stop: StopPreviewFragment }>;
+export type StopPreviewActions = React.FC<{ stop: StopPreviewFragment }>;
 
 const FlagLink: React.FC<{ to: string; enabled: boolean }> = ({
   to,
@@ -159,7 +159,7 @@ export const Search: React.FC<{ config: Config }> = ({ config }) => {
   return (
     <>
       <input
-        className="bg-gray-50 border-b-2 border-gray-200 w-full mb-1 p-3 rounded-t-sm focus:outline-none focus:border-b-1 focus:border-primary-500 sm:text-xs md:text-sm"
+        className="bg-gray-50 border-b-2 border-gray-200 w-full mb-3 p-3 rounded-t-sm focus:outline-none focus:border-b-1 focus:border-primary-500 sm:text-xs md:text-sm"
         value={searchText}
         type="text"
         placeholder="Search by stop name or code Ex. Rideau A, O-Train, 3000"

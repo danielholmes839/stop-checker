@@ -7,7 +7,7 @@ import {
   useTravelRouteQuery,
 } from "client/types";
 import { Sign } from "components";
-import { formatDistance, formatDistanceShort, formatTime } from "helper";
+import { formatDistance, formatDistanceShort } from "helper";
 import React, { useEffect, useState } from "react";
 import {
   Instruction,
@@ -241,28 +241,26 @@ const Select: React.FC = () => {
   const [activeStopRoute, setActiveStopRoute] =
     useState<StopRouteExploreFragment | null>(null);
 
+  const update = (stopRoute: StopRouteExploreFragment | null) => {
+    setTransit(stopRoute !== null);
+    setActiveStopRoute(stopRoute);
+  };
+
   useEffect(() => {
     if (!data || !data.stop) {
       return;
     }
-
     for (let stopRoute of data.stop.routes) {
       if (stopRoute.destinations.length > 0 && !taken(stopRoute.route.id)) {
-        setTransit(true);
-        setActiveStopRoute(stopRoute);
+        update(stopRoute);
         break;
       }
-      setTransit(false);
-      setActiveStopRoute(null);
+      update(null);
     }
   }, [data]);
 
-  if (fetching) {
-    return <></>;
-  }
-
   if (!data || !data.stop || error) {
-    return <>error</>;
+    return <></>;
   }
 
   const { stop } = data;
@@ -279,10 +277,7 @@ const Select: React.FC = () => {
       <div className="mt-2">
         <button
           className={transit ? normalCss : activeCss}
-          onClick={() => {
-            setActiveStopRoute(null);
-            setTransit(false);
-          }}
+          onClick={() => update(null)}
         >
           <span className="text-sm">Walk</span>
         </button>
@@ -300,10 +295,7 @@ const Select: React.FC = () => {
                   ? activeCss
                   : normalCss
               }
-              onClick={() => {
-                setActiveStopRoute(stopRoute);
-                setTransit(true);
-              }}
+              onClick={() => update(stopRoute)}
             >
               <span className="text-xs">
                 <Sign props={route} />
@@ -326,8 +318,7 @@ const Select: React.FC = () => {
                       destination: destination.id,
                       route: activeStopRoute.route.id,
                     });
-                    setTransit(false);
-                    setActiveStopRoute(null);
+                    update(null);
                   }}
                   className={`text-xs ${normalCss}`}
                 >
@@ -337,7 +328,6 @@ const Select: React.FC = () => {
             })}
           </div>
         )}
-
         {!transit && !activeStopRoute && (
           <WalkSelect location={data.stop.location} origin={current} />
         )}
