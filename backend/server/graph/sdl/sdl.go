@@ -38,14 +38,14 @@ type TravelOptions struct {
 	Mode     ScheduleMode `json:"mode"`
 }
 
-type TravelPayload struct {
-	Schedule travel.Schedule `json:"schedule"`
-	Errors   []*UserError    `json:"errors"`
+type TravelRoutePayload struct {
+	Route []*travel.FixedLeg `json:"route"`
+	Error *string            `json:"error"`
 }
 
-type UserError struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
+type TravelSchedulePayload struct {
+	Schedule travel.Schedule `json:"schedule"`
+	Error    *string         `json:"error"`
 }
 
 type RouteType string

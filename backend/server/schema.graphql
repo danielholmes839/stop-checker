@@ -16,6 +16,7 @@ enum RouteType {
 type Location {
     latitude: Float!
     longitude: Float!
+    distance(location: LocationInput!): Float!
 }
 
 type Stop {
@@ -107,16 +108,16 @@ type TravelSchedule {
     origin: Stop!
     destination: Stop!
     duration: Int! 
-    departure: DateTime! # origin departure time
-    arrival: DateTime! # destination arrival
+    departure: DateTime!        # origin departure time
+    arrival: DateTime!          # destination arrival time
 }
 
 type TravelScheduleLeg {
     origin: Stop!
     destination: Stop!
     walk: Boolean!
-    distance: Float!
     transit: Transit            # if null then walking
+    distance: Float!
     duration: Int!
     departure: DateTime!
     arrival: DateTime!
@@ -141,9 +142,22 @@ input TravelOptions {
     mode: ScheduleMode!
 }
 
-type TravelPayload {
+type TravelSchedulePayload {
     schedule: TravelSchedule
-    errors: [UserError!]!
+    error: String
+}
+
+type TravelRoutePayload {
+    route: [TravelRouteLeg!]
+    error: String
+}
+
+type TravelRouteLeg {
+    origin: Stop!
+    destination: Stop!
+    stopRoute: StopRoute # starting at the origin
+    walk: Boolean!
+    distance: Float!
 }
 
 type StopSearchPayload {
@@ -163,18 +177,16 @@ type Query {
 
     # search
     searchStopText(text: String!, page: PageInput!): StopSearchPayload! 
-    searchStopLocation(location: LocationInput!, radius: Float!, page: PageInput!): StopSearchPayload! 
+    searchStopLocation(location: LocationInput!, radius: Float!, page: PageInput!, sorted: Boolean!): StopSearchPayload! 
     
     # travel planner that creates a route and schedule
-    travelPlanner(origin: ID!, destination: ID!, options: TravelOptions!): TravelPayload!
+    travelPlanner(origin: ID!, destination: ID!, options: TravelOptions!): TravelSchedulePayload!
 
     # travel planner that creates a schedule from a route
-    travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelOptions!): TravelPayload!
-}
+    travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelOptions!): TravelSchedulePayload!
 
-type UserError {
-    field: String!
-    message: String!
+    # validate the travel route
+    travelRoute(input: [TravelLegInput!]): TravelRoutePayload!
 }
 
 type PageInfo {
