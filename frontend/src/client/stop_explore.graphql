@@ -7,6 +7,39 @@ query StopExplore($origin: ID!) {
   }
 }
 
+query StopExploreWalk($location: LocationInput!) {
+  searchStopLocation(
+    location: $location
+    radius: 500
+    page: { skip: 0, limit: -1 }
+    sorted: true
+  ) {
+    page {
+      cursor
+      remaining
+    }
+    results {
+      id
+      name
+      code
+      location {
+        latitude
+        longitude
+        distance(location: $location)
+      }
+      routes {
+        headsign
+        route {
+          id
+          name
+          text
+          background
+        }
+      }
+    }
+  }
+}
+
 fragment StopExplore on Stop {
   id
   name

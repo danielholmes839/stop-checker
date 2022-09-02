@@ -1,24 +1,21 @@
 query TravelPlanner($origin: ID!, $destination: ID!, $options: TravelOptions!) {
   travelPlanner(origin: $origin, destination: $destination, options: $options) {
-    errors {
-      field
-      message
-    }
+    error
     ...TravelSchedule
   }
 }
 
-query TravelPlannerFixedRoute($input: [TravelLegInput!]!, $options: TravelOptions!) {
+query TravelPlannerFixedRoute(
+  $input: [TravelLegInput!]!
+  $options: TravelOptions!
+) {
   travelPlannerFixedRoute(input: $input, options: $options) {
-    errors {
-      field
-      message
-    }
+    error
     ...TravelSchedule
   }
 }
 
-fragment TravelSchedule on TravelPayload {
+fragment TravelSchedule on TravelSchedulePayload {
   schedule {
     legs {
       ...TravelScheduleLegDefault

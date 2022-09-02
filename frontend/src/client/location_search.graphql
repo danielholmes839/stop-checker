@@ -1,5 +1,10 @@
 query LocationSearch($location: LocationInput!, $page: PageInput!) {
-  searchStopLocation(location: $location, radius: 1000, page: $page) {
+  searchStopLocation(
+    location: $location
+    radius: 1000
+    page: $page
+    sorted: false
+  ) {
     results {
       id
       name

@@ -1,0 +1,27 @@
+query TravelRoute($input: [TravelLegInput!]!) {
+  travelRoute(input: $input) {
+    route {
+      origin {
+        id
+        name
+        code
+      }
+      destination {
+        id
+        name
+        code
+      }
+      walk
+      distance
+      stopRoute {
+        route {
+          id
+          name
+          text
+          background
+        }
+        headsign
+      }
+    }
+  }
+}

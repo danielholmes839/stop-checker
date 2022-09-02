@@ -76,7 +76,7 @@ export const TravelPage: React.FC = () => {
   return (
     <Container>
       <h1 className="text-4xl mt-3">Travel Planner</h1>
-      <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-3">
+      {/* <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-3">
         <div className="p-3 rounded-sm border">
           <h2 className="text-lg font-semibold">Automatic</h2>
           <p className="text-sm text-gray-600 mb-3">
@@ -102,8 +102,8 @@ export const TravelPage: React.FC = () => {
             Select
           </Link>
         </div>
-      </div>
-      <Manual origin="AG930" />
+      </div> */}
+      <Manual origin="AK151" />
       <TravelPlanner />
     </Container>
   );

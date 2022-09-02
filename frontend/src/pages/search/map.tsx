@@ -110,7 +110,6 @@ export const SearchMap: React.FC<{
                 if (!mapRef.current) {
                   return;
                 }
-                console.log(e.coords);
                 setLocation({
                   latitude: e.coords.latitude,
                   longitude: e.coords.longitude,
@@ -122,9 +121,7 @@ export const SearchMap: React.FC<{
 
                 mapRef.current.setZoom(14);
               },
-              (e) => {
-                console.log(e);
-              },
+              (e) => {},
               {
                 enableHighAccuracy: true,
                 maximumAge: 0,

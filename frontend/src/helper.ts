@@ -26,6 +26,14 @@ export const formatDistance = (distance: number): string => {
   return (Math.round(distance / 10) * 10).toFixed(0) + " meters";
 };
 
+export const formatDistanceShort = (distance: number): string => {
+  if (distance >= 1000) {
+    return (distance / 1000).toFixed(1) + "km";
+  }
+
+  return (Math.round(distance / 10) * 10).toFixed(0) + "m";
+};
+
 export const formatRouteType = (rt: RouteType): string => {
   return rt.toLowerCase();
 };

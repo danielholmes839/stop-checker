@@ -1,17 +1,39 @@
-import { TravelLegInput, useStopExploreQuery } from "client/types";
+import {
+  LocationInput,
+  StopRouteExploreFragment,
+  TravelLegInput,
+  useStopExploreQuery,
+  useStopExploreWalkQuery,
+  useTravelRouteQuery,
+} from "client/types";
 import { Sign } from "components";
-import React, { Children, useState } from "react";
+import { formatDistance, formatDistanceShort, formatTime } from "helper";
+import React, { useEffect, useState } from "react";
+import {
+  Instruction,
+  InstructionSubtitle,
+  InstructionTitle,
+} from "./instructions";
+
+const activeCss =
+  "py-1 px-2 bg-primary-100 rounded-sm mr-2 mb-1 border border-primary-200";
+const normalCss =
+  "py-1 px-2 bg-gray-50 rounded-sm mr-2 mb-1 border border-gray-200 hover:bg-gray-100";
 
 type LegContextValue = {
   current: string; // stop id
   legs: TravelLegInput[];
   add: (leg: TravelLegInput) => void;
+  back: () => void;
+  taken: (route: string) => boolean;
 };
 
 const LegContext = React.createContext<LegContextValue>({
   current: "",
   legs: [],
+  taken: (route) => false,
   add: (leg) => {},
+  back: () => {},
 });
 
 const useLegContext = () => React.useContext(LegContext);
@@ -23,7 +45,40 @@ const LegContextProvider: React.FC<{ origin: string }> = ({
   const [current, setCurrent] = useState(origin);
   const [legs, setLegs] = useState<TravelLegInput[]>([]);
 
+  const back = () => {
+    if (legs.length === 0) {
+      return;
+    }
+
+    let legsCopy = legs.map((leg) => leg);
+    let leg = legsCopy.pop();
+
+    setCurrent((leg as TravelLegInput).origin);
+    setLegs(legsCopy);
+  };
+
+  const taken = (route: string): boolean => {
+    for (let leg of legs) {
+      if (route === leg.route) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const add = (leg: TravelLegInput) => {
+    if (legs.length > 0) {
+      let lastLeg = legs[legs.length - 1];
+
+      if (leg.route === null && lastLeg.route === null) {
+        let legsCopy = legs.map((leg) => leg);
+        legsCopy[legs.length - 1].destination = leg.destination;
+        setCurrent(leg.destination);
+        setLegs(legsCopy);
+        return;
+      }
+    }
+
     setCurrent(leg.destination);
     setLegs([...legs, leg]);
   };
@@ -32,6 +87,8 @@ const LegContextProvider: React.FC<{ origin: string }> = ({
     <LegContext.Provider
       value={{
         add: add,
+        back: back,
+        taken: taken,
         legs: legs,
         current: current,
       }}
@@ -41,32 +98,139 @@ const LegContextProvider: React.FC<{ origin: string }> = ({
   );
 };
 
+const Remove: React.FC = () => {
+  const { back } = useLegContext();
+  return (
+    <button
+      onClick={back}
+      className="bg-red-100 hover:bg-red-200 px-3 py-1 mt-2 rounded-sm text-xs border border-red-300 text-red-700 font-semibold"
+    >
+      Remove
+    </button>
+  );
+};
 const Current: React.FC = () => {
   const { legs } = useLegContext();
-  if (legs.length === 0) {
+
+  const [{ data }, fetch] = useTravelRouteQuery({
+    variables: {
+      input: legs,
+    },
+    pause: true,
+  });
+
+  useEffect(() => {
+    if (legs.length > 0) {
+      fetch();
+    }
+  }, [legs]);
+
+  if (!data || !data.travelRoute.route || legs.length === 0) {
     return <></>;
   }
+
   return (
     <>
-      {legs.map(({ origin, destination, route }) => (
-        <div>
-          {origin} {destination} {route ? route : "walk"}
-        </div>
-      ))}
+      {data.travelRoute.route.map(
+        ({ origin, destination, stopRoute, distance }, i) => {
+          let isLast = i === legs.length - 1;
+
+          if (stopRoute) {
+            let route = stopRoute.route;
+            return (
+              <Instruction key={origin.id + destination.id}>
+                <div
+                  className="border-l-2 pl-3"
+                  style={{ borderColor: route.background }}
+                >
+                  <InstructionTitle>
+                    Board the{" "}
+                    <span className="text-sm">
+                      <Sign props={route} />
+                    </span>{" "}
+                    at {origin.name}
+                  </InstructionTitle>
+                  <InstructionSubtitle>
+                    Towards {stopRoute.headsign}
+                  </InstructionSubtitle>
+                  <div className="mt-2">
+                    <p className="text-sm">
+                      Exit at{" "}
+                      <span className="font-semibold text-gray-700">
+                        {destination.name}
+                      </span>
+                    </p>
+                  </div>
+                  {isLast && <Remove />}
+                </div>
+              </Instruction>
+            );
+          }
+
+          return (
+            <Instruction key={origin.id + destination.id}>
+              <div className="border-l-4 pl-3 border-gray-300 border-dashed">
+                <InstructionTitle>
+                  <span className="align-text-bottom">
+                    Walk to {destination.name}
+                  </span>
+                </InstructionTitle>
+                <InstructionSubtitle>
+                  {formatDistance(distance)}
+                </InstructionSubtitle>
+                {isLast && <Remove />}
+              </div>
+            </Instruction>
+          );
+        }
+      )}
     </>
   );
 };
 
-const WalkSelect: React.FC = () => {
-  return <></>
-}
+const WalkSelect: React.FC<{ location: LocationInput; origin: string }> = ({
+  location,
+  origin,
+}) => {
+  const { add, current } = useLegContext();
+  const [{ data }, _] = useStopExploreWalkQuery({
+    variables: {
+      location: location,
+    },
+  });
 
-const TransitSelect: React.FC = () => {
-  return <></>
-}
+  if (!data) {
+    return <></>;
+  }
+  return (
+    <div className="mt-3">
+      {data.searchStopLocation.results.map(({ id, name, code, location }) => {
+        if (id === current) {
+          return;
+        }
+        return (
+          <button
+            key={id}
+            onClick={() =>
+              add({
+                origin: origin,
+                destination: id,
+                route: null,
+              })
+            }
+            className={`text-xs ${normalCss}`}
+          >
+            {name} #{code} ({formatDistanceShort(location.distance)})
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 const Select: React.FC = () => {
-  const { current, add } = useLegContext();
+  const { current, add, taken } = useLegContext();
+
   const [{ data, error, fetching }, _] = useStopExploreQuery({
     variables: {
       origin: current,
@@ -74,44 +238,70 @@ const Select: React.FC = () => {
   });
 
   const [transit, setTransit] = useState(true);
-  const [activeStopRouteIndex, setActiveStopRouteIndex] = useState(0);
+  const [activeStopRoute, setActiveStopRoute] =
+    useState<StopRouteExploreFragment | null>(null);
+
+  useEffect(() => {
+    if (!data || !data.stop) {
+      return;
+    }
+
+    for (let stopRoute of data.stop.routes) {
+      if (stopRoute.destinations.length > 0 && !taken(stopRoute.route.id)) {
+        setTransit(true);
+        setActiveStopRoute(stopRoute);
+        break;
+      }
+      setTransit(false);
+      setActiveStopRoute(null);
+    }
+  }, [data]);
 
   if (fetching) {
-    return <>Loading...</>;
+    return <></>;
   }
 
   if (!data || !data.stop || error) {
-    return <>error {error?.message}</>;
+    return <>error</>;
   }
 
   const { stop } = data;
 
-  let activeCss =
-    "py-1 px-2 bg-primary-100 rounded-sm mr-2 mb-1 border border-primary-200";
-  let normalCss =
-    "py-1 px-2 bg-gray-50 rounded-sm mr-2 mb-1 border border-gray-200 hover:bg-gray-100";
-
   return (
     <div className="my-5">
-      <h1>
+      <h1 className="font-semibold">
         {stop.name} #{stop.code}
       </h1>
-      <div className="mt-1">
+      <p className="text-sm">
+        Choose your destination from{" "}
+        <span className="underline">{stop.name}</span>
+      </p>
+      <div className="mt-2">
         <button
           className={transit ? normalCss : activeCss}
           onClick={() => {
-            setActiveStopRouteIndex(-1);
+            setActiveStopRoute(null);
             setTransit(false);
           }}
         >
           <span className="text-sm">Walk</span>
         </button>
-        {stop.routes.map(({ route, headsign, destinations }, i) => {
+        {stop.routes.map((stopRoute, i) => {
+          let { route, headsign, destinations } = stopRoute;
+          if (destinations.length === 0 || taken(route.id)) {
+            return;
+          }
+
           return (
             <button
-              className={i === activeStopRouteIndex ? activeCss : normalCss}
+              key={i}
+              className={
+                activeStopRoute && route.id === activeStopRoute.route.id
+                  ? activeCss
+                  : normalCss
+              }
               onClick={() => {
-                setActiveStopRouteIndex(i);
+                setActiveStopRoute(stopRoute);
                 setTransit(true);
               }}
             >
@@ -124,27 +314,32 @@ const Select: React.FC = () => {
         })}
       </div>
       <div>
-        {transit && (
+        {transit && activeStopRoute && (
           <div className="mt-3">
-            {stop.routes[activeStopRouteIndex].destinations.map(
-              (destination, i) => {
-                return (
-                  <button
-                    onClick={() =>
-                      add({
-                        origin: current,
-                        destination: destination.id,
-                        route: stop.routes[activeStopRouteIndex].route.id,
-                      })
-                    }
-                    className={`text-xs ${normalCss}`}
-                  >
-                    {i + 1}. {destination.name} #{destination.code}
-                  </button>
-                );
-              }
-            )}
+            {activeStopRoute.destinations.map((destination, i) => {
+              return (
+                <button
+                  key={destination.id}
+                  onClick={() => {
+                    add({
+                      origin: current,
+                      destination: destination.id,
+                      route: activeStopRoute.route.id,
+                    });
+                    setTransit(false);
+                    setActiveStopRoute(null);
+                  }}
+                  className={`text-xs ${normalCss}`}
+                >
+                  {i + 1}. {destination.name} #{destination.code}
+                </button>
+              );
+            })}
           </div>
+        )}
+
+        {!transit && !activeStopRoute && (
+          <WalkSelect location={data.stop.location} origin={current} />
         )}
       </div>
     </div>
