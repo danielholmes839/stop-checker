@@ -18,7 +18,7 @@ type Server struct {
 }
 
 func (s *Server) HandleGraphQL() {
-	database, _ := db.NewDatabaseFromFilesystem("./db/data")
+	database, _ := db.NewDatabaseFromFilesystem("./db/data", time.Now())
 
 	resolvers := handler.NewDefaultServer(generated.NewExecutableSchema(
 		generated.Config{
