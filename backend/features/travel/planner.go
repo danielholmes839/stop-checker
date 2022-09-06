@@ -3,6 +3,7 @@ package travel
 import (
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
 	"stop-checker.com/features/travel/dijkstra"
@@ -75,6 +76,8 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error
 		blockers:  dijkstra.Set{},
 	}
 
+	t0 := time.Now()
+
 	solution, err := dijkstra.Algorithm(&dijkstra.Config[*node]{
 		Destination: destination,
 		Initial:     initial,
@@ -87,8 +90,22 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error
 	})
 
 	if err != nil {
+		log.Error().Err(err).
+			Str("planner-mode", "depart-at").
+			Dur("planner-duration", time.Since(t0)).
+			Str("planner-origin", origin).
+			Str("planner-destination", destination).
+			Msg("failed to create a travel plan")
+
 		return nil, err
 	}
+
+	log.Info().
+		Str("planner-mode", "depart-at").
+		Dur("planner-duration", time.Since(t0)).
+		Str("planner-origin", origin).
+		Str("planner-destination", destination).
+		Msg("successfully created a travel plan")
 
 	return p.route(solution, true), nil
 }
@@ -103,6 +120,8 @@ func (p *Planner) Arrive(by time.Time, origin, destination string) (Route, error
 		blockers:  dijkstra.Set{},
 	}
 
+	t0 := time.Now()
+
 	solution, err := dijkstra.Algorithm(&dijkstra.Config[*node]{
 		Destination: origin, // the target
 		Initial:     initial,
@@ -115,8 +134,21 @@ func (p *Planner) Arrive(by time.Time, origin, destination string) (Route, error
 	})
 
 	if err != nil {
+		log.Error().Err(err).
+			Str("planner-mode", "arrive-by").
+			Dur("planner-duration", time.Since(t0)).
+			Str("planner-origin", origin).
+			Str("planner-destination", destination).
+			Msg("failed to create a travel plan")
 		return nil, err
 	}
+
+	log.Info().
+		Str("planner-mode", "arrive-by").
+		Dur("planner-duration", time.Since(t0)).
+		Str("planner-origin", origin).
+		Str("planner-destination", destination).
+		Msg("failed to create a travel plan")
 
 	return p.route(solution, false), nil
 }

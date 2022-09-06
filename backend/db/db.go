@@ -1,9 +1,9 @@
 package db
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"stop-checker.com/db/model"
 )
 
@@ -34,11 +34,7 @@ type Database struct {
 }
 
 func NewDatabase(base *model.Base, timezone *time.Location) *Database {
-	// record start time
-	now := time.Now()
-	defer func() {
-		fmt.Println("created database indexes in", time.Since(now))
-	}()
+	t0 := time.Now()
 
 	baseIndex := &BaseIndex{
 		// basic indexes
@@ -56,7 +52,7 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 	})
 	scheduleIndex := NewScheduleIndex(baseIndex, base)
 
-	return &Database{
+	database := &Database{
 		timezone: timezone,
 
 		// inverted indexes
@@ -73,6 +69,9 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 		StopTextIndex: NewStopTextIndex(base.Stops, stopRoutesIndex),
 		ReachIndex:    NewReachIndex(baseIndex, base, stopTimesByTrip, scheduleIndex.indexesRequiredBySchedule),
 	}
+
+	log.Info().Dur("duration", time.Since(t0)).Msg("created indexes")
+	return database
 }
 
 func (db *Database) TZ() *time.Location {

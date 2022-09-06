@@ -4,8 +4,10 @@ import (
 	"io"
 	"os"
 	fp "path/filepath"
+	"time"
 
 	csvtag "github.com/artonge/go-csv-tag/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type raw struct {
@@ -79,12 +81,33 @@ type dataset struct {
 }
 
 func newDataset(r *raw) *dataset {
-	return &dataset{
-		Calendars:     parseCSV[Calendar](r.calendars),
-		CalendarDates: parseCSV[CalendarDate](r.calendarDates),
-		Routes:        parseCSV[Route](r.routes),
-		StopTimes:     parseCSV[StopTime](r.stoptimes),
-		Stops:         parseCSV[Stop](r.stops),
-		Trips:         parseCSV[Trip](r.trips),
+	t0 := time.Now()
+
+	calendars := parseCSV[Calendar](r.calendars)
+	calendarDates := parseCSV[CalendarDate](r.calendarDates)
+	routes := parseCSV[Route](r.routes)
+	stoptimes := parseCSV[StopTime](r.stoptimes)
+	stops := parseCSV[Stop](r.stops)
+	trips := parseCSV[Trip](r.trips)
+
+	dataset := &dataset{
+		Calendars:     calendars,
+		CalendarDates: calendarDates,
+		Routes:        routes,
+		StopTimes:     stoptimes,
+		Stops:         stops,
+		Trips:         trips,
 	}
+
+	log.Info().
+		Dur("duration", time.Since(t0)).
+		Int("routes", len(routes)).
+		Int("stops", len(stops)).
+		Int("stoptimes", len(stoptimes)).
+		Int("trips", len(trips)).
+		Int("services", len(calendars)).
+		Int("service-exceptions", len(calendarDates)).
+		Msg("created dataset")
+
+	return dataset
 }

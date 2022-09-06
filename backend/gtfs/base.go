@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"stop-checker.com/db/model"
 )
 
@@ -17,6 +18,9 @@ type BaseOptions struct {
 
 func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 	dataset := newDataset(r)
+
+	t0 := time.Now()
+
 	validRoutes := map[string]struct{}{}
 	validTrips := map[string]struct{}{}
 	validServices := map[string]struct{}{}
@@ -77,6 +81,16 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 		stop := NewStop(stopRecord)
 		stops = append(stops, stop)
 	}
+
+	log.Info().
+		Dur("duration", time.Since(t0)).
+		Int("routes", len(routes)).
+		Int("stops", len(stops)).
+		Int("stoptimes", len(stoptimes)).
+		Int("trips", len(trips)).
+		Int("services", len(services)).
+		Int("service-exceptions", len(serviceExceptions)).
+		Msg("filtered dataset")
 
 	return &model.Base{
 		Routes:            routes,

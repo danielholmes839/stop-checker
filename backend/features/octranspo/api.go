@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"stop-checker.com/db/model"
 )
 
@@ -93,10 +94,24 @@ func (api *API) update(stop model.Stop) *entry {
 	api.data[stop.Code] = entry
 
 	go func() {
+		t0 := time.Now()
 		routes, err := api.client.Request(stop)
 		entry.Routes = routes
 		entry.Error = err
 		entry.Ready.Done()
+
+		if err != nil {
+			log.Error().Err(err).
+				Dur("request-duration", time.Since(t0)).
+				Str("request-stop", stop.Code).
+				Msg("failed to request live bus data from OC Transpo")
+			return
+		}
+
+		log.Info().
+			Dur("request-duration", time.Since(t0)).
+			Str("request-stop", stop.Code).
+			Msg("requested live bus data from OC Transpo")
 	}()
 
 	return entry
