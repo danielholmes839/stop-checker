@@ -9,6 +9,7 @@ import (
 	"stop-checker.com/features/travel/dijkstra"
 )
 
+const MAX_WALK_DISTANCE = 250
 const TRANSFER_PENALTY = 5 * time.Minute
 
 type closestWalk struct {
@@ -199,6 +200,10 @@ func (p *Planner) expandReverse(n *node) []*node {
 }
 
 func (p *Planner) expandWalk(origin *node, reverse bool) []*node {
+	if origin.walk {
+		return []*node{}
+	}
+	
 	stop, _ := p.stopIndex.Get(origin.ID())
 
 	originRoutes := dijkstra.Set{}
@@ -212,7 +217,7 @@ func (p *Planner) expandWalk(origin *node, reverse bool) []*node {
 	closest := map[string]closestWalk{}
 
 	// for all stops within a 200m radius
-	for _, neighbor := range p.stopLocationIndex.Query(stop.Location, 200) {
+	for _, neighbor := range p.stopLocationIndex.Query(stop.Location, MAX_WALK_DISTANCE) {
 		neighborRoutes := p.stopRouteIndex.Get(neighbor.ID())
 
 		for _, route := range neighborRoutes {
