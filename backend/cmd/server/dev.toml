@@ -1,0 +1,27 @@
+[octranspo]
+# OC Transpo's API endpoint
+endpoint = "https://api.octranspo1.com/v2.0/GetNextTripsForStopAllRoutes"
+# OC Tranpo API key
+api_key = "13d12d72"
+# OC Transpo app id
+app_id = "508a0741b6945609192422d77f3a1da4"
+
+[google_cloud]
+# Maps API key
+api_key = "AIzaSyB1ha-Cb9kOv0dPi-mBZQ4JHukDRVEJ4ME"
+
+[server]
+# IANA time zone string
+timezone = "America/Montreal"
+# Port string used in http.ListenAndServe
+port = ":3001"
+# Enable CORS
+cors = true
+# "AWS" or "local"
+dataset = "filesystem" 
+
+[filesystem]
+dataset_folder = "./db/data"
+
+[aws]
+dataset_bucket = "" # bucket name on AWS
