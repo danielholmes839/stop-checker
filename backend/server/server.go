@@ -33,7 +33,7 @@ func (s *Server) Listen(config Config) {
 				OCTranspo: octranspo.NewAPI(time.Second*30, &octranspo.Client{
 					Endpoint:          config.OCTRANSPO_ENDPOINT,
 					OCTRANSPO_APP_ID:  config.OCTRANSPO_APP_ID,
-					OCTRANSPO_API_KEY: config.OCTRANSPO_ENDPOINT,
+					OCTRANSPO_API_KEY: config.OCTRANSPO_API_KEY,
 				}),
 				Database: database,
 				Planner: travel.NewPlanner(&travel.PlannerConfig{
