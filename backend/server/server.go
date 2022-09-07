@@ -6,6 +6,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/rs/zerolog/log"
 	"stop-checker.com/db"
 	"stop-checker.com/features/octranspo"
 	"stop-checker.com/features/travel"
@@ -17,19 +18,22 @@ type Server struct {
 	Database *db.Database
 }
 
-func (s *Server) HandleGraphQL() {
-	database, _ := db.NewDatabaseFromFilesystem("./db/data", time.Now())
+func (s *Server) Listen(config Config) {
+	t0 := time.Now()
+	log.Info().Msg("server starting")
+
+	database, _ := db.NewDatabaseFromFilesystem(config.DATASET_FOLDER, time.Now())
 
 	resolvers := handler.NewDefaultServer(generated.NewExecutableSchema(
 		generated.Config{
 			Resolvers: &graph.Resolver{
 				Config: graph.Config{
-					GOOGLE_MAPS_API_KEY: "AIzaSyB1ha-Cb9kOv0dPi-mBZQ4JHukDRVEJ4ME",
+					GOOGLE_MAPS_API_KEY: config.GOOGLE_MAPS_API_KEY,
 				},
 				OCTranspo: octranspo.NewAPI(time.Second*30, &octranspo.Client{
-					Endpoint:          "https://api.octranspo1.com/v2.0/GetNextTripsForStopAllRoutes",
-					OCTRANSPO_APP_ID:  "13d12d72",
-					OCTRANSPO_API_KEY: "508a0741b6945609192422d77f3a1da4",
+					Endpoint:          config.OCTRANSPO_ENDPOINT,
+					OCTRANSPO_APP_ID:  config.OCTRANSPO_APP_ID,
+					OCTRANSPO_API_KEY: config.OCTRANSPO_ENDPOINT,
 				}),
 				Database: database,
 				Planner: travel.NewPlanner(&travel.PlannerConfig{
@@ -47,11 +51,21 @@ func (s *Server) HandleGraphQL() {
 		},
 	))
 
+	// server endpoint
 	http.Handle("/graphql", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if config.SERVER_ENABLE_CORS {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		}
 		resolvers.ServeHTTP(w, r)
 	}))
 
 	http.Handle("/graphql-playground", playground.Handler("stop-checker", "/graphql"))
+
+	// server ready
+	log.Info().Dur("total-duration", time.Since(t0)).Msg("server ready")
+	err := http.ListenAndServe(config.SERVER_PORT, nil)
+
+	// server shutdown
+	log.Error().Err(err).Msg("server shutdown")
 }
