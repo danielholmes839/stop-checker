@@ -1,6 +1,6 @@
 import { LiveDataFragment, useStopRouteQuery } from "client/types";
 import { Container, Sign } from "components";
-import { formatDistance } from "helper";
+import { currentDate, formatDistance } from "helper";
 import { format } from "path";
 import React from "react";
 import { useParams } from "react-router-dom";
@@ -11,6 +11,8 @@ export const StopRoutePage: React.FC = () => {
     variables: {
       stop: stopId as string,
       route: routeId as string,
+      today: currentDate(),
+      tomorrow: currentDate(1)
     },
   });
 

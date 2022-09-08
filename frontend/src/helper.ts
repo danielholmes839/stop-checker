@@ -38,6 +38,11 @@ export const formatRouteType = (rt: RouteType): string => {
   return rt.toLowerCase();
 };
 
-export const currentDate = (): string => {
-  return "";
+export const currentDate = (dayOffset: number = 0): string => {
+  let now = new Date();
+  let offset = now.getTimezoneOffset() * 60 * 1000;
+  offset += dayOffset * 60 * 60 * 24 * 1000;
+
+  let adjusted = new Date(now.getTime() - offset);
+  return adjusted.toISOString().split("T")[0];
 };

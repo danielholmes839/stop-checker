@@ -339,6 +339,8 @@ export type StopPreviewFragment = { __typename?: 'Stop', id: string, name: strin
 export type StopRouteQueryVariables = Exact<{
   stop: Scalars['ID'];
   route: Scalars['ID'];
+  today: Scalars['Date'];
+  tomorrow: Scalars['Date'];
 }>;
 
 
@@ -633,7 +635,7 @@ export function useStopPreviewQuery(options: Omit<Urql.UseQueryArgs<StopPreviewQ
   return Urql.useQuery<StopPreviewQuery, StopPreviewQueryVariables>({ query: StopPreviewDocument, ...options });
 };
 export const StopRouteDocument = gql`
-    query StopRoute($stop: ID!, $route: ID!) {
+    query StopRoute($stop: ID!, $route: ID!, $today: Date!, $tomorrow: Date!) {
   stopRoute(stop: $stop, route: $route) {
     stop {
       id
@@ -649,13 +651,13 @@ export const StopRouteDocument = gql`
     headsign
     ...LiveData
     schedule {
-      today: on(date: "2022-08-30") {
+      today: on(date: $today) {
         stoptime {
           id
           time
         }
       }
-      tomorrow: on(date: "2022-08-31") {
+      tomorrow: on(date: $tomorrow) {
         stoptime {
           id
           time

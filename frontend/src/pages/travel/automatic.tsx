@@ -1,9 +1,15 @@
-import { StopPreviewFragment } from "client/types";
+import {
+  ScheduleMode,
+  StopPreviewFragment,
+  useTravelPlannerQuery,
+} from "client/types";
 import { Card } from "components";
 import { Search } from "pages/search";
 import { StopPreviewActions } from "pages/search/search";
 import React, { useState } from "react";
 import { Wizard, useWizard } from "react-use-wizard";
+import { Instructions } from "./instructions";
+import DateTimePicker from "react-datetime-picker";
 
 const Actions: StopPreviewActions = ({ stop }) => {
   const { origin, setOrigin, destination, setDestination } = useAutomatic();
@@ -105,33 +111,41 @@ const Current: React.FC = () => {
   return (
     <div className="mt-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
-        <Card>
+        <div className="border-b pb-1 mb-2">
           <h1>
-            <div className="bg-red-600 rounded-full px-1 text-white text-xs inline mr-2 font-bold">
+            <div className="bg-red-600 rounded-full px-2 text-white text-xs inline mr-2 font-bold">
               A
             </div>
             {origin ? (
-              <span>{origin.name} (Origin)</span>
+              <span className="text-sm font-semibold">
+                {origin.name} (Origin)
+              </span>
             ) : (
-              <span>Origin not selected</span>
+              <span className="text-sm text-gray-600 font-semibold">
+                Origin not selected
+              </span>
             )}
           </h1>
-        </Card>
-        <Card>
+        </div>
+        <div className="border-b pb-2 mb-2">
           <h1>
-            <div className="bg-red-600 rounded-full px-1 text-white text-xs inline mr-2 font-bold">
+            <div className="bg-red-600 rounded-full px-2 text-white text-xs inline mr-2 font-bold">
               B
             </div>{" "}
             {destination ? (
-              <span>{destination.name} (Destination)</span>
+              <span className="text-sm font-semibold">
+                {destination.name} (Destination)
+              </span>
             ) : (
-              <span>Destination not selected</span>
+              <span className="text-sm text-gray-600 font-semibold">
+                Destination not selected
+              </span>
             )}
           </h1>
-        </Card>
+        </div>
       </div>
-      <button className="mt-1 bg-gray-100" onClick={nextStep}>
-        Next
+      <button className="mt-1 mb-3 text-primary-500 text-sm" onClick={nextStep}>
+        Results
       </button>
     </div>
   );
@@ -155,7 +169,56 @@ const Setup: React.FC = () => {
 };
 
 const Results: React.FC = () => {
-  return <>Results</>;
+  const { origin, destination } = useAutomatic();
+  const [datetime, setDatetime] = useState(new Date());
+  const [mode, setMode] = useState(ScheduleMode.DepartAt);
+
+  const [{ data, fetching }] = useTravelPlannerQuery({
+    variables: {
+      origin: origin ? origin.id : "",
+      destination: destination ? destination.id : "",
+      options: {
+        datetime:
+          datetime.toISOString().split(".")[0].slice(0, -2) + "00" + "Z",
+        mode: mode,
+      },
+    },
+  });
+
+  if (!origin || !destination) {
+    return <>Invalid origin or destination</>;
+  }
+
+  if (fetching) {
+    return <></>;
+  }
+
+  if (!data) {
+    return <>Error</>;
+  }
+
+  return (
+    <div>
+      <button
+        className={`bg-${
+          mode === ScheduleMode.DepartAt ? "primary" : "gray"
+        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold`}
+        onClick={() => setMode(ScheduleMode.DepartAt)}
+      >
+        Depart At
+      </button>
+      <button
+        className={`bg-${
+          mode === ScheduleMode.ArriveBy ? "primary" : "gray"
+        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold`}
+        onClick={() => setMode(ScheduleMode.ArriveBy)}
+      >
+        Arrive By
+      </button>
+      <DateTimePicker value={datetime} onChange={setDatetime} />
+      <Instructions data={data.travelPlanner} />
+    </div>
+  );
 };
 
 export const Automatic: React.FC = () => {

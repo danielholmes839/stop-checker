@@ -1,4 +1,4 @@
-query StopRoute($stop: ID!, $route: ID!) {
+query StopRoute($stop: ID!, $route: ID!, $today: Date!, $tomorrow: Date!) {
   stopRoute(stop: $stop, route: $route) {
     stop {
       id
@@ -14,13 +14,13 @@ query StopRoute($stop: ID!, $route: ID!) {
     headsign
     ...LiveData
     schedule {
-      today: on(date: "2022-08-30") {
+      today: on(date: $today) {
         stoptime {
           id
           time
         }
       }
-      tomorrow: on(date: "2022-08-31") {
+      tomorrow: on(date: $tomorrow) {
         stoptime {
           id
           time
