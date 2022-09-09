@@ -7,7 +7,7 @@ export const SearchPage = () => {
   return (
     <Container>
       <div className="mt-3">
-        <h1 className="text-3xl font-semibold mb-3">Browse Stops</h1>
+        <h1 className="text-3xl font-semibold mb-3">Search</h1>
         <Search
           config={{
             Actions: StopPreviewDefaultActions,

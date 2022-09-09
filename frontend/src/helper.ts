@@ -46,3 +46,7 @@ export const currentDate = (dayOffset: number = 0): string => {
   let adjusted = new Date(now.getTime() - offset);
   return adjusted.toISOString().split("T")[0];
 };
+
+export const formatDateTime = (date: Date): string => {
+  return date.toISOString().split(".")[0].slice(0, -2) + "00" + "Z";
+};

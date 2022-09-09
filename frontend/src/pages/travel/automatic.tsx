@@ -1,15 +1,9 @@
-import {
-  ScheduleMode,
-  StopPreviewFragment,
-  useTravelPlannerQuery,
-} from "client/types";
-import { Card } from "components";
+import { StopPreviewFragment } from "client/types";
 import { Search } from "pages/search";
 import { StopPreviewActions } from "pages/search/search";
 import React, { useState } from "react";
-import { Wizard, useWizard } from "react-use-wizard";
-import { Instructions } from "./instructions";
-import DateTimePicker from "react-datetime-picker";
+import { Link } from "react-router-dom";
+import { Container } from "components";
 
 const Actions: StopPreviewActions = ({ stop }) => {
   const { origin, setOrigin, destination, setDestination } = useAutomatic();
@@ -107,7 +101,7 @@ export const AutomaticProvider: React.FC = ({ children }) => {
 
 const Current: React.FC = () => {
   const { origin, destination } = useAutomatic();
-  const { nextStep } = useWizard();
+
   return (
     <div className="mt-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
@@ -122,7 +116,7 @@ const Current: React.FC = () => {
               </span>
             ) : (
               <span className="text-sm text-gray-600 font-semibold">
-                Origin not selected
+                Origin
               </span>
             )}
           </h1>
@@ -138,99 +132,50 @@ const Current: React.FC = () => {
               </span>
             ) : (
               <span className="text-sm text-gray-600 font-semibold">
-                Destination not selected
+                Destination
               </span>
             )}
           </h1>
         </div>
       </div>
-      <button className="mt-1 mb-3 text-primary-500 text-sm" onClick={nextStep}>
-        Results
-      </button>
-    </div>
-  );
-};
-
-const Setup: React.FC = () => {
-  return (
-    <div>
-      <Current />
-      <div className="mt-3">
-        <Search
-          config={{
-            Actions: Actions,
-            enableMap: true,
-            enableStopRouteLinks: false,
-          }}
-        />
+      <div className="mb-3">
+        {origin && destination ? (
+          <Link
+            className="text-primary-500 text-sm"
+            to={`/travel/${origin.id}/${destination.id}`}
+          >
+            Next
+          </Link>
+        ) : (
+          <p className="text-xs text-red-600">
+            Please select an origin and destination using the search below
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
-const Results: React.FC = () => {
-  const { origin, destination } = useAutomatic();
-  const [datetime, setDatetime] = useState(new Date());
-  const [mode, setMode] = useState(ScheduleMode.DepartAt);
-
-  const [{ data, fetching }] = useTravelPlannerQuery({
-    variables: {
-      origin: origin ? origin.id : "",
-      destination: destination ? destination.id : "",
-      options: {
-        datetime:
-          datetime.toISOString().split(".")[0].slice(0, -2) + "00" + "Z",
-        mode: mode,
-      },
-    },
-  });
-
-  if (!origin || !destination) {
-    return <>Invalid origin or destination</>;
-  }
-
-  if (fetching) {
-    return <></>;
-  }
-
-  if (!data) {
-    return <>Error</>;
-  }
-
+export const AutomaticInput: React.FC = () => {
   return (
-    <div>
-      <button
-        className={`bg-${
-          mode === ScheduleMode.DepartAt ? "primary" : "gray"
-        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold`}
-        onClick={() => setMode(ScheduleMode.DepartAt)}
-      >
-        Depart At
-      </button>
-      <button
-        className={`bg-${
-          mode === ScheduleMode.ArriveBy ? "primary" : "gray"
-        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold`}
-        onClick={() => setMode(ScheduleMode.ArriveBy)}
-      >
-        Arrive By
-      </button>
-      <DateTimePicker value={datetime} onChange={setDatetime} />
-      <Instructions data={data.travelPlanner} />
-    </div>
-  );
-};
+    <Container>
+      <AutomaticProvider>
+        <div className="mt-3">
+          <h1 className="text-3xl font-semibold">Travel Planner</h1>
+        </div>
 
-export const Automatic: React.FC = () => {
-  return (
-    <AutomaticProvider>
-      <div className="mt-3">
-        <h1 className="text-3xl font-semibold">Travel Planner</h1>
-      </div>
-      <Wizard>
-        <Setup />
-        <Results />
-      </Wizard>
-    </AutomaticProvider>
+        <Current />
+
+        <div className="mt-3">
+          <Search
+            config={{
+              Actions: Actions,
+              enableMap: true,
+              enableStopRouteLinks: false,
+            }}
+          />
+        </div>
+      </AutomaticProvider>
+    </Container>
   );
 };

@@ -4,7 +4,7 @@ import { Container } from "./helper";
 
 const links = [
   { to: "/", text: "Search" },
-  { to: "/travel", text: "Travel Planner" },
+  { to: "/travel/automatic", text: "Travel Planner" },
   { to: "/dashboard", text: "Dashboard" },
 ];
 

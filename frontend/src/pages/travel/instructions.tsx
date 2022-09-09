@@ -61,7 +61,7 @@ export const BoardInstructions: React.FC<InstructionProps> = ({ leg }) => {
   return (
     <Instruction>
       <div
-        className="border-l-2 pl-3"
+        className="border-l-4 pl-3"
         style={{ borderColor: route.background }}
       >
         <InstructionTitle>
@@ -125,7 +125,7 @@ export const RideInstructions: React.FC<InstructionProps> = ({ leg }) => {
   return (
     <Instruction>
       <div
-        className="border-l-2 pl-3"
+        className="border-l-4 pl-3"
         style={{ borderColor: route.background }}
       >
         <InstructionTitle>
@@ -201,7 +201,7 @@ export const Instructions: React.FC<{
           Failed to create a travel schedule. This can occur when there's no way
           to create a travel schedule within 3 days of the departure/arrival
           time.
-          {error && <span>Error: {error}</span>}
+          {error && <span> Error: {error}</span>}
         </p>
       </div>
     );
