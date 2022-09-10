@@ -15,7 +15,7 @@ const linkClassNameFunc: any = ({ isActive }: { isActive: boolean }) =>
 
 const NavStandard: React.FC = () => {
   return (
-    <div className="hidden w-full md:block md:w-auto">
+    <div className="hidden w-full md:block md:w-auto mb-1">
       <ul className="flex flex-col p-4 mt-4 md:flex-row">
         {links.map(({ to, text }, i) => (
           <li key={i} className="ml-5">
@@ -52,10 +52,10 @@ export const Nav: React.FC = () => {
     setDropDown(false);
   }, [location]);
   return (
-    <nav className="bg-gray-50 py-3">
+    <nav className="bg-gray-50 py-2">
       <Container>
         <div className="flex flex-wrap justify-between items-center mx-auto">
-          <h1 className="text-3xl lg:text-4xl text-primary-600 font-semibold">
+          <h1 className="text-xl lg:text-2xl text-primary-600 font-semibold">
             stop-checker.com
           </h1>
           <button

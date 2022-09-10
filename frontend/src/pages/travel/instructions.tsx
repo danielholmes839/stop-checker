@@ -211,15 +211,9 @@ export const Instructions: React.FC<{
 
   const { arrival, departure, duration, legs } = schedule;
 
-  const lineSymbol = {
-    path: "M 0,-1 0,1",
-    strokeOpacity: 1,
-    scale: 4,
-  };
-
   return (
     <div>
-      <div className="my-5">
+      <div className="mb-5 mt-3">
         <SimpleMap origin={legs[0].origin.location}>
           {legs.map((leg) => {
             let path = leg.shape.map(({ latitude, longitude }) => {
@@ -237,16 +231,28 @@ export const Instructions: React.FC<{
             console.log(path);
 
             return (
-              <Polyline
-                path={path}
-                options={{
-                  strokeWeight: 4,
-                  strokeOpacity: 1,
-                  geodesic: true,
-                  clickable: true,
-                  ...options,
-                }}
-              />
+              <>
+                <Polyline
+                  path={path}
+                  options={{
+                    strokeWeight: 5,
+                    strokeOpacity: 1,
+                    geodesic: true,
+                    clickable: true,
+                    strokeColor: "#000000",
+                  }}
+                />
+                <Polyline
+                  path={path}
+                  options={{
+                    strokeWeight: 4,
+                    strokeOpacity: 1,
+                    geodesic: true,
+                    clickable: true,
+                    ...options,
+                  }}
+                />
+              </>
             );
           })}
         </SimpleMap>
@@ -263,7 +269,7 @@ export const Instructions: React.FC<{
       })}
       <div>
         <h1 className="font-semibold mt-3">You've reached your destination</h1>
-        <h2 className="text-xs text-gray-700 font-semibold">
+        <h2 className="text-xs text-gray-700 font-semibold mb-10">
           Departure {formatTime(departure)} - Arrival {formatTime(arrival)} (
           {duration} min)
         </h2>

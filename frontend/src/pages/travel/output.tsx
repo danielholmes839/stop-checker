@@ -6,6 +6,7 @@ import {
 import { Container } from "components";
 import { formatDateTime } from "helper";
 import React, { useState } from "react";
+import DateTimePicker from "react-datetime-picker";
 import { useParams } from "react-router-dom";
 import { Instructions } from "./instructions";
 
@@ -45,7 +46,7 @@ const OptionProvider: React.FC = ({ children }) => {
 };
 
 const OptionSelect: React.FC = () => {
-  const { options, setMode } = useOptions();
+  const { options, setMode, setDate } = useOptions();
   return (
     <div>
       <button
@@ -64,6 +65,17 @@ const OptionSelect: React.FC = () => {
       >
         Arrive By
       </button>
+      <DateTimePicker
+        onChange={(date: Date | null) => {
+          if (date) {
+            setDate(date);
+          }
+        }}
+        disableClock={true}
+        required={true}
+        value={options.datetime}
+        className="text-sm"
+      />
     </div>
   );
 };
@@ -102,7 +114,7 @@ export const AutomaticOutput: React.FC = () => {
   return (
     <Container>
       <div className="my-3">
-        <h1 className="text-3xl font-semibold">Travel Planner</h1>
+        <h1 className="text-3xl font-semibold">Travel Schedule</h1>
       </div>
       <OptionProvider>
         <OptionSelect />
