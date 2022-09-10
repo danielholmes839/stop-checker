@@ -17,6 +17,7 @@ type raw struct {
 	stoptimes     io.ReadCloser
 	stops         io.ReadCloser
 	trips         io.ReadCloser
+	shapes        io.ReadCloser
 }
 
 func RawFilesystem(path string) (*raw, error) {
@@ -50,6 +51,11 @@ func RawFilesystem(path string) (*raw, error) {
 		return nil, err
 	}
 
+	shapes, err := os.Open(fp.Join(path, "shapes.txt"))
+	if err != nil {
+		return nil, err
+	}
+
 	return &raw{
 		calendars:     calendars,
 		calendarDates: calendarDates,
@@ -57,6 +63,7 @@ func RawFilesystem(path string) (*raw, error) {
 		stoptimes:     stoptimes,
 		stops:         stops,
 		trips:         trips,
+		shapes:        shapes,
 	}, nil
 }
 
@@ -78,6 +85,7 @@ type dataset struct {
 	StopTimes     []StopTime
 	Stops         []Stop
 	Trips         []Trip
+	Shapes        []Shape
 }
 
 func newDataset(r *raw) *dataset {
@@ -89,6 +97,7 @@ func newDataset(r *raw) *dataset {
 	stoptimes := parseCSV[StopTime](r.stoptimes)
 	stops := parseCSV[Stop](r.stops)
 	trips := parseCSV[Trip](r.trips)
+	shapes := parseCSV[Shape](r.shapes)
 
 	dataset := &dataset{
 		Calendars:     calendars,
@@ -97,6 +106,7 @@ func newDataset(r *raw) *dataset {
 		StopTimes:     stoptimes,
 		Stops:         stops,
 		Trips:         trips,
+		Shapes:        shapes,
 	}
 
 	log.Info().
@@ -107,6 +117,7 @@ func newDataset(r *raw) *dataset {
 		Int("trips", len(trips)).
 		Int("services", len(calendars)).
 		Int("service-exceptions", len(calendarDates)).
+		Int("shapes", len(shapes)).
 		Msg("created dataset")
 
 	return dataset

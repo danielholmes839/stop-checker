@@ -74,3 +74,13 @@ type Trip struct {
 func (t Trip) ID() string {
 	return t.Id
 }
+
+type Shape struct {
+	Location
+	Id  string
+	Seq int
+}
+
+func (s Shape) ID() string {
+	return s.Id
+}

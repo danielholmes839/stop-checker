@@ -24,6 +24,7 @@ type Database struct {
 
 	// inverted indexes
 	StopTimesByTrip *InvertedIndex[model.StopTime]
+	ShapesByShape   *InvertedIndex[model.Shape] // weird name. but this index groups shapes with the same shape id
 
 	// specialized indexes
 	*StopRouteIndex    // get routes by stop id
@@ -47,9 +48,15 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 	}
 
 	stopRoutesIndex := NewStopRouteIndex(baseIndex, base)
+	
 	stopTimesByTrip := NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
 		return record.TripId
 	})
+
+	shapesByShape := NewInvertedIndex("shapes", base.Shapes, func(record model.Shape) (key string) {
+		return record.ID()
+	})
+
 	scheduleIndex := NewScheduleIndex(baseIndex, base)
 
 	database := &Database{
@@ -57,6 +64,7 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 
 		// inverted indexes
 		StopTimesByTrip: stopTimesByTrip,
+		ShapesByShape:   shapesByShape,
 
 		// specialized indexes
 		BaseIndex:      baseIndex,

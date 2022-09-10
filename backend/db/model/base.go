@@ -7,4 +7,5 @@ type Base struct {
 	Trips             []Trip
 	Services          []Service
 	ServiceExceptions []ServiceException
+	Shapes            []Shape
 }

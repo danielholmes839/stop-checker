@@ -486,6 +486,49 @@ func (r *travelScheduleLegResolver) Transit(ctx context.Context, obj *travel.Leg
 	}, nil
 }
 
+// Shape is the resolver for the shape field.
+func (r *travelScheduleLegResolver) Shape(ctx context.Context, obj *travel.Leg) ([]*model.Location, error) {
+	origin, _ := r.Stops.Get(obj.Origin)
+	destination, _ := r.Stops.Get(obj.Destination)
+
+	if obj.Walk {
+		return []*model.Location{
+			&origin.Location,
+			&destination.Location,
+		}, nil
+	}
+
+	trip, _ := r.Trips.Get(obj.Transit.TripId)
+	shapes, _ := r.ShapesByShape.Get(trip.ShapeId)
+
+	originClosestShapeIndex := 0
+	originClosestShapeDistance := shapes[0].Distance(origin.Location)
+
+	destinationClosestShapeIndex := 0
+	destinationClosestShapeDistance := shapes[0].Distance(destination.Location)
+
+	for i := 1; i < len(shapes); i++ {
+		originDistance := shapes[i].Distance(origin.Location)
+		destinationDistance := shapes[i].Distance(destination.Location)
+
+		if originDistance < originClosestShapeDistance {
+			originClosestShapeDistance = originDistance
+			originClosestShapeIndex = i
+		}
+
+		if destinationDistance < destinationClosestShapeDistance {
+			destinationClosestShapeDistance = destinationDistance
+			destinationClosestShapeIndex = i
+		}
+	}
+
+	locations := apply(shapes, func(s model.Shape) *model.Location {
+		return &s.Location
+	})
+
+	return locations[originClosestShapeIndex : destinationClosestShapeIndex+1], nil
+}
+
 // Distance is the resolver for the distance field.
 func (r *travelScheduleLegResolver) Distance(ctx context.Context, obj *travel.Leg) (float64, error) {
 	origin, _ := r.Stops.Get(obj.Origin)
@@ -519,6 +562,11 @@ func (r *tripResolver) Route(ctx context.Context, obj *model.Trip) (*model.Route
 func (r *tripResolver) Stoptimes(ctx context.Context, obj *model.Trip) ([]*model.StopTime, error) {
 	stoptimes, _ := r.StopTimesByTrip.Get(obj.ID())
 	return ref(stoptimes), nil
+}
+
+// Shape is the resolver for the shape field.
+func (r *tripResolver) Shape(ctx context.Context, obj *model.Trip) ([]*model.Location, error) {
+	panic(fmt.Errorf("not implemented: Shape - shape"))
 }
 
 // Service is the resolver for the service field.

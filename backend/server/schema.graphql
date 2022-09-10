@@ -71,6 +71,7 @@ type Trip {
     id: ID!
     route: Route!
     stoptimes: [StopTime!]!
+    shape: [Location!]!
     service: Service!
     direction: ID!
     headsign: String!
@@ -117,6 +118,7 @@ type TravelScheduleLeg {
     destination: Stop!
     walk: Boolean!
     transit: Transit            # if null then walking
+    shape: [Location!]!
     distance: Float!
     duration: Int!
     departure: DateTime!

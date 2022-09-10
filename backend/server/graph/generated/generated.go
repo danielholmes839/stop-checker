@@ -199,6 +199,7 @@ type ComplexityRoot struct {
 		Distance    func(childComplexity int) int
 		Duration    func(childComplexity int) int
 		Origin      func(childComplexity int) int
+		Shape       func(childComplexity int) int
 		Transit     func(childComplexity int) int
 		Walk        func(childComplexity int) int
 	}
@@ -214,6 +215,7 @@ type ComplexityRoot struct {
 		ID        func(childComplexity int) int
 		Route     func(childComplexity int) int
 		Service   func(childComplexity int) int
+		Shape     func(childComplexity int) int
 		Stoptimes func(childComplexity int) int
 	}
 }
@@ -306,6 +308,7 @@ type TravelScheduleLegResolver interface {
 	Destination(ctx context.Context, obj *travel.Leg) (*model.Stop, error)
 
 	Transit(ctx context.Context, obj *travel.Leg) (*model.Transit, error)
+	Shape(ctx context.Context, obj *travel.Leg) ([]*model.Location, error)
 	Distance(ctx context.Context, obj *travel.Leg) (float64, error)
 	Duration(ctx context.Context, obj *travel.Leg) (int, error)
 
@@ -315,6 +318,7 @@ type TripResolver interface {
 	ID(ctx context.Context, obj *model.Trip) (string, error)
 	Route(ctx context.Context, obj *model.Trip) (*model.Route, error)
 	Stoptimes(ctx context.Context, obj *model.Trip) ([]*model.StopTime, error)
+	Shape(ctx context.Context, obj *model.Trip) ([]*model.Location, error)
 	Service(ctx context.Context, obj *model.Trip) (*model.Service, error)
 	Direction(ctx context.Context, obj *model.Trip) (string, error)
 }
@@ -989,6 +993,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TravelScheduleLeg.Origin(childComplexity), true
 
+	case "TravelScheduleLeg.shape":
+		if e.complexity.TravelScheduleLeg.Shape == nil {
+			break
+		}
+
+		return e.complexity.TravelScheduleLeg.Shape(childComplexity), true
+
 	case "TravelScheduleLeg.transit":
 		if e.complexity.TravelScheduleLeg.Transit == nil {
 			break
@@ -1051,6 +1062,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Trip.Service(childComplexity), true
+
+	case "Trip.shape":
+		if e.complexity.Trip.Shape == nil {
+			break
+		}
+
+		return e.complexity.Trip.Shape(childComplexity), true
 
 	case "Trip.stoptimes":
 		if e.complexity.Trip.Stoptimes == nil {
@@ -1189,6 +1207,7 @@ type Trip {
     id: ID!
     route: Route!
     stoptimes: [StopTime!]!
+    shape: [Location!]!
     service: Service!
     direction: ID!
     headsign: String!
@@ -1235,6 +1254,7 @@ type TravelScheduleLeg {
     destination: Stop!
     walk: Boolean!
     transit: Transit            # if null then walking
+    shape: [Location!]!
     distance: Float!
     duration: Int!
     departure: DateTime!
@@ -4702,6 +4722,8 @@ func (ec *executionContext) fieldContext_StopTime_trip(ctx context.Context, fiel
 				return ec.fieldContext_Trip_route(ctx, field)
 			case "stoptimes":
 				return ec.fieldContext_Trip_stoptimes(ctx, field)
+			case "shape":
+				return ec.fieldContext_Trip_shape(ctx, field)
 			case "service":
 				return ec.fieldContext_Trip_service(ctx, field)
 			case "direction":
@@ -4948,6 +4970,8 @@ func (ec *executionContext) fieldContext_Transit_trip(ctx context.Context, field
 				return ec.fieldContext_Trip_route(ctx, field)
 			case "stoptimes":
 				return ec.fieldContext_Trip_stoptimes(ctx, field)
+			case "shape":
+				return ec.fieldContext_Trip_shape(ctx, field)
 			case "service":
 				return ec.fieldContext_Trip_service(ctx, field)
 			case "direction":
@@ -5479,6 +5503,8 @@ func (ec *executionContext) fieldContext_TravelSchedule_legs(ctx context.Context
 				return ec.fieldContext_TravelScheduleLeg_walk(ctx, field)
 			case "transit":
 				return ec.fieldContext_TravelScheduleLeg_transit(ctx, field)
+			case "shape":
+				return ec.fieldContext_TravelScheduleLeg_shape(ctx, field)
 			case "distance":
 				return ec.fieldContext_TravelScheduleLeg_distance(ctx, field)
 			case "duration":
@@ -5945,6 +5971,58 @@ func (ec *executionContext) fieldContext_TravelScheduleLeg_transit(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _TravelScheduleLeg_shape(ctx context.Context, field graphql.CollectedField, obj *travel.Leg) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TravelScheduleLeg_shape(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TravelScheduleLeg().Shape(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Location)
+	fc.Result = res
+	return ec.marshalNLocation2ᚕᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐLocationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TravelScheduleLeg_shape(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TravelScheduleLeg",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "latitude":
+				return ec.fieldContext_Location_latitude(ctx, field)
+			case "longitude":
+				return ec.fieldContext_Location_longitude(ctx, field)
+			case "distance":
+				return ec.fieldContext_Location_distance(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TravelScheduleLeg_distance(ctx context.Context, field graphql.CollectedField, obj *travel.Leg) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TravelScheduleLeg_distance(ctx, field)
 	if err != nil {
@@ -6370,6 +6448,58 @@ func (ec *executionContext) fieldContext_Trip_stoptimes(ctx context.Context, fie
 				return ec.fieldContext_StopTime_overflow(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StopTime", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Trip_shape(ctx context.Context, field graphql.CollectedField, obj *model.Trip) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Trip_shape(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Trip().Shape(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Location)
+	fc.Result = res
+	return ec.marshalNLocation2ᚕᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐLocationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Trip_shape(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Trip",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "latitude":
+				return ec.fieldContext_Location_latitude(ctx, field)
+			case "longitude":
+				return ec.fieldContext_Location_longitude(ctx, field)
+			case "distance":
+				return ec.fieldContext_Location_distance(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
 	}
 	return fc, nil
@@ -10124,6 +10254,26 @@ func (ec *executionContext) _TravelScheduleLeg(ctx context.Context, sel ast.Sele
 				return innerFunc(ctx)
 
 			})
+		case "shape":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TravelScheduleLeg_shape(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "distance":
 			field := field
 
@@ -10291,6 +10441,26 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Trip_stoptimes(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "shape":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Trip_shape(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -10859,6 +11029,60 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 
 func (ec *executionContext) marshalNLocation2stopᚑcheckerᚗcomᚋdbᚋmodelᚐLocation(ctx context.Context, sel ast.SelectionSet, v model.Location) graphql.Marshaler {
 	return ec._Location(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLocation2ᚕᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐLocationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Location) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLocation2ᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐLocation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNLocation2ᚖstopᚑcheckerᚗcomᚋdbᚋmodelᚐLocation(ctx context.Context, sel ast.SelectionSet, v *model.Location) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Location(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNLocationInput2stopᚑcheckerᚗcomᚋdbᚋmodelᚐLocation(ctx context.Context, v interface{}) (model.Location, error) {

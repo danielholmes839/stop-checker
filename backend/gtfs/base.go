@@ -24,6 +24,7 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 	validRoutes := map[string]struct{}{}
 	validTrips := map[string]struct{}{}
 	validServices := map[string]struct{}{}
+	validShapes := map[string]struct{}{}
 
 	// create the services
 	services := []model.Service{}
@@ -54,6 +55,7 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 			trips = append(trips, trip)
 			validTrips[trip.Id] = struct{}{}
 			validRoutes[trip.RouteId] = struct{}{}
+			validShapes[trip.ShapeId] = struct{}{}
 		}
 	}
 
@@ -82,6 +84,14 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 		stops = append(stops, stop)
 	}
 
+	shapes := []model.Shape{}
+	for _, shapeRecord := range dataset.Shapes {
+		if _, ok := validShapes[shapeRecord.ID]; ok {
+			shape := NewShape(shapeRecord)
+			shapes = append(shapes, shape)
+		}
+	}
+
 	log.Info().
 		Dur("duration", time.Since(t0)).
 		Int("routes", len(routes)).
@@ -90,6 +100,7 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 		Int("trips", len(trips)).
 		Int("services", len(services)).
 		Int("service-exceptions", len(serviceExceptions)).
+		Int("shapes", len(shapes)).
 		Msg("filtered dataset")
 
 	return &model.Base{
@@ -99,6 +110,7 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 		Trips:             trips,
 		Services:          services,
 		ServiceExceptions: serviceExceptions,
+		Shapes:            shapes,
 	}, nil
 }
 
@@ -193,5 +205,16 @@ func NewTrip(data Trip) model.Trip {
 		ShapeId:     data.ShapeID,
 		DirectionId: data.DirectionID,
 		Headsign:    data.Headsign,
+	}
+}
+
+func NewShape(data Shape) model.Shape {
+	return model.Shape{
+		Id: data.ID,
+		Location: model.Location{
+			Latitude:  data.Latitude,
+			Longitude: data.Longitude,
+		},
+		Seq: data.Seq,
 	}
 }

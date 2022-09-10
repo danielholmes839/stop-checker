@@ -2,7 +2,7 @@ package gtfs
 
 // from https://github.com/artonge/go-gtfs/blob/master/models.go
 
-// Route -
+// Route
 type Route struct {
 	ID        string `csv:"route_id"`
 	ShortName string `csv:"route_short_name"`
@@ -14,7 +14,7 @@ type Route struct {
 	TextColor string `csv:"route_text_color"`
 }
 
-// Trip -
+// Trip
 type Trip struct {
 	ID          string `csv:"trip_id"`
 	Name        string `csv:"trip_short_name"`
@@ -25,7 +25,7 @@ type Trip struct {
 	Headsign    string `csv:"trip_headsign"`
 }
 
-// Stop -
+// Stop
 type Stop struct {
 	ID          string  `csv:"stop_id"`
 	Code        string  `csv:"stop_code"`
@@ -37,7 +37,7 @@ type Stop struct {
 	Parent      string  `csv:"parent_station"`
 }
 
-// StopTime -
+// StopTime
 type StopTime struct {
 	StopID       string  `csv:"stop_id"`
 	StopSeq      string  `csv:"stop_sequence"`
@@ -48,7 +48,7 @@ type StopTime struct {
 	Arrival      string  `csv:"arrival_time"`
 }
 
-// Calendar -
+// Calendar
 type Calendar struct {
 	ServiceID string `csv:"service_id"`
 	Monday    int    `csv:"monday"`
@@ -62,9 +62,17 @@ type Calendar struct {
 	End       string `csv:"end_date"`
 }
 
-// CalendarDate -
+// CalendarDate
 type CalendarDate struct {
 	ServiceID     string `csv:"service_id"`
 	Date          string `csv:"date"`
 	ExceptionType int    `csv:"exception_type"`
+}
+
+// Shape
+type Shape struct {
+	ID        string  `csv:"shape_id"`
+	Latitude  float64 `csv:"shape_pt_lat"`
+	Longitude float64 `csv:"shape_pt_lon"`
+	Seq       int     `csv:"shape_pt_sequence"`
 }
