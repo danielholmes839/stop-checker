@@ -6,7 +6,9 @@ import {
 } from "client/types";
 import { Sign } from "components";
 import { formatDistance, formatTime } from "helper";
+import { SimpleMap } from "pages/search/map";
 import { useMemo, useState } from "react";
+import { Polyline } from "@react-google-maps/api";
 
 type InstructionProps = { leg: TravelScheduleLegDefaultFragment };
 
@@ -207,11 +209,49 @@ export const Instructions: React.FC<{
     );
   }
 
-  const { arrival, departure, duration } = schedule;
+  const { arrival, departure, duration, legs } = schedule;
+
+  const lineSymbol = {
+    path: "M 0,-1 0,1",
+    strokeOpacity: 1,
+    scale: 4,
+  };
 
   return (
     <div>
-      {schedule.legs.map((leg, i) => {
+      <div className="my-5">
+        <SimpleMap origin={legs[0].origin.location}>
+          {legs.map((leg) => {
+            let path = leg.shape.map(({ latitude, longitude }) => {
+              return { lat: latitude, lng: longitude };
+            });
+
+            let options = leg.transit
+              ? {
+                  strokeColor: leg.transit.route.background,
+                }
+              : {
+                  strokeColor: "#d1d5db",
+                };
+
+            console.log(path);
+
+            return (
+              <Polyline
+                path={path}
+                options={{
+                  strokeWeight: 4,
+                  strokeOpacity: 1,
+                  geodesic: true,
+                  clickable: true,
+                  ...options,
+                }}
+              />
+            );
+          })}
+        </SimpleMap>
+      </div>
+      {legs.map((leg, i) => {
         return leg.walk ? (
           <WalkInstructions key={i} leg={leg} />
         ) : (

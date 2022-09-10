@@ -33,6 +33,10 @@ fragment TravelScheduleLegDefault on TravelScheduleLeg {
     id
     name
     code
+    location {
+      latitude
+      longitude
+    }
   }
   destination {
     id
@@ -41,6 +45,10 @@ fragment TravelScheduleLegDefault on TravelScheduleLeg {
   }
   walk
   distance
+  shape {
+    latitude
+    longitude
+  }
   transit {
     route {
       id

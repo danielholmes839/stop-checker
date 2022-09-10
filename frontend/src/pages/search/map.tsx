@@ -8,6 +8,7 @@ import {
 } from "@react-google-maps/api";
 import { LocationInput, Stop, useLocationSearchQuery } from "client/types";
 
+const key = "AIzaSyAvCHchRFUDqVPHSs5jpR74ehIY7A5WBIY";
 const libraries = ["geometry", "drawing"];
 const mapOptions = {
   gestureHandling: "greedy",
@@ -37,6 +38,52 @@ const mapOptions = {
 const initialLocation = {
   latitude: 45.4211,
   longitude: -75.6903,
+};
+
+export const SimpleMap: React.FC<{ origin: LocationInput }> = ({
+  children,
+  origin,
+}) => {
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: key,
+    libraries: libraries as any,
+  });
+
+  const mapRef = useRef<google.maps.Map>();
+
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+    mapRef.current.setCenter({
+      lat: origin.latitude,
+      lng: origin.longitude,
+    });
+  }, []);
+
+  if (!isLoaded) {
+    return <></>;
+  }
+
+  if (loadError) {
+    return <div>{loadError.message}</div>;
+  }
+
+  return (
+    <GoogleMap
+      mapContainerStyle={{
+        width: "100%",
+        height: "350px",
+      }}
+      options={mapOptions}
+      onLoad={onMapLoad}
+      zoom={12}
+      center={{
+        lat: mapRef.current?.getCenter()?.lat() as any,
+        lng: mapRef.current?.getCenter()?.lng() as any,
+      }}
+    >
+      {children}
+    </GoogleMap>
+  );
 };
 
 export const SearchMap: React.FC<{

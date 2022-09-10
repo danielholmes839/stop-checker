@@ -78,9 +78,9 @@ const StopPreview: React.FC<{
 
 export const StopPreviewDefaultActions: StopPreviewActions = ({ stop }) => {
   const to =
-    stop.routes.length > 1
-      ? `/stop/${stop.id}`
-      : `/stop/${stop.id}/route/${stop.routes[0].route.id}`;
+    stop.routes.length === 1
+      ? `/stop/${stop.id}/route/${stop.routes[0].route.id}`
+      : `/stop/${stop.id}`;
 
   return (
     <Link to={to}>
