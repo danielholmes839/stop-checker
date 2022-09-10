@@ -9,7 +9,7 @@ import (
 	"stop-checker.com/features/travel/dijkstra"
 )
 
-const MAX_WALK_DISTANCE = 250
+const MAX_WALK_DISTANCE = 300
 const TRANSFER_PENALTY = 5 * time.Minute
 
 type closestWalk struct {
@@ -203,7 +203,7 @@ func (p *Planner) expandWalk(origin *node, reverse bool) []*node {
 	if origin.walk {
 		return []*node{}
 	}
-	
+
 	stop, _ := p.stopIndex.Get(origin.ID())
 
 	originRoutes := dijkstra.Set{}
