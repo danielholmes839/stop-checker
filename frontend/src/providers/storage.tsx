@@ -1,4 +1,4 @@
-import { TravelLegInput } from "client/types";
+import { TravelLegInput, TravelOptions } from "client/types";
 import React, { useEffect, useState } from "react";
 
 type Route = TravelLegInput[];
@@ -19,6 +19,28 @@ const getKey = (legs: Route): string => {
       return `${origin}:${route ? route : "W"}:${last ? destination : ""}`;
     })
     .join("");
+};
+
+const reverseKey = (key: string): Route => {
+  try {
+    let tokens = key.split(":");
+    let route: Route = [];
+
+    for (let i = 0; i < tokens.length - 2; i += 2) {
+      let origin = tokens[i];
+      let destination = tokens[i + 2];
+      let transit = tokens[i + 1];
+
+      route.push({
+        origin: origin,
+        destination: destination,
+        route: transit === "W" ? null : transit,
+      });
+    }
+    return route;
+  } catch (e) {
+    return [];
+  }
 };
 
 const StorageContext = React.createContext<StorageContextValue>({
@@ -77,4 +99,12 @@ export const StorageProvider: React.FC = ({ children }) => {
       {children}
     </StorageContext.Provider>
   );
+};
+
+export const encodeRoute = (route: Route): string => {
+  return btoa(getKey(route));
+};
+
+export const decodeRoute = (encoded: string): Route => {
+  return reverseKey(atob(encoded));
 };

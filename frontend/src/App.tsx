@@ -4,7 +4,7 @@ import { Provider as UrqlProvider } from "urql";
 import { client } from "client";
 import { SearchPage, StopPage, StopRoutePage } from "pages";
 import { Nav } from "components";
-import { AutomaticInput, AutomaticOutput } from "pages/travel";
+import { AutomaticInput, AutomaticOutput, FixedRoute } from "pages/travel";
 import { StorageProvider } from "providers/storage";
 import { Dashboard } from "pages/dashboard";
 
@@ -26,6 +26,7 @@ const App: React.FC = () => {
               path="/travel/:origin/:destination"
               element={<AutomaticOutput />}
             />
+            <Route path="/travel/route/:encoded" element={<FixedRoute />} />
             <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </BrowserRouter>

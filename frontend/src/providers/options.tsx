@@ -19,9 +19,16 @@ const OptionContext = React.createContext<OptionContextValue>({
 
 export const useOptions = () => React.useContext(OptionContext);
 
-export const OptionProvider: React.FC = ({ children }) => {
-  const [mode, setMode] = useState(ScheduleMode.DepartAt);
-  const [date, setDate] = useState(new Date());
+export const OptionProvider: React.FC<{
+  initial?: TravelOptions;
+}> = ({ children, initial }) => {
+  const [mode, setMode] = useState<ScheduleMode>(
+    initial ? initial.mode : ScheduleMode.DepartAt
+  );
+  const [date, setDate] = useState<Date>(
+    initial ? initial.datetime : new Date()
+  );
+
   return (
     <OptionContext.Provider
       value={{

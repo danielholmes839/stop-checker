@@ -1,21 +1,102 @@
-import { Container } from "components";
-import { OptionInput, OptionProvider } from "providers";
-import { useStorage } from "providers/storage";
+import { useDashboardQuery } from "client/types";
+import { Container, Sign } from "components";
+import { formatDateTime, formatTime } from "helper";
+import { OptionInput, OptionProvider, useOptions } from "providers";
+import { encodeRoute, useStorage } from "providers/storage";
 import React from "react";
+import { Link } from "react-router-dom";
 
+const DashboardResults: React.FC = () => {
+  const { options } = useOptions();
+  const { routes } = useStorage();
+
+  const { data, fetching, error } = useDashboardQuery({
+    variables: {
+      input: routes,
+      options: {
+        mode: options.mode,
+        datetime: formatDateTime(options.datetime),
+      },
+    },
+  })[0];
+
+  if (fetching) {
+    return <>Loading...</>;
+  }
+
+  if (error) {
+    return <>{error.message}</>;
+  }
+
+  if (!data) {
+    return <>server error</>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
+      {data.travelPlannerFixedRoutes.map(({ schedule, error }) => {
+        if (!schedule) {
+          return <div>{error}</div>;
+        }
+
+        let { legs, arrival, departure, duration, origin, destination } =
+          schedule;
+
+        let route = legs.map((leg) => {
+          return {
+            origin: leg.origin.id,
+            destination: leg.destination.id,
+            route: leg.transit ? leg.transit.route.id : null,
+          };
+        });
+
+        return (
+          <div className="py-2 px-3 border border-gray-200">
+            <h1 className="font-semibold">
+              {origin.name} - {destination.name}
+            </h1>
+            <div>
+              {legs.map((leg) => {
+                if (!leg.transit) {
+                  return <></>;
+                }
+                return (
+                  <span className="mr-1 text-xs">
+                    <Sign props={leg.transit.route} />
+                  </span>
+                );
+              })}
+            </div>
+            <p className="text-sm mt-1">
+              {formatTime(departure)} - {formatTime(arrival)} ({duration} min)
+            </p>
+            <Link
+              to={`/travel/route/${encodeRoute(route)}`}
+              state={{ options: options }}
+            >
+              <button className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm">
+                View
+              </button>
+            </Link>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 export const Dashboard: React.FC = () => {
   const { routes } = useStorage();
   return (
     <Container>
-      <OptionProvider>
-        <div className="my-3">
-          <h1 className="text-3xl font-semibold">Dashboard</h1>
-        </div>
-        <OptionInput />
-        {routes.map((route) => (
-          <pre>{JSON.stringify(route, undefined, 4)}</pre>
-        ))}
-      </OptionProvider>
+      <div className="my-3">
+        <h1 className="text-3xl font-semibold">Dashboard</h1>
+      </div>
+      {routes.length > 0 && (
+        <OptionProvider>
+          <OptionInput />
+          <DashboardResults />
+        </OptionProvider>
+      )}
     </Container>
   );
 };

@@ -66,6 +66,7 @@ export type Query = {
   stopRoute?: Maybe<StopRoute>;
   travelPlanner: TravelSchedulePayload;
   travelPlannerFixedRoute: TravelSchedulePayload;
+  travelPlannerFixedRoutes: Array<TravelSchedulePayload>;
   travelRoute: TravelRoutePayload;
 };
 
@@ -104,6 +105,12 @@ export type QueryTravelPlannerArgs = {
 
 export type QueryTravelPlannerFixedRouteArgs = {
   input: Array<TravelLegInput>;
+  options: TravelOptions;
+};
+
+
+export type QueryTravelPlannerFixedRoutesArgs = {
+  input: Array<Array<TravelLegInput>>;
   options: TravelOptions;
 };
 
@@ -295,6 +302,14 @@ export type Trip = {
   shape: Array<Location>;
   stoptimes: Array<StopTime>;
 };
+
+export type DashboardQueryVariables = Exact<{
+  input: Array<Array<TravelLegInput> | TravelLegInput> | Array<TravelLegInput> | TravelLegInput;
+  options: TravelOptions;
+}>;
+
+
+export type DashboardQuery = { __typename?: 'Query', travelPlannerFixedRoutes: Array<{ __typename?: 'TravelSchedulePayload', error?: string | null, schedule?: { __typename?: 'TravelSchedule', departure: any, arrival: any, duration: number, origin: { __typename?: 'Stop', id: string, name: string, code: string }, destination: { __typename?: 'Stop', id: string, name: string, code: string }, legs: Array<{ __typename?: 'TravelScheduleLeg', walk: boolean, transit?: { __typename?: 'Transit', route: { __typename?: 'Route', id: string, name: string, text: any, background: any } } | null, origin: { __typename?: 'Stop', id: string }, destination: { __typename?: 'Stop', id: string } }> } | null }> };
 
 export type LocationSearchQueryVariables = Exact<{
   location: LocationInput;
@@ -523,6 +538,49 @@ export const TravelScheduleFragmentDoc = gql`
   }
 }
     ${TravelScheduleLegDefaultFragmentDoc}`;
+export const DashboardDocument = gql`
+    query Dashboard($input: [[TravelLegInput!]!]!, $options: TravelOptions!) {
+  travelPlannerFixedRoutes(input: $input, options: $options) {
+    error
+    schedule {
+      origin {
+        id
+        name
+        code
+      }
+      destination {
+        id
+        name
+        code
+      }
+      legs {
+        transit {
+          route {
+            id
+            name
+            text
+            background
+          }
+        }
+        origin {
+          id
+        }
+        destination {
+          id
+        }
+        walk
+      }
+      departure
+      arrival
+      duration
+    }
+  }
+}
+    `;
+
+export function useDashboardQuery(options: Omit<Urql.UseQueryArgs<DashboardQueryVariables>, 'query'>) {
+  return Urql.useQuery<DashboardQuery, DashboardQueryVariables>({ query: DashboardDocument, ...options });
+};
 export const LocationSearchDocument = gql`
     query LocationSearch($location: LocationInput!, $page: PageInput!) {
   searchStopLocation(
