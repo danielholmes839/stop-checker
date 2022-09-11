@@ -187,6 +187,8 @@ type Query {
     # travel planner that creates a schedule from a route
     travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelOptions!): TravelSchedulePayload!
 
+    travelPlannerFixedRoutes(input: [[TravelLegInput!]!]!, options: TravelOptions!): [TravelSchedulePayload!]!
+
     # validate the travel route
     travelRoute(input: [TravelLegInput!]): TravelRoutePayload!
 }

@@ -1,6 +1,8 @@
 package sdl
 
-import "stop-checker.com/features/travel"
+import (
+	"stop-checker.com/features/travel"
+)
 
 func NewTravelRoute(route []*TravelLegInput) travel.Route {
 	travelRoute := travel.Route{}

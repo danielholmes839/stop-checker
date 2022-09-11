@@ -167,9 +167,30 @@ func (r *queryResolver) TravelPlanner(ctx context.Context, origin string, destin
 
 // TravelPlannerFixedRoute is the resolver for the travelPlannerFixedRoute field.
 func (r *queryResolver) TravelPlannerFixedRoute(ctx context.Context, input []*sdl.TravelLegInput, options sdl.TravelOptions) (*sdl.TravelSchedulePayload, error) {
+	if options.Datetime == nil {
+		t := time.Now().In(r.TZ())
+		options.Datetime = &t
+	}
+
 	fixed := sdl.NewTravelRoute(input)
 	schedule, _ := sdl.ScheduleWrapper(r.Scheduler, fixed, options)
 	return &sdl.TravelSchedulePayload{Schedule: schedule, Error: nil}, nil
+}
+
+// TravelPlannerFixedRoutes is the resolver for the travelPlannerFixedRoutes field.
+func (r *queryResolver) TravelPlannerFixedRoutes(ctx context.Context, input [][]*sdl.TravelLegInput, options sdl.TravelOptions) ([]*sdl.TravelSchedulePayload, error) {
+	if options.Datetime == nil {
+		t := time.Now().In(r.TZ())
+		options.Datetime = &t
+	}
+
+	schedules := []*sdl.TravelSchedulePayload{}
+
+	for _, route := range input {
+		schedule, _ := r.TravelPlannerFixedRoute(ctx, route, options)
+		schedules = append(schedules, schedule)
+	}
+	return schedules, nil
 }
 
 // TravelRoute is the resolver for the travelRoute field.
@@ -566,7 +587,11 @@ func (r *tripResolver) Stoptimes(ctx context.Context, obj *model.Trip) ([]*model
 
 // Shape is the resolver for the shape field.
 func (r *tripResolver) Shape(ctx context.Context, obj *model.Trip) ([]*model.Location, error) {
-	panic(fmt.Errorf("not implemented: Shape - shape"))
+	shapes, _ := r.ShapesByShape.Get(obj.ShapeId)
+	locations := apply(shapes, func(s model.Shape) *model.Location {
+		return &s.Location
+	})
+	return locations, nil
 }
 
 // Service is the resolver for the service field.
@@ -650,13 +675,3 @@ type travelRouteLegResolver struct{ *Resolver }
 type travelScheduleResolver struct{ *Resolver }
 type travelScheduleLegResolver struct{ *Resolver }
 type tripResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *travelRouteLegResolver) Route(ctx context.Context, obj *travel.FixedLeg) (*model.Route, error) {
-	panic("not implemented")
-}
