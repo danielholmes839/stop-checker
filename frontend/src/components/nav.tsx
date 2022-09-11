@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Container } from "./helper";
+import { Container } from "./containers";
 
 const links = [
   { to: "/", text: "Search" },

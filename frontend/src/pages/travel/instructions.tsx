@@ -9,6 +9,7 @@ import { formatDistance, formatTime } from "helper";
 import { SimpleMap } from "pages/search/map";
 import { useMemo, useState } from "react";
 import { Polyline } from "@react-google-maps/api";
+import { useStorage } from "providers/storage";
 
 type InstructionProps = { leg: TravelScheduleLegDefaultFragment };
 
@@ -196,6 +197,8 @@ export const Instructions: React.FC<{
   data: TravelScheduleFragment;
 }> = ({ data }) => {
   const { schedule, error } = data;
+  const { has, add, remove } = useStorage();
+
   if (!schedule) {
     return (
       <div>
@@ -210,10 +213,17 @@ export const Instructions: React.FC<{
   }
 
   const { arrival, departure, duration, legs } = schedule;
+  const route = legs.map((leg) => {
+    return {
+      origin: leg.origin.id,
+      destination: leg.destination.id,
+      route: leg.transit ? leg.transit.route.id : null,
+    };
+  });
 
   return (
     <div>
-      <div className="mb-5 mt-3">
+      <div className="mb-1 mt-3">
         <SimpleMap origin={legs[0].origin.location}>
           {legs.map((leg) => {
             let path = leg.shape.map(({ latitude, longitude }) => {
@@ -267,12 +277,29 @@ export const Instructions: React.FC<{
           </div>
         );
       })}
-      <div>
+      <div className="mb-10">
         <h1 className="font-semibold mt-3">You've reached your destination</h1>
-        <h2 className="text-xs text-gray-700 font-semibold mb-10">
+        <h2 className="text-xs text-gray-700 font-semibold">
           Departure {formatTime(departure)} - Arrival {formatTime(arrival)} (
           {duration} min)
         </h2>
+        <div className="mt-2">
+          {has(route) ? (
+            <button
+              className="text-red-600 text-sm"
+              onClick={() => remove(route)}
+            >
+              Remove from Dashboard
+            </button>
+          ) : (
+            <button
+              className="text-primary-500 text-sm"
+              onClick={() => add(route)}
+            >
+              Add to Dashboard
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

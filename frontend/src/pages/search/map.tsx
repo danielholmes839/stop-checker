@@ -51,13 +51,16 @@ export const SimpleMap: React.FC<{ origin: LocationInput }> = ({
 
   const mapRef = useRef<google.maps.Map>();
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-    mapRef.current.setCenter({
-      lat: origin.latitude,
-      lng: origin.longitude,
-    });
-  }, []);
+  const onMapLoad = useCallback(
+    (map: google.maps.Map) => {
+      mapRef.current = map;
+      mapRef.current.setCenter({
+        lat: origin.latitude,
+        lng: origin.longitude,
+      });
+    },
+    [origin.latitude, origin.longitude]
+  );
 
   if (!isLoaded) {
     return <></>;
@@ -131,12 +134,12 @@ export const SearchMap: React.FC<{
     setSelected(null);
   }, [setSelected]);
 
-  const [{ data }, _] = useLocationSearchQuery({
+  const { data } = useLocationSearchQuery({
     variables: {
       location: location,
       page: { limit: -1, skip: 0 },
     },
-  });
+  })[0];
 
   if (!isLoaded) {
     return <></>;

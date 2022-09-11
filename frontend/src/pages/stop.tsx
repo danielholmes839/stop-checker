@@ -1,5 +1,5 @@
 import { StopPageQuery, useStopPageQuery } from "client/types";
-import { Container, QueryResponseWrapper, Sign, Card } from "components";
+import { Container, Sign, Card } from "components";
 import { Link, useParams } from "react-router-dom";
 
 const StopPageResponse: React.FC<{ data: StopPageQuery }> = ({ data }) => {
@@ -72,15 +72,25 @@ const StopPageResponse: React.FC<{ data: StopPageQuery }> = ({ data }) => {
 
 export const StopPage: React.FC = () => {
   const { id } = useParams();
-  const [response, _] = useStopPageQuery({
+  const [{ data, fetching, error }, _ignore] = useStopPageQuery({
     variables: { id: id === undefined ? "" : id },
   });
 
+  if (fetching) {
+    return <>Loading...</>;
+  }
+
+  if (error) {
+    return <>{error.message}</>;
+  }
+
+  if (!data) {
+    return <></>;
+  }
+
   return (
     <Container>
-      <QueryResponseWrapper response={response}>
-        {response.data && <StopPageResponse data={response.data} />}
-      </QueryResponseWrapper>
+      <StopPageResponse data={data} />
     </Container>
   );
 };

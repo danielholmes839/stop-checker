@@ -95,13 +95,13 @@ const SelectedStopPreview: React.FC<{
   id: string;
   config: Config;
 }> = ({ id, config }) => {
-  const [{ data }, _] = useStopPreviewQuery({
+  const { data } = useStopPreviewQuery({
     variables: {
       id: id,
     },
-  });
+  })[0];
 
-  const [debounced, __] = useDebounce(data, 100);
+  const debounced = useDebounce(data, 100)[0];
   if (!debounced) {
     return <></>;
   }

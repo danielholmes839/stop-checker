@@ -123,7 +123,7 @@ const Current: React.FC = () => {
     if (legs.length > 0) {
       fetch();
     }
-  }, [legs]);
+  }, [legs, fetch]);
 
   if (!data || !data.travelRoute.route || legs.length === 0) {
     return <></>;
@@ -206,7 +206,7 @@ const WalkSelect: React.FC<{ location: LocationInput; origin: string }> = ({
     <div className="mt-3">
       {data.searchStopLocation.results.map(({ id, name, code, location }) => {
         if (id === current) {
-          return;
+          return <></>;
         }
         return (
           <button
@@ -231,7 +231,7 @@ const WalkSelect: React.FC<{ location: LocationInput; origin: string }> = ({
 const Select: React.FC = () => {
   const { current, add, taken } = useLegContext();
 
-  const [{ data, error, fetching }, _] = useStopExploreQuery({
+  const [{ data, error }, _] = useStopExploreQuery({
     variables: {
       origin: current,
     },
@@ -257,7 +257,7 @@ const Select: React.FC = () => {
       }
       update(null);
     }
-  }, [data]);
+  }, [data, taken]);
 
   if (!data || !data.stop || error) {
     return <></>;
@@ -284,7 +284,7 @@ const Select: React.FC = () => {
         {stop.routes.map((stopRoute, i) => {
           let { route, headsign, destinations } = stopRoute;
           if (destinations.length === 0 || taken(route.id)) {
-            return;
+            return <></>;
           }
 
           return (

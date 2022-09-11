@@ -1,20 +1,19 @@
-import { LiveDataFragment, useStopRouteQuery } from "client/types";
+import { useStopRouteQuery } from "client/types";
 import { Container, Sign } from "components";
 import { currentDate, formatDistance } from "helper";
-import { format } from "path";
 import React from "react";
 import { useParams } from "react-router-dom";
 
 export const StopRoutePage: React.FC = () => {
   const { stop: stopId, route: routeId } = useParams();
-  const [{ data }, _] = useStopRouteQuery({
+  const { data } = useStopRouteQuery({
     variables: {
       stop: stopId as string,
       route: routeId as string,
       today: currentDate(),
-      tomorrow: currentDate(1)
+      tomorrow: currentDate(1),
     },
-  });
+  })[0];
 
   if (!data || !data.stopRoute) {
     return <></>;
@@ -60,7 +59,9 @@ export const StopRoutePage: React.FC = () => {
                 </div>
               );
             })}
-            {liveMap && <img className="mt-3 shadow" src={liveMap} />}
+            {liveMap && (
+              <img alt="live bus map" className="mt-3 shadow" src={liveMap} />
+            )}
           </div>
         )}
       </div>
