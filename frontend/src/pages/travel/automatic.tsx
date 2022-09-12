@@ -143,7 +143,7 @@ const Current: React.FC = () => {
           <div className="flex">
             <Link
               className="border border-primary-500 py-1 text-center py-0 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm w-full"
-              to={`/travel/${origin.id}/${destination.id}`}
+              to={`/travel/p/${origin.id}/${destination.id}`}
             >
               Next
             </Link>

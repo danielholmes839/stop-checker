@@ -1,4 +1,4 @@
-import { TravelLegInput, TravelOptions } from "client/types";
+import { TravelLegInput } from "client/types";
 import React, { useEffect, useState } from "react";
 
 type Route = TravelLegInput[];

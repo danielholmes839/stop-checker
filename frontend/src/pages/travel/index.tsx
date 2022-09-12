@@ -1,6 +1,6 @@
 import { AutomaticInput } from "./automatic";
-import { Manual } from "./manual";
+import { ManualLegInput, ManualOriginInput } from "./manual";
 import { AutomaticOutput } from "./output";
 export * from "./fixed_route";
 
-export { AutomaticInput, AutomaticOutput, Manual };
+export { AutomaticInput, AutomaticOutput, ManualOriginInput, ManualLegInput };

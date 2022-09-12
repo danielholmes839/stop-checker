@@ -1,7 +1,7 @@
 import { Container } from "components";
 import { Search, StopPreviewDefaultActions } from "./search";
 
-export { Search } from "./search";
+export * from "./search";
 
 export const SearchPage = () => {
   return (

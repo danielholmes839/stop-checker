@@ -6,9 +6,12 @@ import {
   useStopExploreWalkQuery,
   useTravelRouteQuery,
 } from "client/types";
-import { Sign } from "components";
+import { Container, Sign } from "components";
 import { formatDistance, formatDistanceShort } from "helper";
+import { Search, StopPreviewActions } from "pages/search";
+import { encodeRoute } from "providers";
 import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
   Instruction,
   InstructionSubtitle,
@@ -130,7 +133,7 @@ const Current: React.FC = () => {
   }
 
   return (
-    <>
+    <div className="mb-3">
       {data.travelRoute.route.map(
         ({ origin, destination, stopRoute, distance }, i) => {
           let isLast = i === legs.length - 1;
@@ -184,7 +187,15 @@ const Current: React.FC = () => {
           );
         }
       )}
-    </>
+      <div className="flex">
+        <Link
+          className="border border-primary-500 py-1 text-center py-0 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm w-full"
+          to={`/travel/r/${encodeRoute(legs)}`}
+        >
+          Next
+        </Link>
+      </div>
+    </div>
   );
 };
 
@@ -266,7 +277,7 @@ const Select: React.FC = () => {
   const { stop } = data;
 
   return (
-    <div className="my-5">
+    <div>
       <h1 className="font-semibold">
         {stop.name} #{stop.code}
       </h1>
@@ -336,11 +347,52 @@ const Select: React.FC = () => {
   );
 };
 
-export const Manual: React.FC<{ origin: string }> = ({ origin }) => {
+const Actions: StopPreviewActions = ({ stop }) => {
   return (
-    <LegContextProvider origin={origin}>
-      <Current />
-      <Select />
-    </LegContextProvider>
+    <div className="mt-3">
+      <Link to={`/travel/m/${stop.id}`}>
+        <button
+          className="mr-3 text-primary-500 underline text-sm"
+          onClick={() => {}}
+        >
+          Set as Origin
+        </button>
+      </Link>
+    </div>
+  );
+};
+
+export const ManualOriginInput: React.FC = () => {
+  return (
+    <Container>
+      <div className="my-3">
+        <h1 className="text-3xl font-semibold">Select Your Origin</h1>
+        <p className="text-sm mt-3">
+          First select an origin using the search below
+        </p>
+      </div>
+      <Search
+        config={{
+          Actions: Actions,
+          enableMap: true,
+          enableStopRouteLinks: false,
+        }}
+      />
+    </Container>
+  );
+};
+
+export const ManualLegInput: React.FC = () => {
+  const { origin } = useParams();
+  return (
+    <Container>
+      <div className="my-3">
+        <h1 className="text-3xl font-semibold">Select Your Route</h1>
+      </div>
+      <LegContextProvider origin={origin ? origin : ""}>
+        <Current />
+        <Select />
+      </LegContextProvider>
+    </Container>
   );
 };

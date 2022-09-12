@@ -71,7 +71,7 @@ const DashboardResults: React.FC = () => {
               {formatTime(departure)} - {formatTime(arrival)} ({duration} min)
             </p>
             <Link
-              to={`/travel/route/${encodeRoute(route)}`}
+              to={`/travel/r/${encodeRoute(route)}`}
               state={{ options: options }}
             >
               <button className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm">
@@ -88,8 +88,23 @@ export const Dashboard: React.FC = () => {
   const { routes } = useStorage();
   return (
     <Container>
-      <div className="my-3">
+      <div className="mt-3 mb-5">
         <h1 className="text-3xl font-semibold">Dashboard</h1>
+        <p className="mt-2">
+          Add routes to your dashboard using the{" "}
+          <Link to="/travel">
+            <span className="text-primary-500 hover:text-primary-600 hover:underline">
+              Travel Planner
+            </span>
+          </Link>{" "}
+          or enter your route{" "}
+          <Link to="/travel/create">
+            <span className="text-primary-500 hover:text-primary-600 hover:underline">
+              Manually
+            </span>
+          </Link>
+          .
+        </p>
       </div>
       {routes.length > 0 && (
         <OptionProvider>

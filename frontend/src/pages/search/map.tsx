@@ -151,7 +151,7 @@ export const SearchMap: React.FC<{
 
   return (
     <div className="mb-3">
-      <div style={{ height: 450 }}>
+      <div style={{ height: 400 }}>
         <button
           className="absolute text-white bg-primary-500 hover:bg-primary-600 z-10 mt-3 ml-3 px-3 py-1 shadow-lg rounded-sm text-sm font-semibold"
           onClick={() => {
@@ -187,7 +187,7 @@ export const SearchMap: React.FC<{
           onClick={resetSelected}
           mapContainerStyle={{
             width: "100%",
-            height: "450px",
+            height: "400px",
           }}
           zoom={14}
           center={{
