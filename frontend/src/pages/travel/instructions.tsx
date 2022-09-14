@@ -203,8 +203,8 @@ export const Instructions: React.FC<{
     return (
       <div>
         <p>
-          Failed to create a travel schedule. This can occur when there's no way
-          to create a travel schedule within 3 days of the departure/arrival
+          Failed to create a travel plan. This can occur when there's no way
+          to create a travel plan within 3 days of the departure/arrival
           time.
           {error && <span> Error: {error}</span>}
         </p>

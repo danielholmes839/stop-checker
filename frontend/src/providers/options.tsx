@@ -52,7 +52,7 @@ export const OptionInput: React.FC = () => {
       <button
         className={`bg-${
           options.mode === ScheduleMode.DepartAt ? "primary" : "gray"
-        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold`}
+        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold mb-1`}
         onClick={() => setMode(ScheduleMode.DepartAt)}
       >
         Depart At
@@ -60,7 +60,7 @@ export const OptionInput: React.FC = () => {
       <button
         className={`bg-${
           options.mode === ScheduleMode.ArriveBy ? "primary" : "gray"
-        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold`}
+        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold mb-1`}
         onClick={() => setMode(ScheduleMode.ArriveBy)}
       >
         Arrive By

@@ -84,7 +84,7 @@ export const StopPreviewDefaultActions: StopPreviewActions = ({ stop }) => {
 
   return (
     <Link to={to}>
-      <button className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm">
+      <button className="border border-primary-500 px-5 py-1 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-xs rounded-sm">
         View
       </button>
     </Link>

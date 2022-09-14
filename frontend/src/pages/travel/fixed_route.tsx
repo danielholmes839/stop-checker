@@ -37,7 +37,7 @@ export const FixedRoute: React.FC = () => {
   return (
     <Container>
       <div className="my-3">
-        <h1 className="text-3xl font-semibold">Travel Schedule</h1>
+        <h1 className="text-3xl font-semibold">Travel Plan</h1>
       </div>
       <OptionProvider initial={options}>
         <OptionInput />

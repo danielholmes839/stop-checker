@@ -94,13 +94,13 @@ export const Dashboard: React.FC = () => {
           Add routes to your dashboard using the{" "}
           <Link to="/travel">
             <span className="text-primary-500 hover:text-primary-600 hover:underline">
-              Travel Planner
+              travel planner
             </span>
           </Link>{" "}
           or enter your route{" "}
           <Link to="/travel/create">
             <span className="text-primary-500 hover:text-primary-600 hover:underline">
-              Manually
+              manually
             </span>
           </Link>
           .

@@ -104,11 +104,8 @@ const LegContextProvider: React.FC<{ origin: string }> = ({
 const Remove: React.FC = () => {
   const { back } = useLegContext();
   return (
-    <button
-      onClick={back}
-      className="bg-red-100 hover:bg-red-200 px-3 py-1 mt-2 rounded-sm text-xs border border-red-300 text-red-700 font-semibold"
-    >
-      Remove
+    <button className="text-red-600 text-sm mt-2" onClick={back}>
+      Remove from Route
     </button>
   );
 };
@@ -143,7 +140,7 @@ const Current: React.FC = () => {
             return (
               <Instruction key={origin.id + destination.id}>
                 <div
-                  className="border-l-2 pl-3"
+                  className="border-l-4 pl-3"
                   style={{ borderColor: route.background }}
                 >
                   <InstructionTitle>
@@ -192,7 +189,7 @@ const Current: React.FC = () => {
           className="border border-primary-500 py-1 text-center py-0 mt-2 hover:bg-primary-500 hover:text-white text-primary-500 text-sm rounded-sm w-full"
           to={`/travel/r/${encodeRoute(legs)}`}
         >
-          Next
+          Done
         </Link>
       </div>
     </div>
@@ -366,10 +363,7 @@ export const ManualOriginInput: React.FC = () => {
   return (
     <Container>
       <div className="my-3">
-        <h1 className="text-3xl font-semibold">Select Your Origin</h1>
-        <p className="text-sm mt-3">
-          First select an origin using the search below
-        </p>
+        <h1 className="text-3xl font-semibold">Select an Origin</h1>
       </div>
       <Search
         config={{
@@ -387,7 +381,7 @@ export const ManualLegInput: React.FC = () => {
   return (
     <Container>
       <div className="my-3">
-        <h1 className="text-3xl font-semibold">Select Your Route</h1>
+        <h1 className="text-3xl font-semibold">Route Planner</h1>
       </div>
       <LegContextProvider origin={origin ? origin : ""}>
         <Current />
