@@ -1,14 +1,24 @@
 # stop-checker.com
 
-Hello World
+## Commands
+
+Backend
+```
+go run ./cmd/server/main.go --config=dev
+go test ./...
+go test -bench=. -benchtime=20s ./...
 
 go get github.com/99designs/gqlgen
 go run github.com/99designs/gqlgen generate
 
-go test -bench=. -benchtime=20s ./...
+docker build -t stop-checker:latest .
+docker run -p 3001:3001 stop-checker:latest --config=dev
+```
 
-- Expanding navbar for small devices
-- Figure out how to manage search. Need to be able to 
-- Travel planner
-
-- Dashboard / saved routes page decided whether or not to add auth.
+Frontend
+```
+npm install
+npm run start
+npm run build
+npm run codegen
+```
