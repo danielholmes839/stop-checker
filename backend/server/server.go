@@ -60,7 +60,9 @@ func (s *Server) Listen(config Config) {
 		resolvers.ServeHTTP(w, r)
 	}))
 
-	http.Handle("/graphql-playground", playground.Handler("stop-checker", "/graphql"))
+	if config.SERVER_ENABLE_PLAYGROUND {
+		http.Handle("/graphql-playground", playground.Handler("stop-checker", "/graphql"))
+	}
 
 	// server ready
 	log.Info().Dur("total-duration", time.Since(t0)).Msg("server ready")

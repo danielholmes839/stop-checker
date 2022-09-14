@@ -17,6 +17,8 @@ timezone = "America/Montreal"
 port = ":3001"
 # Enable CORS
 cors = true
+# Enable GraphQL playground
+playground = true
 # "AWS" or "local"
 dataset = "filesystem" 
 
