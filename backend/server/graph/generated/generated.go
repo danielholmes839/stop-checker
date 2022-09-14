@@ -1148,7 +1148,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../../schema.graphql", Input: `scalar DateTime     # Input/Output: "2022-07-28T06:30:00Z"
+	{Name: "../../../schema.graphql", Input: `scalar DateTime     # Input/Output: "2022-07-28T06:30:00Z"
 scalar Date         # Input/Output: "2022-07-28"
 scalar Time         # Output: 6:30pm, 8:30am...
 scalar Color 

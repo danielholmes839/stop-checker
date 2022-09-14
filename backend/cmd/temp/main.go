@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	database, _ := db.NewDatabaseFromFilesystem("./db/data", time.Now())
+	database, _ := db.NewDatabaseFromFilesystem("./data", time.Now())
 
 	now := time.Now().Local()
 

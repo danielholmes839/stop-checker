@@ -21,7 +21,7 @@ cors = true
 dataset = "filesystem" 
 
 [filesystem]
-dataset_folder = "./db/data"
+dataset_folder = "./data"
 
 [aws]
 dataset_bucket = "" # bucket name on AWS

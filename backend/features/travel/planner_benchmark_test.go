@@ -9,7 +9,7 @@ import (
 )
 
 func BenchmarkPlanComplete(b *testing.B) {
-	database, base := db.NewDatabaseFromFilesystem("../../db/data/2022-09-03", time.Date(2022, 7, 24, 0, 0, 0, 0, time.UTC))
+	database, base := db.NewDatabaseFromFilesystem("../../data/2022-09-03", time.Date(2022, 7, 24, 0, 0, 0, 0, time.UTC))
 	planner := NewPlanner(&PlannerConfig{
 		StopLocationIndex: database.StopLocationIndex,
 		StopRouteIndex:    database.StopRouteIndex,
