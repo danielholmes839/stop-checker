@@ -72,9 +72,9 @@ const StopPageResponse: React.FC<{ data: StopPageQuery }> = ({ data }) => {
 
 export const StopPage: React.FC = () => {
   const { id } = useParams();
-  const [{ data, fetching, error }, _ignore] = useStopPageQuery({
+  const { data, fetching, error } = useStopPageQuery({
     variables: { id: id === undefined ? "" : id },
-  });
+  })[0];
 
   if (fetching) {
     return <>Loading...</>;

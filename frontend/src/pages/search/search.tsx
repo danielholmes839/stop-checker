@@ -146,7 +146,7 @@ export const Search: React.FC<{ config: Config }> = ({ config }) => {
   const [searchText, setSearchText] = useState("");
   const [searchTextDebounced] = useDebounce(searchText, 200);
 
-  const [{ data }, _] = useTextSearchQuery({
+  const { data } = useTextSearchQuery({
     variables: {
       text: searchTextDebounced,
       page: {
@@ -154,7 +154,7 @@ export const Search: React.FC<{ config: Config }> = ({ config }) => {
         skip: 0,
       },
     },
-  });
+  })[0];
 
   return (
     <>

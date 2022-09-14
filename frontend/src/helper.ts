@@ -48,5 +48,5 @@ export const currentDate = (dayOffset: number = 0): string => {
 };
 
 export const formatDateTime = (date: Date): string => {
-  return date.toISOString().split(".")[0].slice(0, -2) + "00" + "Z";
+  return date.toISOString().split(".")[0].slice(0, -2) + "00Z";
 };

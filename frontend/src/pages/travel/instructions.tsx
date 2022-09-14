@@ -28,9 +28,9 @@ export const InstructionSubtitle: React.FC = ({ children }) => {
 const MoreDepartures: React.FC<{
   input: TravelPlannerDeparturesQueryVariables;
 }> = ({ input }) => {
-  const [{ data }, _] = useTravelPlannerDeparturesQuery({
+  const { data } = useTravelPlannerDeparturesQuery({
     variables: input,
-  });
+  })[0];
 
   if (!data || !data.stopRoute) {
     return <>{JSON.stringify(data, undefined, 4)}</>;
@@ -203,9 +203,8 @@ export const Instructions: React.FC<{
     return (
       <div>
         <p>
-          Failed to create a travel plan. This can occur when there's no way
-          to create a travel plan within 3 days of the departure/arrival
-          time.
+          Failed to create a travel plan. This can occur when there's no way to
+          create a travel plan within 3 days of the departure/arrival time.
           {error && <span> Error: {error}</span>}
         </p>
       </div>

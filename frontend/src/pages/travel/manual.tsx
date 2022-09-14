@@ -201,11 +201,11 @@ const WalkSelect: React.FC<{ location: LocationInput; origin: string }> = ({
   origin,
 }) => {
   const { add, current } = useLegContext();
-  const [{ data }, _] = useStopExploreWalkQuery({
+  const { data } = useStopExploreWalkQuery({
     variables: {
       location: location,
     },
-  });
+  })[0];
 
   if (!data) {
     return <></>;
@@ -239,11 +239,11 @@ const WalkSelect: React.FC<{ location: LocationInput; origin: string }> = ({
 const Select: React.FC = () => {
   const { current, add, taken } = useLegContext();
 
-  const [{ data, error }, _] = useStopExploreQuery({
+  const { data, error } = useStopExploreQuery({
     variables: {
       origin: current,
     },
-  });
+  })[0];
 
   const [transit, setTransit] = useState(true);
   const [activeStopRoute, setActiveStopRoute] =
