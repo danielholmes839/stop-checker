@@ -36,7 +36,9 @@ const DashboardResults: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
       {data.travelPlannerFixedRoutes.map(({ schedule, error }) => {
         if (!schedule) {
-          return <div>{error}</div>;
+          return (
+            <div className="py-2 px-3 border border-gray-200">{error}</div>
+          );
         }
 
         let { legs, arrival, departure, duration, origin, destination } =
