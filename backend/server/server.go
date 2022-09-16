@@ -54,8 +54,14 @@ func (s *Server) Listen(config Config) {
 	// server endpoint
 	http.Handle("/graphql", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if config.SERVER_ENABLE_CORS {
+			// allow all requests
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		} else {
+			// only allow requests from stop-checker.com
+			switch origin := r.Header.Get("Origin"); origin {
+			case "https://www.stop-checker.com", "https://stop-checker.com":
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+			}
 		}
 		resolvers.ServeHTTP(w, r)
 	}))
