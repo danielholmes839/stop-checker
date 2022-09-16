@@ -2,9 +2,9 @@
 # OC Transpo's API endpoint
 endpoint = "https://api.octranspo1.com/v2.0/GetNextTripsForStopAllRoutes"
 # OC Tranpo API key
-api_key = "508a0741b6945609192422d77f3a1da4"
+api_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 # OC Transpo app id
-app_id = "13d12d72"
+app_id = "xxxxxxxxxxxxxx"
 
 [google_cloud]
 # Maps API key
