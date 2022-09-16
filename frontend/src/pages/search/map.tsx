@@ -95,7 +95,7 @@ export const SearchMap: React.FC<{
 }> = ({ selected, setSelected }) => {
   // load google maps
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyAvCHchRFUDqVPHSs5jpR74ehIY7A5WBIY",
+    googleMapsApiKey: "AIzaSyDnH87oA5pYUpa6o-OpkjUtZVxVBkosRPA",
     libraries: libraries as any,
   });
 

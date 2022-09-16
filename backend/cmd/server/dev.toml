@@ -8,7 +8,7 @@ app_id = "13d12d72"
 
 [google_cloud]
 # Maps API key
-api_key = "AIzaSyB1ha-Cb9kOv0dPi-mBZQ4JHukDRVEJ4ME"
+api_key = "AIzaSyDnH87oA5pYUpa6o-OpkjUtZVxVBkosRPA"
 
 [server]
 # Port string used in http.ListenAndServe
