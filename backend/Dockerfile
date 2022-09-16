@@ -1,6 +1,8 @@
 FROM golang:1.18.6-alpine3.16
 RUN apk add build-base
 
+ENV TZ=America/Montreal
+
 WORKDIR /app
 
 COPY go.mod ./
