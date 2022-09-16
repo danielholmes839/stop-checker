@@ -47,20 +47,21 @@ export const OptionProvider: React.FC<{
 
 export const OptionInput: React.FC = () => {
   const { options, setMode, setDate } = useOptions();
+  const departAtClass =
+    options.mode === ScheduleMode.DepartAt ? "bg-primary-200" : "bg-gray-200";
+  const arriveByClass =
+    options.mode === ScheduleMode.ArriveBy ? "bg-primary-200" : "bg-gray-200";
+
   return (
     <div>
       <button
-        className={`bg-${
-          options.mode === ScheduleMode.DepartAt ? "primary" : "gray"
-        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold mb-1`}
+        className={`${departAtClass} px-3 py-1 mr-1 rounded-full text-xs font-semibold mb-1`}
         onClick={() => setMode(ScheduleMode.DepartAt)}
       >
         Depart At
       </button>
       <button
-        className={`bg-${
-          options.mode === ScheduleMode.ArriveBy ? "primary" : "gray"
-        }-200 px-3 py-1 mr-1 rounded-full text-xs font-semibold mb-1`}
+        className={`${arriveByClass} px-3 py-1 mr-1 rounded-full text-xs font-semibold mb-1`}
         onClick={() => setMode(ScheduleMode.ArriveBy)}
       >
         Arrive By
