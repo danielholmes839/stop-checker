@@ -11,19 +11,11 @@ app_id = "13d12d72"
 api_key = "AIzaSyB1ha-Cb9kOv0dPi-mBZQ4JHukDRVEJ4ME"
 
 [server]
-# IANA time zone string
-timezone = "America/Montreal"
 # Port string used in http.ListenAndServe
 port = ":3001"
 # Enable CORS
 cors = true
 # Enable GraphQL playground
 playground = true
-# "AWS" or "local"
-dataset = "filesystem" 
-
-[filesystem]
-dataset_folder = "./data"
-
-[aws]
-dataset_bucket = "" # bucket name on AWS
+# Where the data set is located
+dataset = "./data"

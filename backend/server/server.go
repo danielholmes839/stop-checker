@@ -22,7 +22,7 @@ func (s *Server) Listen(config Config) {
 	t0 := time.Now()
 	log.Info().Msg("server starting")
 
-	database, _ := db.NewDatabaseFromFilesystem(config.DATASET_FOLDER, time.Now())
+	database, _ := db.NewDatabaseFromFilesystem(config.SERVER_DATASET, time.Now())
 
 	resolvers := handler.NewDefaultServer(generated.NewExecutableSchema(
 		generated.Config{

@@ -9,8 +9,6 @@ import (
 )
 
 func NewDatabaseFromFilesystem(path string, t time.Time) (*Database, *model.Base) {
-	tz, _ := time.LoadLocation("America/Montreal")
-
 	raw, err := gtfs.RawFilesystem(path)
 	if err != nil {
 		panic(err)
@@ -18,7 +16,7 @@ func NewDatabaseFromFilesystem(path string, t time.Time) (*Database, *model.Base
 
 	base, err := gtfs.NewBase(raw, gtfs.BaseOptions{
 		Time:       t,
-		TimeZone:   tz,
+		TZ:   time.Local,
 		TimeLayout: "15:04:05",
 		DateLayout: "20060102",
 	})
@@ -27,7 +25,7 @@ func NewDatabaseFromFilesystem(path string, t time.Time) (*Database, *model.Base
 		panic(err)
 	}
 
-	database := NewDatabase(base, tz)
+	database := NewDatabase(base, time.Local)
 	runtime.GC()
 
 	return database, base

@@ -10,8 +10,8 @@ import (
 )
 
 type BaseOptions struct {
-	Time       time.Time
-	TimeZone   *time.Location
+	Time       time.Time // remove all records that are not needed past this date
+	TZ         *time.Location
 	TimeLayout string
 	DateLayout string
 }
@@ -115,7 +115,7 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 }
 
 type DatasetParser struct {
-	TimeZone   *time.Location
+	TZ         *time.Location
 	TimeLayout string
 	DateLayout string
 
@@ -124,8 +124,8 @@ type DatasetParser struct {
 }
 
 func NewService(data Calendar, opts BaseOptions) model.Service {
-	start, _ := time.ParseInLocation(opts.DateLayout, data.Start, opts.TimeZone)
-	end, _ := time.ParseInLocation(opts.DateLayout, data.End, opts.TimeZone)
+	start, _ := time.ParseInLocation(opts.DateLayout, data.Start, opts.TZ)
+	end, _ := time.ParseInLocation(opts.DateLayout, data.End, opts.TZ)
 
 	return model.Service{
 		Id: data.ServiceID,
@@ -144,7 +144,7 @@ func NewService(data Calendar, opts BaseOptions) model.Service {
 }
 
 func NewServiceException(data CalendarDate, opts BaseOptions) model.ServiceException {
-	date, _ := time.ParseInLocation(opts.DateLayout, data.Date, opts.TimeZone)
+	date, _ := time.ParseInLocation(opts.DateLayout, data.Date, opts.TZ)
 
 	return model.ServiceException{
 		ServiceId: data.ServiceID,

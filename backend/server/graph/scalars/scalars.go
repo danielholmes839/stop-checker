@@ -34,9 +34,7 @@ func UnmarshalDate(v interface{}) (time.Time, error) {
 		return time.Time{}, errors.New("'Date' scalar must be a string")
 	}
 
-	location, _ := time.LoadLocation("America/Montreal")
-
-	t, err := time.ParseInLocation("2006-01-02", date, location)
+	t, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -56,16 +54,11 @@ func UnmarshalDateTime(v interface{}) (time.Time, error) {
 		return time.Time{}, errors.New("'DateTime' scalar must be a string")
 	}
 
-	location, err := time.LoadLocation("America/Toronto")
-	if err != nil {
-		panic(err)
-	}
-
 	t, err := time.Parse("2006-01-02T15:04:00Z", date)
 
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	return t.In(location), nil
+	return t.In(time.Local), nil
 }
