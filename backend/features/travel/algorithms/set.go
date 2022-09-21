@@ -1,4 +1,4 @@
-package dijkstra
+package algorithms
 
 type Set map[string]struct{}
 

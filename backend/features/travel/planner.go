@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"stop-checker.com/db"
 	"stop-checker.com/db/model"
-	"stop-checker.com/features/travel/dijkstra"
+	"stop-checker.com/features/travel/algorithms"
 )
 
 const MAX_WALK_DISTANCE = 300
@@ -24,12 +24,12 @@ type fastestTransit struct {
 }
 
 type node struct {
-	walk      bool         // walked to the stop
-	routeId   string       // route taken to the stop, empty when walking
-	stopId    string       // stop id
-	transfers int          // transfers
-	arrival   time.Time    // arrival time at this stop
-	blockers  dijkstra.Set // routes than cannot be taken from this node
+	walk      bool           // walked to the stop
+	routeId   string         // route taken to the stop, empty when walking
+	stopId    string         // stop id
+	transfers int            // transfers
+	arrival   time.Time      // arrival time at this stop
+	blockers  algorithms.Set // routes than cannot be taken from this node
 }
 
 func (n *node) ID() string {
@@ -74,14 +74,14 @@ func (p *Planner) Depart(at time.Time, origin, destination string) (Route, error
 		walk:      false,
 		routeId:   "",
 		transfers: 0,
-		blockers:  dijkstra.Set{},
+		blockers:  algorithms.Set{},
 	}
 
 	t0 := time.Now()
 
-	solution, err := dijkstra.Algorithm(&dijkstra.Config[*node]{
+	solution, err := algorithms.Dijkstra(&algorithms.DijkstraConfig[*node]{
 		Destination: destination,
-		Initial:     initial,
+		Initial:     []*node{initial},
 		Expand:      p.expand,
 		Compare: func(a, b *node) bool {
 			aPen := time.Duration(a.transfers) * TRANSFER_PENALTY
@@ -118,14 +118,14 @@ func (p *Planner) Arrive(by time.Time, origin, destination string) (Route, error
 		walk:      false,
 		routeId:   "",
 		transfers: 0,
-		blockers:  dijkstra.Set{},
+		blockers:  algorithms.Set{},
 	}
 
 	t0 := time.Now()
 
-	solution, err := dijkstra.Algorithm(&dijkstra.Config[*node]{
+	solution, err := algorithms.Dijkstra(&algorithms.DijkstraConfig[*node]{
 		Destination: origin, // the target
-		Initial:     initial,
+		Initial:     []*node{initial},
 		Expand:      p.expandReverse,
 		Compare: func(a, b *node) bool {
 			aPen := time.Duration(a.transfers) * -TRANSFER_PENALTY
@@ -154,7 +154,7 @@ func (p *Planner) Arrive(by time.Time, origin, destination string) (Route, error
 	return p.route(solution, false), nil
 }
 
-func (p *Planner) route(solution *dijkstra.Path[*node], depart bool) Route {
+func (p *Planner) route(solution *algorithms.Path[*node], depart bool) Route {
 	route := Route{}
 
 	for solution.Prev != nil {
@@ -206,7 +206,7 @@ func (p *Planner) expandWalk(origin *node, reverse bool) []*node {
 
 	stop, _ := p.stopIndex.Get(origin.ID())
 
-	originRoutes := dijkstra.Set{}
+	originRoutes := algorithms.Set{}
 	originRoutesList := p.stopRouteIndex.Get(origin.ID())
 
 	for _, originRoute := range originRoutesList {
@@ -269,7 +269,7 @@ func (p *Planner) expandTransit(n *node) []*node {
 	origin := n.ID()
 	originArrival := n.Arrival()
 
-	blockers := dijkstra.Set{}             // blocked routes key:stopid, set of directed routeid
+	blockers := algorithms.Set{}           // blocked routes key:stopid, set of directed routeid
 	fastest := map[string]fastestTransit{} // fastest transit option key:stopid
 
 	// expand on routes
@@ -319,7 +319,7 @@ func (p *Planner) expandTransitReverse(n *node) []*node {
 	destination := n.ID()
 	destinationArrival := n.Arrival()
 
-	blockers := dijkstra.Set{}             // blocked routes key:stopid, set of directed routeid
+	blockers := algorithms.Set{}           // blocked routes key:stopid, set of directed routeid
 	fastest := map[string]fastestTransit{} // fastest transit option key:stopid
 
 	// expand on routes

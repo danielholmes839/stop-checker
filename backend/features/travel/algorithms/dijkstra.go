@@ -1,4 +1,4 @@
-package dijkstra
+package algorithms
 
 import (
 	"errors"
@@ -19,24 +19,26 @@ func (p *Path[N]) ID() string {
 	return p.Node.ID()
 }
 
-type Config[N Node] struct {
+type DijkstraConfig[N Node] struct {
 	Destination string
-	Initial     N
+	Initial     []N
 	Expand      Expand[N]
 	Compare     func(a, b N) bool
 }
 
-func Algorithm[N Node](config *Config[N]) (*Path[N], error) {
+func Dijkstra[N Node](config *DijkstraConfig[N]) (*Path[N], error) {
 	seen := Set{}
 	pq := NewPriorityQueue(func(a, b *Path[N]) bool {
 		return config.Compare(a.Node, b.Node)
 	})
 
 	// push initial path
-	pq.Push(&Path[N]{
-		Prev: nil,
-		Node: config.Initial,
-	})
+	for _, node := range config.Initial {
+		pq.Push(&Path[N]{
+			Prev: nil,
+			Node: node,
+		})
+	}
 
 	for !pq.Empty() {
 		path := pq.Pop()

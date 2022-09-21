@@ -1,4 +1,4 @@
-package dijkstra
+package algorithms
 
 import (
 	"testing"
@@ -49,13 +49,13 @@ func TestAlgorithm(t *testing.T) {
 		"C": {{to: "D", weight: 1}},
 	}
 
-	config := &Config[*path]{
+	config := &DijkstraConfig[*path]{
 		Destination: "D",
-		Initial: &path{
+		Initial: []*path{{
 			node:   nodes["A"],
 			prev:   nil,
 			weight: 0,
-		},
+		}},
 		Expand: func(n *path) []*path {
 			expanded := []*path{}
 			for _, edge := range edges[n.id] {
@@ -72,7 +72,7 @@ func TestAlgorithm(t *testing.T) {
 		},
 	}
 
-	solution, _ := Algorithm(config)
+	solution, _ := Dijkstra(config)
 
 	assert.Equal(t, 3, solution.Node.weight)
 }
