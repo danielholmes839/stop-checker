@@ -8,7 +8,7 @@ import {
 } from "@react-google-maps/api";
 import { LocationInput, Stop, useLocationSearchQuery } from "client/types";
 
-const key = "AIzaSyAvCHchRFUDqVPHSs5jpR74ehIY7A5WBIY";
+const key = "AIzaSyDnH87oA5pYUpa6o-OpkjUtZVxVBkosRPA";
 const libraries = ["geometry", "drawing"];
 const mapOptions = {
   gestureHandling: "greedy",
