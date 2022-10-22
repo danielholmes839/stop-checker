@@ -99,11 +99,11 @@ func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []
 	order := map[string]int{}
 	stops := make([]model.Stop, len(reachable))
 
-	counter := 0
+	i := 0
 	for stopId, options := range reachable {
 		stop, _ := r.stops.Get(stopId)
-		stops[counter] = stop
-		counter++
+		stops[i] = stop
+		i++
 
 		for _, info := range options {
 			sequence, ok := order[stopId]

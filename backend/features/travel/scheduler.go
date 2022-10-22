@@ -121,7 +121,7 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 	all, _ := s.stopTimesByTrip.Get(next.TripId)
 
 	// origin stop time
-	originArrival, err := s.stopTime(fixed.Origin, all)
+	_, err = s.stopTime(fixed.Origin, all)
 	if err != nil {
 		return nil, err
 	}
@@ -143,9 +143,7 @@ func (s *Scheduler) planDepart(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		Departure:   departure,
 		Duration:    transitDuration,
 		Transit: &transit{
-			TripId:                next.TripId,
-			OriginStopTimeId:      originArrival.ID(),
-			DestinationStopTimeId: destinationArrival.ID(),
+			TripId: next.TripId,
 		},
 	}, nil
 }
@@ -204,9 +202,7 @@ func (s *Scheduler) planArrive(acc time.Time, fixed *FixedLeg) (*Leg, error) {
 		Departure:   previous.Add(-transitDuration),
 		Duration:    transitDuration,
 		Transit: &transit{
-			TripId:                previous.TripId,
-			OriginStopTimeId:      originArrival.ID(),
-			DestinationStopTimeId: destinationArrival.ID(),
+			TripId: previous.TripId,
 		},
 	}, nil
 }

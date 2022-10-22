@@ -7,8 +7,6 @@ import (
 
 type transit struct {
 	TripId                string
-	OriginStopTimeId      string
-	DestinationStopTimeId string
 }
 
 type Leg struct {

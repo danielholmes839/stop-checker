@@ -206,13 +206,6 @@ func (p *Planner) expandWalk(origin *node, reverse bool) []*node {
 
 	stop, _ := p.stopIndex.Get(origin.ID())
 
-	originRoutes := algorithms.Set{}
-	originRoutesList := p.stopRouteIndex.Get(origin.ID())
-
-	for _, originRoute := range originRoutesList {
-		originRoutes.Add(originRoute.DirectedID())
-	}
-
 	// closest walk for each route key:routeid
 	closest := map[string]closestWalk{}
 
@@ -223,10 +216,6 @@ func (p *Planner) expandWalk(origin *node, reverse bool) []*node {
 		for _, route := range neighborRoutes {
 			directedRouteId := route.DirectedID()
 			if origin.Blocked(directedRouteId) {
-				continue
-			}
-
-			if originRoutes.Contains(directedRouteId) {
 				continue
 			}
 
@@ -273,7 +262,7 @@ func (p *Planner) expandTransit(n *node) []*node {
 	fastest := map[string]fastestTransit{} // fastest transit option key:stopid
 
 	// expand on routes
-	for _, stopRoute := range p.stopRouteIndex.Get(n.ID()) {
+	for _, stopRoute := range p.stopRouteIndex.Get(origin) {
 		if n.Blocked(stopRoute.DirectedID()) {
 			continue
 		}
