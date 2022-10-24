@@ -1,84 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"stop-checker.com/db"
-	"stop-checker.com/features/travel"
+	"stop-checker.com/db/model"
+	v2 "stop-checker.com/features/travel/v2"
 )
 
 func main() {
 	database, _ := db.NewDatabaseFromFilesystem("./data", time.Now())
 
-	now := time.Now().Local()
+	planner := v2.NewPlanner(database)
 
-	t0 := time.Now()
-	scheduleResults := database.ReachIndex.ReachableForwardWithNext("AK151", "49-340", now)
+	origin := model.Location{Latitude: 45.397671, Longitude: -75.631022}
+	origin2 := model.Location{Latitude: 45.395909, Longitude: -75.631384}
+	destination := model.Location{Latitude: 45.421274, Longitude: -75.681846}
 
-	fmt.Println("-------------")
-	fmt.Println(time.Since(t0))
+	depart, _ := time.Parse("2006-01-02T15:04:00Z", "2022-10-22T11:50:00Z")
+	depart = depart.In(time.Local)
 
-	for _, result := range scheduleResults {
-		fmt.Println(result.Origin.Name, result.Departure.Format(time.Kitchen), "->", result.Destination.Name, result.Arrival.Format(time.Kitchen))
-	}
+	depart2, _ := time.Parse("2006-01-02T15:04:00Z", "2022-10-24T11:50:00Z")
+	depart2 = depart2.In(time.Local)
 
-	t0 = time.Now()
-	scheduleResults = database.ReachIndex.ReachableBackwardWithPrevious("AK151", "49-340", now)
+	planner.Depart(origin, destination, depart)
 
-	fmt.Println("-------------")
-	fmt.Println(time.Since(t0))
-
-	for _, result := range scheduleResults {
-		fmt.Println(result.Origin.Name, result.Departure.Format(time.Kitchen), "->", result.Destination.Name, result.Arrival.Format(time.Kitchen))
-	}
-
-	fmt.Println("---------------------------")
-
-	planner := travel.NewPlanner(&travel.PlannerConfig{
-		StopLocationIndex: database.StopLocationIndex,
-		StopRouteIndex:    database.StopRouteIndex,
-		StopIndex:         database.Stops,
-		ReachIndex:        database.ReachIndex,
-	})
-
-	arrive, _ := time.Parse("2006-01-02T15:04:00Z", "2022-08-25T12:18:00Z") // 8:28 am EST
-	arrive = arrive.In(time.Local)
-
-	t0 = time.Now()
-	p1, err := planner.Arrive(arrive, "AK151", "CD998")
-	fmt.Println(time.Since(t0))
-	fmt.Println(err)
-	fmt.Println(p1)
-
-	// t0 = time.Now()
-	// results := database.ReachIndex.Reachable("AK151", "49-340", true)
-
-	// fmt.Println("-------------")
-	// fmt.Println(time.Since(t0))
-	// fmt.Println(results)
-
-	// for _, stop := range results {
-	// 	fmt.Println(stop.Name)
-	// }
-
-	// t0 = time.Now()
-	// results = database.ReachIndex.Reachable("AF940", "88-340", false)
-	// fmt.Println("-------------")
-	// fmt.Println(time.Since(t0))
-	// fmt.Println(results)
-
-	// for _, stop := range results {
-	// 	fmt.Println(stop.Name)
-	// }
-
-	// t0 = time.Now()
-	// scheduleResults = database.ReachIndex.ReachableForwardWithNext("AF940", "88-340", now)
-	// fmt.Println("-------------")
-	// fmt.Println(time.Since(t0))
-
-	// for _, result := range scheduleResults {
-	// 	fmt.Println(result.Origin.Name, result.Departure.Format(time.Kitchen), "->", result.Destination.Name, result.Arrival.Format(time.Kitchen))
-	// }
-
+	planner.Depart(origin2, destination, depart2)
 }
