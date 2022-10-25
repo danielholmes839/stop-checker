@@ -16,7 +16,7 @@ const MAX_WALK = 500.0
 // the maximum distance to walk between stops
 const MAX_WALK_EXPLORE = 300.0
 
-const WALK_SPEED = 1.2 // meters per second
+const WALK_SPEED = 1.4 // meters per second
 const WALK_PENALTY = 0.5
 
 type kind int
