@@ -11,13 +11,13 @@ const TRANSFER_PENALTY = time.Minute * 5
 const DISTANCE_PENALTY = (5 * time.Minute) / (2 * 1000)
 
 // the maximum distance to walk from origin to first stop, or last stop to destination
-const MAX_WALK = 500.0
+const MAX_WALK = 750.0
 
 // the maximum distance to walk between stops
 const MAX_WALK_EXPLORE = 300.0
 
 const WALK_SPEED = 1.4 // meters per second
-const WALK_PENALTY = 0.5
+const WALK_PENALTY = 1
 
 type kind int
 

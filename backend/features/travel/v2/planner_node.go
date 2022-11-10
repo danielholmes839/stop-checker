@@ -81,7 +81,7 @@ func (n *node) blocked(directedRouteId string) bool {
 func createInitialNode(initial model.Location, t time.Time) *node {
 	return &node{
 		previous:      nil,
-		id:            "INITIAL",
+		id:            "",
 		transfers:     0,
 		walkTotal:     0,
 		location:      initial,
@@ -104,7 +104,7 @@ func createTargetNode(previous *node, target model.Location, forward bool) *node
 
 	return &node{
 		previous:      previous,
-		id:            "TARGET",
+		id:            "",
 		transfers:     previous.transfers,
 		walkTotal:     previous.walkTotal + distance,
 		location:      target,

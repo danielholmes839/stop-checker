@@ -6,31 +6,32 @@ import (
 	"stop-checker.com/db/model"
 )
 
-type FixedLegTransit struct {
-	Origin      string // stop id
-	Destination string // stop id
-	Route       string // route id
-}
+type Schedule []*Leg
+
+type Route []*FixedLeg
 
 type FixedLeg struct {
-	Origin      model.Location
-	Destination model.Location
-	Transit     *FixedLegTransit
-}
-
-type LegTransit struct {
-	Origin      model.Stop
-	Destination model.Stop
-	Route       model.Route
-	Trip        model.Trip
-	Arrival     time.Time
-	Departure   time.Time
+	OriginId      string
+	Origin        model.Location
+	DestinationId string
+	Destination   model.Location
+	RouteId       string
 }
 
 type Leg struct {
-	Origin             model.Location
-	OriginArrival      time.Time
+	OriginId      string
+	Origin        model.Location
+	OriginArrival time.Time
+
+	DestinationId      string
 	Destination        model.Location
 	DestinationArrival time.Time
-	Transit            *LegTransit
+
+	Transit *Transit
+}
+
+type Transit struct {
+	RouteId   string
+	TripId    string
+	Departure time.Time
 }

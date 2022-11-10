@@ -32,15 +32,15 @@ func (f *fastestTransit) Faster(t time.Time, forward bool) bool {
 	return f.stopArrival.After(t)
 }
 
-type RoutePlanner struct {
+type Planner struct {
 	stopLocationIndex *db.StopLocationIndex
 	stopRouteIndex    *db.StopRouteIndex
 	stopIndex         *db.Index[model.Stop]
 	reachIndex        *db.ReachIndex
 }
 
-func NewRoutePlanner(database *db.Database) *RoutePlanner {
-	return &RoutePlanner{
+func NewPlanner(database *db.Database) *Planner {
+	return &Planner{
 		stopLocationIndex: database.StopLocationIndex,
 		stopRouteIndex:    database.StopRouteIndex,
 		stopIndex:         database.Stops,
@@ -48,25 +48,27 @@ func NewRoutePlanner(database *db.Database) *RoutePlanner {
 	}
 }
 
-func (rp *RoutePlanner) Depart(origin, destination model.Location, at time.Time) ([]*FixedLeg, error) {
-	solution, err := rp.plan(origin, destination, at, true)
+func (p *Planner) Depart(origin, destination model.Location, at time.Time) ([]*FixedLeg, error) {
+	forward := true
+	solution, err := p.plan(origin, destination, at, forward)
 	if err != nil {
 		return nil, err
 	}
-	return rp.getRoute(solution), nil
+	return p.getRoute(solution, forward), nil
 }
 
-func (rp *RoutePlanner) Arrive(origin, destination model.Location, by time.Time) ([]*FixedLeg, error) {
-	solution, err := rp.plan(origin, destination, by, false)
+func (p *Planner) Arrive(origin, destination model.Location, by time.Time) ([]*FixedLeg, error) {
+	forward := false
+	solution, err := p.plan(origin, destination, by, forward)
 	if err != nil {
 		return nil, err
 	}
-	return rp.getRoute(solution), nil
+	return p.getRoute(solution, forward), nil
 }
 
-func (rp *RoutePlanner) plan(origin, destination model.Location, t time.Time, forward bool) (*node, error) {
+func (p *Planner) plan(origin, destination model.Location, t time.Time, forward bool) (*node, error) {
 	// target and initial locations
-	initial, target := rp.getInitialAndTarget(origin, destination, forward)
+	initial, target := p.getInitialAndTarget(origin, destination, forward)
 	explored := algorithms.Set{}
 
 	pq := algorithms.NewPriorityQueue(func(a, b *node) bool {
@@ -94,12 +96,12 @@ func (rp *RoutePlanner) plan(origin, destination model.Location, t time.Time, fo
 		}
 
 		// Explore by walking
-		for _, node := range rp.exploreWalk(current, forward) {
+		for _, node := range p.exploreWalk(current, forward) {
 			pq.Push(node)
 		}
 
 		// Explore using transit
-		for _, node := range rp.exploreTransit(current, forward) {
+		for _, node := range p.exploreTransit(current, forward) {
 			pq.Push(node)
 		}
 	}
@@ -107,7 +109,7 @@ func (rp *RoutePlanner) plan(origin, destination model.Location, t time.Time, fo
 	return nil, errors.New("failed to create travel route")
 }
 
-func (rp *RoutePlanner) exploreTransit(current *node, forward bool) []*node {
+func (p *Planner) exploreTransit(current *node, forward bool) []*node {
 	if current.kind != STOP {
 		return []*node{}
 	}
@@ -115,14 +117,14 @@ func (rp *RoutePlanner) exploreTransit(current *node, forward bool) []*node {
 	blockers := algorithms.Set{}           // blocked set of directed route ids
 	fastest := map[string]fastestTransit{} // fastest transit option key:stopid
 
-	for _, stopRoute := range rp.stopRouteIndex.Get(current.ID()) {
+	for _, stopRoute := range p.stopRouteIndex.Get(current.ID()) {
 		if current.blocked(stopRoute.DirectedID()) {
 			continue
 		}
 		blockers.Add(stopRoute.DirectedID())
 
 		// reachable stops
-		for _, reachable := range rp.getReachable(current, stopRoute, forward) {
+		for _, reachable := range p.getReachable(current, stopRoute, forward) {
 			current, seen := fastest[reachable.stopId]
 			if !seen || !current.Faster(reachable.stopArrival, forward) {
 				fastest[reachable.stopId] = reachable
@@ -130,29 +132,30 @@ func (rp *RoutePlanner) exploreTransit(current *node, forward bool) []*node {
 		}
 	}
 
-	return rp.getTransitNodes(current, fastest, blockers)
+	return p.getTransitNodes(current, fastest, blockers)
 }
 
-func (rp *RoutePlanner) exploreWalk(current *node, forward bool) []*node {
+func (p *Planner) exploreWalk(current *node, forward bool) []*node {
 	if current.walk {
 		return []*node{}
 	}
 
+	// the closest stop for each route
 	closest := map[string]closestWalk{}
 
-	for _, neighbor := range rp.getNeighbors(current) {
+	for _, neighbor := range p.getNeighbors(current) {
 		if neighbor.ID() == current.ID() {
 			continue
 		}
 
-		for _, route := range rp.stopRouteIndex.Get(neighbor.ID()) {
+		for _, route := range p.stopRouteIndex.Get(neighbor.ID()) {
 			directedRouteId := route.DirectedID()
 			if current.blocked(directedRouteId) {
 				continue
 			}
 
-			walk, seen := closest[directedRouteId]
-			if !seen || walk.distance > neighbor.Distance {
+			currentWalk, seen := closest[directedRouteId]
+			if !seen || currentWalk.distance > neighbor.Distance {
 				closest[directedRouteId] = closestWalk{
 					distance:     neighbor.Distance,
 					stopId:       neighbor.ID(),
@@ -163,15 +166,15 @@ func (rp *RoutePlanner) exploreWalk(current *node, forward bool) []*node {
 		}
 	}
 
-	return rp.getWalkNodes(current, closest, forward)
+	return p.getWalkNodes(current, closest, forward)
 }
 
-func (rp *RoutePlanner) getReachable(current *node, stopRoute model.StopRoute, forward bool) []fastestTransit {
+func (p *Planner) getReachable(current *node, stopRoute model.StopRoute, forward bool) []fastestTransit {
 	var results []db.ReachableSchedule
 	if forward {
-		results = rp.reachIndex.ReachableForwardWithNext(current.ID(), stopRoute.RouteId, current.Time())
+		results = p.reachIndex.ReachableForwardWithNext(current.ID(), stopRoute.RouteId, current.Time())
 	} else {
-		results = rp.reachIndex.ReachableBackwardWithPrevious(current.ID(), stopRoute.RouteId, current.Time())
+		results = p.reachIndex.ReachableBackwardWithPrevious(current.ID(), stopRoute.RouteId, current.Time())
 	}
 
 	reachable := make([]fastestTransit, len(results))
@@ -199,17 +202,17 @@ func (rp *RoutePlanner) getReachable(current *node, stopRoute model.StopRoute, f
 	return reachable
 }
 
-func (rp *RoutePlanner) getNeighbors(current *node) []db.StopLocationResult {
+func (p *Planner) getNeighbors(current *node) []db.StopLocationResult {
 	var neighbors []db.StopLocationResult
 	if current.kind == INITIAL {
-		neighbors = rp.stopLocationIndex.Query(current.Location(), MAX_WALK)
+		neighbors = p.stopLocationIndex.Query(current.Location(), MAX_WALK)
 	} else {
-		neighbors = rp.stopLocationIndex.Query(current.Location(), MAX_WALK_EXPLORE)
+		neighbors = p.stopLocationIndex.Query(current.Location(), MAX_WALK_EXPLORE)
 	}
 	return neighbors
 }
 
-func (rp *RoutePlanner) getTransitNodes(current *node, fastest map[string]fastestTransit, blockers algorithms.Set) []*node {
+func (p *Planner) getTransitNodes(current *node, fastest map[string]fastestTransit, blockers algorithms.Set) []*node {
 	nodes := []*node{}
 	for _, transit := range fastest {
 		nodes = append(nodes, createTransitNode(current, transit, blockers))
@@ -217,7 +220,7 @@ func (rp *RoutePlanner) getTransitNodes(current *node, fastest map[string]fastes
 	return nodes
 }
 
-func (rp *RoutePlanner) getWalkNodes(current *node, closest map[string]closestWalk, forward bool) []*node {
+func (p *Planner) getWalkNodes(current *node, closest map[string]closestWalk, forward bool) []*node {
 	nodes := []*node{}
 	added := algorithms.Set{}
 
@@ -233,43 +236,59 @@ func (rp *RoutePlanner) getWalkNodes(current *node, closest map[string]closestWa
 	return nodes
 }
 
-func (rp *RoutePlanner) getInitialAndTarget(origin, destination model.Location, forward bool) (initial, target model.Location) {
+func (p *Planner) getInitialAndTarget(origin, destination model.Location, forward bool) (initial, target model.Location) {
 	if forward {
 		return origin, destination
 	}
 	return destination, origin
 }
 
-func (rp *RoutePlanner) getRoute(solution *node) []*FixedLeg {
+func (p *Planner) getRoute(solution *node, forward bool) []*FixedLeg {
 	legs := []*FixedLeg{}
 
 	current := solution
 
-	for current != nil {
-		if current.transit != nil {
-			fmt.Println(current.ID(), current.Time(), current.Location(), current.transit.route)
+	for current.previous != nil {
+		var leg *FixedLeg
+		if forward {
+			leg = &FixedLeg{
+				OriginId:      current.previous.ID(),
+				Origin:        current.previous.Location(),
+				DestinationId: current.ID(),
+				Destination:   current.Location(),
+				RouteId:       "",
+			}
 		} else {
-			fmt.Println(current.ID(), current.Time(), current.Location())
-		}
-		previous := current.previous
-
-		var legTransit *FixedLegTransit
-		if current.transit != nil {
-			legTransit = &FixedLegTransit{
-				Origin:      current.ID(),
-				Destination: previous.ID(),
-				Route:       current.transit.route,
+			leg = &FixedLeg{
+				OriginId:      current.ID(),
+				Origin:        current.Location(),
+				DestinationId: current.previous.ID(),
+				Destination:   current.previous.Location(),
+				RouteId:       "",
 			}
 		}
 
-		if current.previous != nil {
-			legs = append(legs, &FixedLeg{
-				Origin:      current.Location(),
-				Destination: previous.Location(),
-				Transit:     legTransit,
-			})
+		if current.transit != nil {
+			leg.RouteId = current.transit.route
 		}
+
+		legs = append(legs, leg)
+
 		current = current.previous
+	}
+
+	if forward {
+		for i, j := 0, len(legs)-1; i < j; i, j = i+1, j-1 {
+			legs[i], legs[j] = legs[j], legs[i]
+		}
+	}
+
+	// clear the origin and destination ids
+	legs[0].OriginId = ""
+	legs[len(legs)-1].DestinationId = ""
+
+	for _, leg := range legs {
+		fmt.Printf("%+v\n", leg)
 	}
 
 	return legs

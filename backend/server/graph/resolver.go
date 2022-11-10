@@ -17,6 +17,6 @@ type Resolver struct {
 	Config
 	*db.Database
 	OCTranspo *octranspo.API
-	Planner   travel.RoutePlanner
+	Planner   *travel.Planner
 	Scheduler travel.SchedulePlanner
 }
