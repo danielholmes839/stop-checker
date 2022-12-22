@@ -42,7 +42,7 @@ type ReachIndex struct {
 	hashesByStopRoute map[string]map[string]hashStopInfo
 }
 
-func NewReachIndex(indexes *BaseIndex, base *model.Base, stopTimesByTrip *InvertedIndex[model.StopTime], indexesRequiredBySchedule *indexesRequiredBySchedule) *ReachIndex {
+func NewReachIndex(indexes *BaseIndex, base *model.Dataset, stopTimesByTrip *InvertedIndex[model.StopTime], indexesRequiredBySchedule *indexesRequiredBySchedule) *ReachIndex {
 	tripsByHash := map[string]map[string]struct{}{}
 	stopsByHash := map[string]map[string]hashStopInfo{}
 	hashesByStopRoute := map[string]map[string]hashStopInfo{}

@@ -23,7 +23,7 @@ type StopLocationIndex struct {
 	index      *InvertedIndex[model.Stop]
 }
 
-func NewStopLocationIndex(indexes *BaseIndex, base *model.Base, resolution ResolutionConfig) *StopLocationIndex {
+func NewStopLocationIndex(indexes *BaseIndex, base *model.Dataset, resolution ResolutionConfig) *StopLocationIndex {
 	return &StopLocationIndex{
 		resolution: resolution,
 		index: NewInvertedIndex("location", base.Stops, func(stop model.Stop) string {

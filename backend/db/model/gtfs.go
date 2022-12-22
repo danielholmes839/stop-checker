@@ -7,7 +7,7 @@ import (
 
 type Service struct {
 	Id    string
-	On    map[time.Weekday]bool
+	On    [7]bool
 	Start time.Time
 	End   time.Time
 }

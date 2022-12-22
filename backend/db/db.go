@@ -34,7 +34,7 @@ type Database struct {
 	*ReachIndex
 }
 
-func NewDatabase(base *model.Base, timezone *time.Location) *Database {
+func NewDatabase(base *model.Dataset, timezone *time.Location) *Database {
 	t0 := time.Now()
 
 	baseIndex := &BaseIndex{
@@ -48,7 +48,7 @@ func NewDatabase(base *model.Base, timezone *time.Location) *Database {
 	}
 
 	stopRoutesIndex := NewStopRouteIndex(baseIndex, base)
-	
+
 	stopTimesByTrip := NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
 		return record.TripId
 	})

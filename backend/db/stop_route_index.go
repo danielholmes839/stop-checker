@@ -12,7 +12,7 @@ type stopRouteInfo struct {
 	directionId, headsign string
 }
 
-func NewStopRouteIndex(indexes *BaseIndex, base *model.Base) *StopRouteIndex {
+func NewStopRouteIndex(indexes *BaseIndex, base *model.Dataset) *StopRouteIndex {
 	routes := make(map[string]map[string]stopRouteInfo)
 
 	// create a map of unique route ids for each stop id

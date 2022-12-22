@@ -14,8 +14,8 @@ func StopTimeSort(stopTimes []StopTime) {
 
 type Time int
 
-func NewTimeFromDateTime(dt time.Time) Time {
-	return NewTime(dt.Hour(), dt.Minute())
+func NewTimeFromDateTime(t time.Time) Time {
+	return NewTime(t.Hour(), t.Minute())
 }
 
 func NewTime(hours, minutes int) Time {

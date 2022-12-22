@@ -1,6 +1,6 @@
 package model
 
-type Base struct {
+type Dataset struct {
 	Routes            []Route
 	Stops             []Stop
 	StopTimes         []StopTime
