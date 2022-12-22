@@ -9,30 +9,21 @@ import (
 	"stop-checker.com/db/model"
 )
 
-type BaseOptions struct {
-	Time       time.Time // remove all records that are not needed past this date
+type CSVParser struct {
+	ParserFilter
 	TZ         *time.Location
 	TimeLayout string
 	DateLayout string
 }
 
-func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
-	dataset := newDataset(r)
-
+func (p *CSVParser) ParseDataset(dataset *CSVDataset) *model.Dataset {
 	t0 := time.Now()
-
-	validRoutes := map[string]struct{}{}
-	validTrips := map[string]struct{}{}
-	validServices := map[string]struct{}{}
-	validShapes := map[string]struct{}{}
 
 	// create the services
 	services := []model.Service{}
 	for _, calendar := range dataset.Calendars {
-		service := NewService(calendar, opts)
-
-		if service.End.After(opts.Time) {
-			validServices[service.Id] = struct{}{}
+		service := p.parseService(calendar)
+		if !p.FilterService(service) {
 			services = append(services, service)
 		}
 	}
@@ -40,9 +31,8 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 	// create service exceptions
 	serviceExceptions := []model.ServiceException{}
 	for _, calendarDate := range dataset.CalendarDates {
-		serviceException := NewServiceException(calendarDate, opts)
-
-		if _, ok := validServices[serviceException.ServiceId]; ok {
+		serviceException := p.parseServiceException(calendarDate)
+		if !p.FilterServiceException(serviceException) {
 			serviceExceptions = append(serviceExceptions, serviceException)
 		}
 	}
@@ -50,20 +40,17 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 	// create trips
 	trips := []model.Trip{}
 	for _, tripRecord := range dataset.Trips {
-		trip := NewTrip(tripRecord)
-		if _, ok := validServices[trip.ServiceId]; ok {
+		trip := p.parseTrip(tripRecord)
+		if !p.FilterTrip(trip) {
 			trips = append(trips, trip)
-			validTrips[trip.Id] = struct{}{}
-			validRoutes[trip.RouteId] = struct{}{}
-			validShapes[trip.ShapeId] = struct{}{}
 		}
 	}
 
 	// create routes
 	routes := []model.Route{}
 	for _, routeRecord := range dataset.Routes {
-		route := NewRoute(routeRecord)
-		if _, ok := validRoutes[route.Id]; ok {
+		route := p.parseRoute(routeRecord)
+		if !p.FilterRoute(route) {
 			routes = append(routes, route)
 		}
 	}
@@ -71,8 +58,8 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 	// create stop times
 	stoptimes := []model.StopTime{}
 	for _, stoptimeRecord := range dataset.StopTimes {
-		stoptime := NewStopTime(stoptimeRecord)
-		if _, ok := validTrips[stoptime.TripId]; ok {
+		stoptime := p.parseStopTime(stoptimeRecord)
+		if !p.FilterStopTime(stoptime) {
 			stoptimes = append(stoptimes, stoptime)
 		}
 	}
@@ -80,14 +67,17 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 	// create stops
 	stops := []model.Stop{}
 	for _, stopRecord := range dataset.Stops {
-		stop := NewStop(stopRecord)
-		stops = append(stops, stop)
+		stop := p.parseStop(stopRecord)
+		if !p.FilterStop(stop) {
+			stops = append(stops, stop)
+		}
 	}
 
+	// create shapes
 	shapes := []model.Shape{}
 	for _, shapeRecord := range dataset.Shapes {
-		if _, ok := validShapes[shapeRecord.ID]; ok {
-			shape := NewShape(shapeRecord)
+		shape := p.parseShape(shapeRecord)
+		if !p.FilterShape(shape) {
 			shapes = append(shapes, shape)
 		}
 	}
@@ -101,9 +91,9 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 		Int("services", len(services)).
 		Int("service-exceptions", len(serviceExceptions)).
 		Int("shapes", len(shapes)).
-		Msg("filtered dataset")
+		Msg("parsed CSV dataset")
 
-	return &model.Base{
+	return &model.Dataset{
 		Routes:            routes,
 		Stops:             stops,
 		StopTimes:         stoptimes,
@@ -111,40 +101,31 @@ func NewBase(r *raw, opts BaseOptions) (*model.Base, error) {
 		Services:          services,
 		ServiceExceptions: serviceExceptions,
 		Shapes:            shapes,
-	}, nil
-}
-
-type DatasetParser struct {
-	TZ         *time.Location
-	TimeLayout string
-	DateLayout string
-
-	ValidServices map[string]struct{} // all services with an end date before the startup time
-	ValidRoutes   map[string]struct{} //
-}
-
-func NewService(data Calendar, opts BaseOptions) model.Service {
-	start, _ := time.ParseInLocation(opts.DateLayout, data.Start, opts.TZ)
-	end, _ := time.ParseInLocation(opts.DateLayout, data.End, opts.TZ)
-
-	return model.Service{
-		Id: data.ServiceID,
-		On: map[time.Weekday]bool{
-			time.Sunday:    data.Sunday == 1,
-			time.Monday:    data.Monday == 1,
-			time.Tuesday:   data.Tuesday == 1,
-			time.Wednesday: data.Wednesday == 1,
-			time.Thursday:  data.Thursday == 1,
-			time.Friday:    data.Friday == 1,
-			time.Saturday:  data.Saturday == 1,
-		},
-		Start: start,
-		End:   end.Add(time.Hour*24 - time.Minute),
 	}
 }
 
-func NewServiceException(data CalendarDate, opts BaseOptions) model.ServiceException {
-	date, _ := time.ParseInLocation(opts.DateLayout, data.Date, opts.TZ)
+func (p *CSVParser) parseService(data Calendar) model.Service {
+	start, _ := time.ParseInLocation(p.DateLayout, data.Start, p.TZ)
+	end, _ := time.ParseInLocation(p.DateLayout, data.End, p.TZ)
+
+	return model.Service{
+		Id: data.ServiceID,
+		On: [7]bool{
+			data.Sunday == 1,
+			data.Monday == 1,
+			data.Tuesday == 1,
+			data.Wednesday == 1,
+			data.Thursday == 1,
+			data.Friday == 1,
+			data.Saturday == 1,
+		},
+		Start: start,
+		End:   end,
+	}
+}
+
+func (p *CSVParser) parseServiceException(data CalendarDate) model.ServiceException {
+	date, _ := time.ParseInLocation(p.DateLayout, data.Date, p.TZ)
 
 	return model.ServiceException{
 		ServiceId: data.ServiceID,
@@ -153,7 +134,7 @@ func NewServiceException(data CalendarDate, opts BaseOptions) model.ServiceExcep
 	}
 }
 
-func NewRoute(data Route) model.Route {
+func (p *CSVParser) parseRoute(data Route) model.Route {
 	return model.Route{
 		Id:        data.ID,
 		Name:      data.ShortName,
@@ -163,12 +144,11 @@ func NewRoute(data Route) model.Route {
 	}
 }
 
-func NewStopTime(data StopTime) model.StopTime {
+func (p *CSVParser) parseStopTime(data StopTime) model.StopTime {
 	seq, _ := strconv.Atoi(data.StopSeq)
 
 	hours, _ := strconv.Atoi(data.Departure[0:2])
 	overflow := hours >= 24
-
 	hours %= 24
 
 	minutes, _ := strconv.Atoi(data.Departure[3:5])
@@ -184,7 +164,7 @@ func NewStopTime(data StopTime) model.StopTime {
 	}
 }
 
-func NewStop(data Stop) model.Stop {
+func (p *CSVParser) parseStop(data Stop) model.Stop {
 	return model.Stop{
 		Id:   data.ID,
 		Code: data.Code,
@@ -197,7 +177,7 @@ func NewStop(data Stop) model.Stop {
 	}
 }
 
-func NewTrip(data Trip) model.Trip {
+func (p *CSVParser) parseTrip(data Trip) model.Trip {
 	return model.Trip{
 		Id:          data.ID,
 		RouteId:     data.RouteID,
@@ -208,7 +188,7 @@ func NewTrip(data Trip) model.Trip {
 	}
 }
 
-func NewShape(data Shape) model.Shape {
+func (p *CSVParser) parseShape(data Shape) model.Shape {
 	return model.Shape{
 		Id: data.ID,
 		Location: model.Location{

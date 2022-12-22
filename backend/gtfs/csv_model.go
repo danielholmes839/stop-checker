@@ -1,6 +1,6 @@
 package gtfs
 
-// from https://github.com/artonge/go-gtfs/blob/master/models.go
+// https://github.com/artonge/go-gtfs/blob/master/models.go
 
 // Route
 type Route struct {
