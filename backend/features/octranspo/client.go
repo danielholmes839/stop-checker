@@ -32,6 +32,7 @@ func (c *Client) Request(stop model.Stop) (map[string][]model.Bus, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
