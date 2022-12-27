@@ -8,32 +8,27 @@ import (
 	"stop-checker.com/db/model"
 )
 
-type ResolutionConfig struct {
+type Resolution struct {
 	Level      int
 	EdgeLength float64 // in meters
 }
 
-type StopLocationResult struct {
-	model.Stop
-	Distance float64
-}
-
 type StopLocationIndex struct {
-	resolution ResolutionConfig
+	resolution Resolution
 	index      *InvertedIndex[model.Stop]
 }
 
-func NewStopLocationIndex(indexes *BaseIndex, base *model.Dataset, resolution ResolutionConfig) *StopLocationIndex {
+func NewStopLocationIndex(stops []model.Stop, resolution Resolution) *StopLocationIndex {
 	return &StopLocationIndex{
 		resolution: resolution,
-		index: NewInvertedIndex("location", base.Stops, func(stop model.Stop) string {
+		index: NewInvertedIndex("location", stops, func(stop model.Stop) string {
 			key := h3.FromGeo(h3.GeoCoord(stop.Location), resolution.Level)
 			return fmt.Sprintf("%#x", key)
 		}),
 	}
 }
 
-func (s *StopLocationIndex) Query(origin model.Location, searchRadius float64) []StopLocationResult {
+func (s *StopLocationIndex) Query(origin model.Location, searchRadius float64) []model.StopWithDistance {
 	// determine the hexs that could contain stops
 	// https://observablehq.com/@nrabinowitz/h3-radius-lookup
 	rings := int(searchRadius/(s.resolution.EdgeLength*2)) + 1
@@ -49,7 +44,7 @@ func (s *StopLocationIndex) Query(origin model.Location, searchRadius float64) [
 		stops = append(stops, results...)
 	}
 
-	filtered := []StopLocationResult{}
+	filtered := []model.StopWithDistance{}
 
 	for _, stop := range stops {
 		// check the distance
@@ -59,7 +54,7 @@ func (s *StopLocationIndex) Query(origin model.Location, searchRadius float64) [
 		}
 
 		// add the stop
-		filtered = append(filtered, StopLocationResult{
+		filtered = append(filtered, model.StopWithDistance{
 			Stop:     stop,
 			Distance: distance,
 		})

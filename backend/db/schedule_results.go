@@ -42,7 +42,7 @@ func (s *ScheduleResults) Before(before time.Time, limit int) []ScheduleResult {
 
 	before = truncate(before).Add(-time.Second)
 	attempts := 0
-	for len(results) != limit && attempts < 3 {
+	for len(results) != limit && attempts < 7 {
 		attempts++
 		results = append(results, s.beforeWithinDay(before, limit-len(results))...)
 		before = before.AddDate(0, 0, -1)
@@ -56,7 +56,7 @@ func (s *ScheduleResults) After(after time.Time, limit int) []ScheduleResult {
 	results := s.afterWithinDay(after, limit)
 
 	attempts := 0
-	for len(results) != limit && attempts < 3 {
+	for len(results) != limit && attempts < 7 {
 		attempts++
 		after = truncate(after.AddDate(0, 0, 1))
 		results = append(results, s.afterWithinDay(after, limit-len(results))...)

@@ -4,25 +4,21 @@ import (
 	"fmt"
 )
 
-type WithID interface {
-	ID() string
-}
-
-type KeyFunc[R any] func(record R) (key string)
+type KeyFunc[R any] func(record R) string
 
 type Index[R any] struct {
 	name string
 	data map[string]R
 }
 
-func NewIndex[R WithID](name string, data []R) *Index[R] {
+func NewIndex[R any](name string, data []R, key KeyFunc[R]) *Index[R] {
 	index := &Index[R]{
 		name: name,
 		data: map[string]R{},
 	}
 
 	for _, record := range data {
-		index.data[record.ID()] = record
+		index.data[key(record)] = record
 	}
 
 	return index

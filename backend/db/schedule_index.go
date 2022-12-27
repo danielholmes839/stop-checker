@@ -18,10 +18,10 @@ type ScheduleIndex struct {
 	index *InvertedIndex[model.StopTime]
 }
 
-func NewScheduleIndex(indexes *BaseIndex, base *model.Dataset) *ScheduleIndex {
+func NewScheduleIndex(stopTimes []model.StopTime, indexes *indexesRequiredBySchedule) *ScheduleIndex {
 	// create the schedule index
-	index := NewInvertedIndex("schedule", base.StopTimes, func(stopTime model.StopTime) (key string) {
-		trip, _ := indexes.Trips.Get(stopTime.TripId)
+	index := NewInvertedIndex("schedule", stopTimes, func(stopTime model.StopTime) (key string) {
+		trip, _ := indexes.trips.Get(stopTime.TripId)
 		return fmt.Sprintf("%s:%s", stopTime.StopId, trip.RouteId)
 	})
 
@@ -33,12 +33,8 @@ func NewScheduleIndex(indexes *BaseIndex, base *model.Dataset) *ScheduleIndex {
 	}
 
 	return &ScheduleIndex{
-		index: index,
-		indexesRequiredBySchedule: &indexesRequiredBySchedule{
-			trips:             indexes.Trips,
-			services:          indexes.Services,
-			serviceExceptions: indexes.ServiceExeceptions,
-		},
+		index:                     index,
+		indexesRequiredBySchedule: &indexesRequiredBySchedule{},
 	}
 }
 

@@ -1,30 +1,26 @@
 package db
 
 import (
+	"runtime"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"stop-checker.com/db/model"
+	"stop-checker.com/gtfs"
 )
 
-type BaseIndex struct {
+type DB struct {
+	// basic indexes
 	Routes             *Index[model.Route]
 	ServiceExeceptions *ServiceExceptionIndex // lookup by serviceId and time
 	Services           *Index[model.Service]
 	Stops              *Index[model.Stop]
 	StopTimes          *Index[model.StopTime]
 	Trips              *Index[model.Trip]
-}
-
-type Database struct {
-	timezone *time.Location
-
-	// basic indexes
-	*BaseIndex
+	Shapes             *InvertedIndex[model.Shape]
 
 	// inverted indexes
 	StopTimesByTrip *InvertedIndex[model.StopTime]
-	ShapesByShape   *InvertedIndex[model.Shape] // weird name. but this index groups shapes with the same shape id
 
 	// specialized indexes
 	*StopRouteIndex    // get routes by stop id
@@ -34,54 +30,103 @@ type Database struct {
 	*ReachIndex
 }
 
-func NewDatabase(base *model.Dataset, timezone *time.Location) *Database {
+func NewDB(dataset *model.Dataset) *DB {
 	t0 := time.Now()
 
-	baseIndex := &BaseIndex{
-		// basic indexes
-		Routes:             NewIndex("route", base.Routes),
-		ServiceExeceptions: NewServiceExceptionIndex(base.ServiceExceptions),
-		Services:           NewIndex("service", base.Services),
-		Stops:              NewIndex("stop", base.Stops),
-		StopTimes:          NewIndex("stop time", base.StopTimes),
-		Trips:              NewIndex("trip", base.Trips),
-	}
+	// GTFS indexes
+	routes := NewIndex("routes", dataset.Routes, func(route model.Route) string {
+		return route.ID()
+	})
 
-	stopRoutesIndex := NewStopRouteIndex(baseIndex, base)
+	serviceExeceptions := NewServiceExceptionIndex(dataset.ServiceExceptions)
 
-	stopTimesByTrip := NewInvertedIndex("stop time", base.StopTimes, func(record model.StopTime) (key string) {
+	services := NewIndex("services", dataset.Services, func(service model.Service) string {
+		return service.ID()
+	})
+	stops := NewIndex("stops", dataset.Stops, func(stop model.Stop) string {
+		return stop.ID()
+	})
+	stopTimes := NewIndex("stop-times", dataset.StopTimes, func(stoptime model.StopTime) string {
+		return stoptime.ID()
+	})
+	trips := NewIndex("trips", dataset.Trips, func(trip model.Trip) string {
+		return trip.ID()
+	})
+
+	stopRoutesIndex := NewStopRouteIndex(trips, dataset.StopTimes)
+
+	stopTimesByTrip := NewInvertedIndex("stop-times-by-trip", dataset.StopTimes, func(record model.StopTime) (key string) {
 		return record.TripId
 	})
 
-	shapesByShape := NewInvertedIndex("shapes", base.Shapes, func(record model.Shape) (key string) {
+	shapes := NewInvertedIndex("shapes", dataset.Shapes, func(record model.Shape) (key string) {
 		return record.ID()
 	})
 
-	scheduleIndex := NewScheduleIndex(baseIndex, base)
+	scheduleIndex := NewScheduleIndex(dataset.StopTimes, &indexesRequiredBySchedule{
+		trips:             trips,
+		services:          services,
+		serviceExceptions: serviceExeceptions,
+	})
 
-	database := &Database{
-		timezone: timezone,
+	stopsByCode := NewInvertedIndex("stops-by-code", dataset.Stops, func(stop model.Stop) (key string) {
+		return stop.Code
+	})
 
-		// inverted indexes
+	database := &DB{
+		// GTFS indexes
+		Routes:             routes,
+		ServiceExeceptions: serviceExeceptions,
+		Services:           services,
+		Stops:              stops,
+		StopTimes:          stopTimes,
+		Trips:              trips,
+		Shapes:             shapes,
+
 		StopTimesByTrip: stopTimesByTrip,
-		ShapesByShape:   shapesByShape,
 
 		// specialized indexes
-		BaseIndex:      baseIndex,
 		StopRouteIndex: stopRoutesIndex,
 		ScheduleIndex:  scheduleIndex,
-		StopLocationIndex: NewStopLocationIndex(baseIndex, base, ResolutionConfig{
+		StopLocationIndex: NewStopLocationIndex(dataset.Stops, Resolution{
 			Level:      9,
 			EdgeLength: 174.375668,
 		}),
-		StopTextIndex: NewStopTextIndex(base.Stops, stopRoutesIndex),
-		ReachIndex:    NewReachIndex(baseIndex, base, stopTimesByTrip, scheduleIndex.indexesRequiredBySchedule),
+		StopTextIndex: NewStopTextIndex(stopsByCode, stopRoutesIndex, dataset.Stops),
+		ReachIndex:    NewReachIndex(trips, stops, dataset.Trips, stopTimesByTrip, scheduleIndex.indexesRequiredBySchedule),
 	}
 
-	log.Info().Dur("duration", time.Since(t0)).Msg("created indexes")
+	log.Info().Dur("duration", time.Since(t0)).Msg("initialized database")
 	return database
 }
 
-func (db *Database) TZ() *time.Location {
-	return db.timezone
+func NewDBFromFilesystem(path string) (*DB, *model.Dataset) {
+	// input
+	input, err := gtfs.FileInput(path)
+	if err != nil {
+		panic(err)
+	}
+
+	// read the dataset
+	reader := &gtfs.CSVReader{}
+	raw, err := reader.ReadDataset(input)
+	if err != nil {
+		panic(err)
+	}
+
+	// parse the dataset
+	parser := &gtfs.CSVParser{
+		ParserFilter: gtfs.NewCutoffFilter(time.Now()),
+		TZ:           time.Local,
+		TimeLayout:   "15:04:05",
+		DateLayout:   "20060102",
+	}
+
+	dataset := parser.ParseDataset(raw)
+
+	// indexes
+	database := NewDB(dataset)
+	runtime.GC()
+
+	return database, dataset
 }

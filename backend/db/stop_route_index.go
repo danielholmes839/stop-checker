@@ -9,22 +9,23 @@ type StopRouteIndex struct {
 }
 
 type stopRouteInfo struct {
-	directionId, headsign string
+	directionId string
+	headsign    string
 }
 
-func NewStopRouteIndex(indexes *BaseIndex, base *model.Dataset) *StopRouteIndex {
-	routes := make(map[string]map[string]stopRouteInfo)
+func NewStopRouteIndex(trips *Index[model.Trip], stopTimes []model.StopTime) *StopRouteIndex {
+	stopRoutes := make(map[string]map[string]stopRouteInfo)
 
 	// create a map of unique route ids for each stop id
-	for _, stopTime := range base.StopTimes {
-		trip, _ := indexes.Trips.Get(stopTime.TripId)
+	for _, stopTime := range stopTimes {
+		trip, _ := trips.Get(stopTime.TripId)
 		stopId := stopTime.StopId
 		routeId := trip.RouteId
 
-		if _, ok := routes[stopId]; !ok {
-			routes[stopId] = map[string]stopRouteInfo{}
+		if _, ok := stopRoutes[stopId]; !ok {
+			stopRoutes[stopId] = map[string]stopRouteInfo{}
 		}
-		routes[stopId][routeId] = stopRouteInfo{
+		stopRoutes[stopId][routeId] = stopRouteInfo{
 			directionId: trip.DirectionId,
 			headsign:    trip.Headsign,
 		}
@@ -35,7 +36,7 @@ func NewStopRouteIndex(indexes *BaseIndex, base *model.Dataset) *StopRouteIndex 
 	}
 
 	// add data to the index
-	for stopId, routes := range routes {
+	for stopId, routes := range stopRoutes {
 		index.data[stopId] = []model.StopRoute{}
 		for routeId, info := range routes {
 			index.data[stopId] = append(index.data[stopId], model.StopRoute{

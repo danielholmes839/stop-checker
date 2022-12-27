@@ -42,12 +42,18 @@ type ReachIndex struct {
 	hashesByStopRoute map[string]map[string]hashStopInfo
 }
 
-func NewReachIndex(indexes *BaseIndex, base *model.Dataset, stopTimesByTrip *InvertedIndex[model.StopTime], indexesRequiredBySchedule *indexesRequiredBySchedule) *ReachIndex {
+func NewReachIndex(
+	tripIndex *Index[model.Trip],
+	stopIndex *Index[model.Stop],
+	trips []model.Trip,
+	stopTimesByTrip *InvertedIndex[model.StopTime],
+	indexesRequiredBySchedule *indexesRequiredBySchedule,
+) *ReachIndex {
 	tripsByHash := map[string]map[string]struct{}{}
 	stopsByHash := map[string]map[string]hashStopInfo{}
 	hashesByStopRoute := map[string]map[string]hashStopInfo{}
 
-	for _, trip := range base.Trips {
+	for _, trip := range trips {
 		// get trip hash
 		stopTimes, _ := stopTimesByTrip.Get(trip.Id)
 		hash, err := hashTrip(trip, stopTimes)
@@ -80,8 +86,8 @@ func NewReachIndex(indexes *BaseIndex, base *model.Dataset, stopTimesByTrip *Inv
 	}
 
 	return &ReachIndex{
-		trips:                     indexes.Trips,
-		stops:                     indexes.Stops,
+		trips:                     tripIndex,
+		stops:                     stopIndex,
 		stopTimesByTrip:           stopTimesByTrip,
 		indexesRequiredBySchedule: indexesRequiredBySchedule,
 		tripsByHash:               tripsByHash,
@@ -90,7 +96,7 @@ func NewReachIndex(indexes *BaseIndex, base *model.Dataset, stopTimesByTrip *Inv
 	}
 }
 
-func (r *ReachIndex) Reachable(originId string, routeId string, reverse bool) []model.Stop {
+func (r *ReachIndex) Reachable(originId, routeId string, reverse bool) []model.Stop {
 	/*
 		Returns the reachable stops given the origin and route sorted by stop sequence (always ascending)
 		If reverse is true then the function returns the incident stops using this route

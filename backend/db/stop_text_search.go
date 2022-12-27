@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"stop-checker.com/db/model"
+	"stop-checker.com/db/repository"
 )
 
 type StopTextResult struct {
@@ -16,17 +17,17 @@ type StopTextResult struct {
 
 type StopTextIndex struct {
 	stopsByToken      map[string][]model.Stop
-	stopsByCode       *InvertedIndex[model.Stop]
-	stopRoutes        *StopRouteIndex
+	stopsByCode       repository.InvertedIndex[model.Stop]
+	stopRoutes        repository.StopRoutes
 	removePunctuation *regexp.Regexp
 }
 
-func NewStopTextIndex(stops []model.Stop, stopRoutes *StopRouteIndex) *StopTextIndex {
+func NewStopTextIndex(
+	stopsByCode repository.InvertedIndex[model.Stop],
+	stopRoutes repository.StopRoutes,
+	stops []model.Stop,
+) *StopTextIndex {
 	re, _ := regexp.Compile(`[^\w]`)
-
-	stopsByCode := NewInvertedIndex("stop code", stops, func(stop model.Stop) (key string) {
-		return stop.Code
-	})
 
 	index := &StopTextIndex{
 		stopsByCode:       stopsByCode,

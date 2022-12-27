@@ -2,20 +2,23 @@ package db
 
 import (
 	"sort"
+
+	"stop-checker.com/db/model"
+	"stop-checker.com/db/repository"
 )
 
 type StopRank struct {
-	StopLocationResult
+	model.StopWithDistance
 	BestRoute     string
 	BestRouteRank int
 	RouteCount    int
 }
 
 type StopRanker struct {
-	stopRoutes *StopRouteIndex
+	stopRoutes repository.StopRoutes
 }
 
-func NewStopRanker(stopRoutes *StopRouteIndex) *StopRanker {
+func NewStopRanker(stopRoutes repository.StopRoutes) *StopRanker {
 	return &StopRanker{
 		stopRoutes: stopRoutes,
 	}
@@ -34,7 +37,7 @@ type tracker struct {
 
 WARNING: does not preserve order by distance. stops passed in must be sorted by distance.
 */
-func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
+func (ranker *StopRanker) Rank(stops []model.StopWithDistance) []StopRank {
 	// closest stop by route id
 	closest := map[string]*tracker{}
 	ranked := []StopRank{}
@@ -42,9 +45,9 @@ func (ranker *StopRanker) Rank(stops []StopLocationResult) []StopRank {
 	for _, stop := range stops {
 		stopRoutes := ranker.stopRoutes.Get(stop.Id)
 		rank := &StopRank{
-			StopLocationResult: stop,
-			BestRouteRank:      99,
-			RouteCount:         len(stopRoutes),
+			StopWithDistance: stop,
+			BestRouteRank:    99,
+			RouteCount:       len(stopRoutes),
 		}
 
 		for _, stopRoute := range stopRoutes {

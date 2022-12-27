@@ -11,13 +11,11 @@ type record struct {
 	value string
 }
 
-func (r record) ID() string {
-	return r.id
-}
-
 func TestIndex(t *testing.T) {
 	index := NewIndex("test_index", []record{
 		{id: "a", value: "1"},
+	}, func(r record) string {
+		return r.id
 	})
 
 	r, err := index.Get("a")
@@ -44,5 +42,4 @@ func TestInvertedIndex(t *testing.T) {
 	results, err = index.Get("2")
 	assert.Empty(t, results)
 	assert.Error(t, err)
-
 }
