@@ -44,14 +44,14 @@ func (c *Client) requestWalkingDirections(origin, destination model.Location) (*
 	return directions, nil
 }
 
-func (c *Client) WalkingDirections(origin, destination model.Location) ([]model.Location, error) {
+func (c *Client) GetDirections(origin, destination model.Location) (model.Path, error) {
 	directions, err := c.requestWalkingDirections(origin, destination)
 	if err != nil {
-		return nil, fmt.Errorf("osm request error: %w", err)
+		return model.Path{}, fmt.Errorf("osm request error: %w", err)
 	}
 
 	if directions.Code != "Ok" {
-		return nil, fmt.Errorf("osm error: %s", directions.Code)
+		return model.Path{}, fmt.Errorf("osm error: %s", directions.Code)
 	}
 
 	// all points in the directions
@@ -71,5 +71,8 @@ func (c *Client) WalkingDirections(origin, destination model.Location) ([]model.
 		}
 	}
 
-	return points, nil
+	return model.Path{
+		Path:     points,
+		Distance: model.Distance(points...),
+	}, nil
 }
