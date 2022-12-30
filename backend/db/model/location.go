@@ -3,8 +3,8 @@ package model
 import "math"
 
 type Location struct {
-	Latitude  float64
-	Longitude float64
+	Latitude  float64 `json:"lat"`
+	Longitude float64 `json:"lon"`
 }
 
 const earthRaidusKm float64 = 6371 // radius of the earth in kilometers.
@@ -29,4 +29,18 @@ func (l Location) Distance(other Location) float64 {
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 
 	return c * 6_371_000
+}
+
+type Path struct {
+	Distance float64    `json:"distance"`
+	Path     []Location `json:"path"`
+}
+
+func Distance(path ...Location) float64 {
+	distance := 0.0
+	n := len(path) - 1
+	for i := 0; i < n; i++ {
+		distance += path[i].Distance(path[i+1])
+	}
+	return distance
 }

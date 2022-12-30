@@ -150,7 +150,7 @@ func (s *ScheduleResults) valid(date time.Time, stopTime model.StopTime) bool {
 		return false
 	}
 
-	// results must not have execpetions
+	// results must not have exceptions
 	if exception, err := s.serviceExceptions.Get(service.Id, date); err == nil && !exception.Added {
 		return false
 	}

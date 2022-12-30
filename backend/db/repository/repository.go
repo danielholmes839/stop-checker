@@ -54,7 +54,7 @@ type Schedules interface {
 }
 
 type StopLocationSearch interface {
-	Query(radius float64) []model.StopWithDistance
+	Query(origin model.Location, radius float64) []model.StopWithDistance
 }
 
 type StopTextSearch interface {
@@ -62,5 +62,6 @@ type StopTextSearch interface {
 }
 
 type Reach interface {
-	
+	ReachableForwardWithNext(originId, routeId string, after time.Time) []model.ReachableSchedule
+	ReachableBackwardWithPrevious(originId, routeId string, after time.Time) []model.ReachableSchedule
 }

@@ -34,7 +34,7 @@ func NewScheduleIndex(stopTimes []model.StopTime, indexes *indexesRequiredBySche
 
 	return &ScheduleIndex{
 		index:                     index,
-		indexesRequiredBySchedule: &indexesRequiredBySchedule{},
+		indexesRequiredBySchedule: indexes,
 	}
 }
 

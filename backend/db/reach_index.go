@@ -18,14 +18,6 @@ type hashStopInfo struct {
 
 type reachableResults map[string]map[string]hashStopInfo // { reachable stop id: { trip hash: hash stop info }}
 
-type ReachableSchedule struct {
-	Departure   time.Time  // departure time from the origin
-	Arrival     time.Time  // arrival time at the destination
-	Origin      model.Stop // origin stop
-	Destination model.Stop // destination stop
-	Trip        model.Trip
-}
-
 type ReachIndex struct {
 	trips                     *Index[model.Trip]
 	stops                     *Index[model.Stop]
@@ -174,7 +166,7 @@ func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, route
 	return originResults, destinationResults
 }
 
-func (r *ReachIndex) ReachableForwardWithNext(originId, routeId string, after time.Time) []ReachableSchedule {
+func (r *ReachIndex) ReachableForwardWithNext(originId, routeId string, after time.Time) []model.ReachableSchedule {
 	/*
 		1. get all stop times (as a *ScheduleResults object) for each hash
 		2. get next stop time for each *ScheduleResults for each hash
@@ -194,13 +186,13 @@ func (r *ReachIndex) ReachableForwardWithNext(originId, routeId string, after ti
 	}
 
 	reachableForward := r.reachable(originId, routeId, false)
-	results := []ReachableSchedule{}
+	results := []model.ReachableSchedule{}
 
 	for destinationId, destinationHashInfo := range reachableForward {
 		destination, _ := r.stops.Get(destinationId)
 
 		set := false
-		result := ReachableSchedule{
+		result := model.ReachableSchedule{
 			Origin:      origin,
 			Destination: destination,
 		}
@@ -242,7 +234,7 @@ func (r *ReachIndex) ReachableForwardWithNext(originId, routeId string, after ti
 	return results
 }
 
-func (r *ReachIndex) ReachableBackwardWithPrevious(destinationId, routeId string, before time.Time) []ReachableSchedule {
+func (r *ReachIndex) ReachableBackwardWithPrevious(destinationId, routeId string, before time.Time) []model.ReachableSchedule {
 	destination, _ := r.stops.Get(destinationId)
 	destinationScheduleResultsByHash := r.stopTimesByHash(destinationId, routeId)
 	destinationPreviousByHash := map[string]ScheduleResult{}
@@ -256,13 +248,13 @@ func (r *ReachIndex) ReachableBackwardWithPrevious(destinationId, routeId string
 	}
 
 	reachableBackward := r.reachable(destinationId, routeId, true)
-	results := []ReachableSchedule{}
+	results := []model.ReachableSchedule{}
 
 	for originId, originHashInfo := range reachableBackward {
 		origin, _ := r.stops.Get(originId)
 
 		set := false
-		result := ReachableSchedule{
+		result := model.ReachableSchedule{
 			Origin:      origin,
 			Destination: destination,
 		}
