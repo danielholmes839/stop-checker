@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/uber/h3-go"
 	"stop-checker.com/db/model"
@@ -59,11 +58,6 @@ func (s *StopLocationIndex) Query(origin model.Location, searchRadius float64) [
 			Distance: distance,
 		})
 	}
-
-	// sort by ascending distance
-	sort.Slice(filtered, func(i, j int) bool {
-		return filtered[i].Distance < filtered[j].Distance
-	})
 
 	return filtered
 }
