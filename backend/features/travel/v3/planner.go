@@ -51,6 +51,19 @@ func NewPlanner(
 	}
 }
 
+func (p *Planner) Arrive(by time.Time, origin, destination model.Location) {
+	solution, err := p.explore(by, destination, origin, ARRIVE_BY)
+	if err != nil {
+		panic(err)
+	}
+
+	for solution != nil {
+		fmt.Println(solution.id, solution.time)
+		fmt.Println(solution.transit, solution.walking)
+		solution = solution.prev
+	}
+}
+
 func (p *Planner) Depart(at time.Time, origin, destination model.Location) {
 	solution, err := p.explore(at, origin, destination, DEPART_AT)
 	if err != nil {
@@ -80,16 +93,14 @@ func (p *Planner) explore(t time.Time, initial, target model.Location, mode Mode
 	for !pq.Empty() {
 		current := pq.Pop()
 
-		// duplicate node
+		// ignore explored nodes
 		if explored.Contains(current.ID()) {
 			continue
 		}
 		explored.Add(current.ID())
-		fmt.Printf("%f,%f,blue,square\n", current.location.Latitude, current.location.Longitude)
 
-		// target node
+		// travel plan solution!
 		if current.kind == TARGET {
-			fmt.Println(explored.Size())
 			return current, nil
 		}
 
@@ -99,13 +110,14 @@ func (p *Planner) explore(t time.Time, initial, target model.Location, mode Mode
 		// explore nodes by transit
 		pq.Push(p.exploreTransit(current, mode)...)
 
-		distance := current.location.Distance(target)
-		duration := walkingDuration(distance)
-		if mode == ARRIVE_BY {
-			duration = -duration
-		}
+		distance := current.Distance(target)
 
 		if distance < MAX_WALK_TARGET {
+			duration := walkingDuration(distance)
+			if mode == ARRIVE_BY {
+				duration = -duration
+			}
+
 			pq.Push(createTargetNode(current, &targetNodeParams{
 				location: target,
 				arrival:  current.time.Add(duration),
@@ -125,7 +137,7 @@ func (p *Planner) exploreWalking(current *node, mode Mode) []*node {
 		return nodes
 	}
 
-	for _, neighbor := range p.stopLocationIndex.Query(current.location, MAX_WALK) {
+	for _, neighbor := range p.stopLocationIndex.Query(current.Location, MAX_WALK) {
 		// don't walk to the same stop
 		if neighbor.ID() == current.ID() {
 			continue
@@ -165,7 +177,7 @@ func (p *Planner) getWalkingDirections(current *node, neighbor model.StopWithDis
 
 		return model.Path{
 			Distance: neighbor.Distance,
-			Path:     []model.Location{current.location, neighbor.Location},
+			Path:     []model.Location{current.Location, neighbor.Location},
 		}
 	}
 
@@ -252,8 +264,7 @@ func (p *Planner) getTransitNodes(current *node, fastest map[string]fastestTrans
 }
 
 func (p *Planner) exploreInitial(initial *node, mode Mode) []*node {
-	t0 := time.Now()
-	neighbors := p.stopLocationIndex.Query(initial.location, MAX_WALK_INITIAL)
+	neighbors := p.stopLocationIndex.Query(initial.Location, MAX_WALK_INITIAL)
 	nodes := make([]*node, len(neighbors))
 	wg := sync.WaitGroup{}
 
@@ -262,7 +273,7 @@ func (p *Planner) exploreInitial(initial *node, mode Mode) []*node {
 
 		go func(i int, neighbor model.StopWithDistance) {
 			// directions
-			directions, err := p.directions.GetDirections(initial.location, neighbor.Location)
+			directions, err := p.directions.GetDirections(initial.Location, neighbor.Location)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -288,8 +299,5 @@ func (p *Planner) exploreInitial(initial *node, mode Mode) []*node {
 	}
 
 	wg.Wait()
-
-	log.Info().Dur("duration", time.Since(t0)).Int("neighbors", len(neighbors)).Msg("initial node")
-
 	return nodes
 }

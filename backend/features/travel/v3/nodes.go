@@ -21,7 +21,7 @@ type node struct {
 	transit  *transit
 
 	// heuristics
-	location  model.Location
+	model.Location
 	transfers int     // the cumulative number of buses taken
 	walking   float64 // the cumulative walking distance
 
@@ -60,7 +60,7 @@ func (n *node) Weight(target model.Location, initial time.Time, mode Mode) time.
 		}
 
 		// calculating heuristics
-		distancePenalty := time.Duration(n.location.Distance(target)) * DISTANCE_PENALTY
+		distancePenalty := time.Duration(n.Distance(target)) * DISTANCE_PENALTY
 		walkPenalty := walkingDuration(n.walking * WALK_PENALTY)
 		transferPenalty := time.Duration(n.Transfers()) * TRANSFER_PENALTY
 		penalty := distancePenalty + walkPenalty + transferPenalty
@@ -106,7 +106,7 @@ func createInitialNode(t time.Time, initial model.Location) *node {
 		id:            "INITIAL",
 		kind:          INITIAL,
 		time:          t,
-		location:      initial,
+		Location:      initial,
 		blockers:      algorithms.Set{},
 		transit:       nil, // not necessary since we will not explore transit from this node
 		transfers:     0,
@@ -124,7 +124,7 @@ func createTargetNode(prev *node, params *targetNodeParams) *node {
 		time:          params.arrival,
 		blockers:      algorithms.Set{}, // not necessary since we will not explore transit from this node
 		transit:       nil,
-		location:      params.location,
+		Location:      params.location,
 		transfers:     prev.transfers,
 		walking:       prev.walking + params.distance, // increase cumulative walking distance
 		weight:        0,                              // updated separately
@@ -140,7 +140,7 @@ func createWalkingNode(prev *node, params *walkingNodeParams) *node {
 		time:          params.arrival,
 		blockers:      prev.blockers, // ignore the same routes as the previous node.
 		transit:       nil,
-		location:      params.location,
+		Location:      params.location,
 		transfers:     prev.transfers,
 		walking:       prev.walking + params.distance, // increase cumulative walking distance
 		weight:        0,                              // updated separately
@@ -156,7 +156,7 @@ func createTransitNode(prev *node, params *transitNodeParams) *node {
 		time:          params.arrival,
 		blockers:      params.blockers,
 		transit:       params.transit,
-		location:      params.location,
+		Location:      params.location,
 		transfers:     prev.transfers + 1, // increase the number of transfers
 		walking:       prev.walking,
 		weight:        0, // updated separately
