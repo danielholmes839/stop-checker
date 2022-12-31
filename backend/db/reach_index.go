@@ -27,16 +27,21 @@ type ReachIndex struct {
 	// {hash: {tripId: nil}}
 	tripsByHash map[string]map[string]struct{}
 
-	// {hash: {stopId: trip stop time index}}
+	// {hash: {stopId: trip stop time index}} - stops visited by hash
 	stopsByHash map[string]map[string]hashStopInfo
 
-	// {stopId-routeId: {hash: trip stop time index}}
+	// {stopId-routeId: {hash: trip stop time index}} - what hashes the stop route is part of and the sequence / index of stop time on the trip
 	hashesByStopRoute map[string]map[string]hashStopInfo
+
+	// {stopid-routeid: {hash: schedule}}
+	stopRouteStopTimesByHash map[string]map[string]*ScheduleResults
 }
 
 func NewReachIndex(
 	tripIndex *Index[model.Trip],
 	stopIndex *Index[model.Stop],
+	stops []model.Stop,
+	stopRouteIndex *StopRouteIndex,
 	trips []model.Trip,
 	stopTimesByTrip *InvertedIndex[model.StopTime],
 	indexesRequiredBySchedule *indexesRequiredBySchedule,
@@ -77,7 +82,7 @@ func NewReachIndex(
 		tripsByHash[hash][trip.ID()] = struct{}{}
 	}
 
-	return &ReachIndex{
+	index := &ReachIndex{
 		trips:                     tripIndex,
 		stops:                     stopIndex,
 		stopTimesByTrip:           stopTimesByTrip,
@@ -85,7 +90,17 @@ func NewReachIndex(
 		tripsByHash:               tripsByHash,
 		stopsByHash:               stopsByHash,
 		hashesByStopRoute:         hashesByStopRoute,
+		stopRouteStopTimesByHash:  make(map[string]map[string]*ScheduleResults),
 	}
+
+	for _, stop := range stops {
+		stopId := stop.ID()
+		for _, stopRoute := range stopRouteIndex.Get(stopId) {
+			index.stopRouteStopTimesByHash[stopRouteId(stopId, stopRoute.RouteId)] = index.stopTimesByHashFunc(stopId, stopRoute.RouteId)
+		}
+	}
+
+	return index
 }
 
 func (r *ReachIndex) Reachable(originId, routeId string, reverse bool) []model.Stop {
@@ -329,8 +344,12 @@ func (r *ReachIndex) reachable(originId string, routeId string, reverse bool) re
 	return reachable
 }
 
-// {hash: schedule results}
 func (r *ReachIndex) stopTimesByHash(stopId, routeId string) map[string]*ScheduleResults {
+	return r.stopRouteStopTimesByHash[stopRouteId(stopId, routeId)]
+}
+
+// {hash: schedule results}
+func (r *ReachIndex) stopTimesByHashFunc(stopId, routeId string) map[string]*ScheduleResults {
 	stopTimesByHash := map[string]*ScheduleResults{}
 	stopRoute := stopRouteId(stopId, routeId)
 

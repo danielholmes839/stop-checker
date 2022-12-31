@@ -93,10 +93,18 @@ func NewDB(dataset *model.Dataset) *DB {
 			EdgeLength: 174.375668,
 		}),
 		StopTextIndex: NewStopTextIndex(stopsByCode, stopRoutesIndex, dataset.Stops),
-		ReachIndex:    NewReachIndex(trips, stops, dataset.Trips, stopTimesByTrip, scheduleIndex.indexesRequiredBySchedule),
+		ReachIndex: NewReachIndex(
+			trips,
+			stops,
+			dataset.Stops,
+			stopRoutesIndex,
+			dataset.Trips,
+			stopTimesByTrip,
+			scheduleIndex.indexesRequiredBySchedule,
+		),
 	}
 
-	log.Info().Dur("duration", time.Since(t0)).Msg("initialized database")
+	log.Info().Dur("duration", time.Since(t0)).Msg("setup DB")
 	return database
 }
 
