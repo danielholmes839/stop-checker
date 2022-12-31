@@ -39,7 +39,7 @@ type Planner struct {
 	reachIndex        *db.ReachIndex
 }
 
-func NewPlanner(database *db.Database) *Planner {
+func NewPlanner(database *db.DB) *Planner {
 	return &Planner{
 		stopLocationIndex: database.StopLocationIndex,
 		stopRouteIndex:    database.StopRouteIndex,
@@ -79,19 +79,21 @@ func (p *Planner) plan(origin, destination model.Location, t time.Time, forward 
 	for !pq.Empty() {
 		current := pq.Pop()
 
-		// check if we reached a target node
+		// we reached a target node
 		if current.kind == TARGET {
 			return current, nil
 		}
 
-		// check if we reached a node thats already explored
+		// we already visited this stop
 		if explored.Contains(current.ID()) {
 			continue
 		}
+
+		// mark stop as seen
 		explored.Add(current.ID())
 
 		// We're exploring a potential last stop so add another node to walk to the final destination.
-		if target.Distance(current.Location()) < MAX_WALK {
+		if current.transit != nil && target.Distance(current.Location()) < MAX_WALK {
 			pq.Push(createTargetNode(current, target, forward))
 		}
 
@@ -170,7 +172,7 @@ func (p *Planner) exploreWalk(current *node, forward bool) []*node {
 }
 
 func (p *Planner) getReachable(current *node, stopRoute model.StopRoute, forward bool) []fastestTransit {
-	var results []db.ReachableSchedule
+	var results []model.ReachableSchedule
 	if forward {
 		results = p.reachIndex.ReachableForwardWithNext(current.ID(), stopRoute.RouteId, current.Time())
 	} else {
@@ -202,8 +204,8 @@ func (p *Planner) getReachable(current *node, stopRoute model.StopRoute, forward
 	return reachable
 }
 
-func (p *Planner) getNeighbors(current *node) []db.StopLocationResult {
-	var neighbors []db.StopLocationResult
+func (p *Planner) getNeighbors(current *node) []model.StopWithDistance {
+	var neighbors []model.StopWithDistance
 	if current.kind == INITIAL {
 		neighbors = p.stopLocationIndex.Query(current.Location(), MAX_WALK)
 	} else {

@@ -29,11 +29,11 @@ func (h *nHeap[N]) Pop() any {
 	return x
 }
 
-type PriorityQueue[N Node] struct {
+type PriorityQueue[N any] struct {
 	heap *nHeap[N]
 }
 
-func NewPriorityQueue[N Node](compare func(a, b N) bool) *PriorityQueue[N] {
+func NewPriorityQueue[N any](compare func(a, b N) bool) *PriorityQueue[N] {
 	return &PriorityQueue[N]{
 		heap: &nHeap[N]{
 			Nodes:   []N{},
@@ -42,8 +42,10 @@ func NewPriorityQueue[N Node](compare func(a, b N) bool) *PriorityQueue[N] {
 	}
 }
 
-func (pq *PriorityQueue[N]) Push(n N) {
-	heap.Push(pq.heap, n)
+func (pq *PriorityQueue[N]) Push(nodes ...N) {
+	for _, n := range nodes {
+		heap.Push(pq.heap, n)
+	}
 }
 
 func (pq *PriorityQueue[N]) Pop() N {
