@@ -129,29 +129,28 @@ func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []ScheduleResu
 - the service is running on the time's day of the week
 - there on no service exception on the time's date
 */
-func (s *ScheduleResults) valid(date time.Time, stopTime model.StopTime) bool {
+func (s *ScheduleResults) valid(t time.Time, stopTime model.StopTime) bool {
 	if stopTime.Overflow {
 		/* stop times can overflow to the next day. service day of
 		2022-08-28 and time of 26:00 means 2AM on 2022-08-29 so to check
 		if the stoptime will happen on the 29th we actually check the 28th*/
-		date = date.Add(time.Hour * -24)
+		t = t.Add(-24 * time.Hour)
 	}
 
 	trip, _ := s.trips.Get(stopTime.TripId)
 	service, _ := s.services.Get(trip.ServiceId)
 
-	// results must be between the start and end dates
-	if service.End.Before(date) || service.Start.After(date) {
+	if t.Before(service.Start) || t.After(service.End.Add(24*time.Hour)) {
 		return false
 	}
 
 	// results must have service on the week day
-	if !service.On[date.Weekday()] {
+	if !service.On[t.Weekday()] {
 		return false
 	}
 
 	// results must not have exceptions
-	if exception, err := s.serviceExceptions.Get(service.Id, date); err == nil && !exception.Added {
+	if exception, err := s.serviceExceptions.Get(service.Id, t); err == nil && !exception.Added {
 		return false
 	}
 
