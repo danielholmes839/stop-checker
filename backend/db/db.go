@@ -122,10 +122,15 @@ func NewDBFromFilesystem(path string) (*DB, *model.Dataset) {
 		panic(err)
 	}
 
+	tz, err := time.LoadLocation("America/Montreal")
+	if err != nil {
+		panic(err)
+	}
+
 	// parse the dataset
 	parser := &gtfs.CSVParser{
 		ParserFilter: gtfs.NewCutoffFilter(time.Now()),
-		TZ:           time.Local,
+		TZ:           tz,
 		TimeLayout:   "15:04:05",
 		DateLayout:   "20060102",
 	}
