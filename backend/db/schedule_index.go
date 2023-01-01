@@ -5,12 +5,13 @@ import (
 	"sort"
 
 	"stop-checker.com/db/model"
+	"stop-checker.com/db/repository"
 )
 
 type indexesRequiredBySchedule struct {
-	trips             *Index[model.Trip]
-	services          *Index[model.Service]  // services by id
-	serviceExceptions *ServiceExceptionIndex // service exceptions by service ID and time
+	trips             repository.Trips
+	services          repository.Services          // services by id
+	serviceExceptions repository.ServiceExceptions // service exceptions by service ID and time
 }
 
 type ScheduleIndex struct {
