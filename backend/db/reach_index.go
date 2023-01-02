@@ -190,7 +190,7 @@ func (r *ReachIndex) ReachableForwardWithNext(originId, routeId string, after ti
 
 	origin, _ := r.stops.Get(originId)
 	originScheduleResultsByHash := r.stopTimesByHash(originId, routeId)
-	originNextByHash := map[string]ScheduleResult{}
+	originNextByHash := map[string]model.ScheduleResult{}
 
 	for hash, originScheduleResults := range originScheduleResultsByHash {
 		next, err := originScheduleResults.Next(after)
@@ -252,7 +252,7 @@ func (r *ReachIndex) ReachableForwardWithNext(originId, routeId string, after ti
 func (r *ReachIndex) ReachableBackwardWithPrevious(destinationId, routeId string, before time.Time) []model.ReachableSchedule {
 	destination, _ := r.stops.Get(destinationId)
 	destinationScheduleResultsByHash := r.stopTimesByHash(destinationId, routeId)
-	destinationPreviousByHash := map[string]ScheduleResult{}
+	destinationPreviousByHash := map[string]model.ScheduleResult{}
 
 	for hash, destinationScheduleResults := range destinationScheduleResultsByHash {
 		next, err := destinationScheduleResults.Previous(before)

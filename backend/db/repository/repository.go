@@ -43,10 +43,11 @@ type StopRoutes interface {
 }
 
 type Schedule interface {
-	Next(t time.Time)
-	Previous(t time.Time)
-	After(t time.Time, limit int)
-	Before(t time.Time, limit int)
+	Next(t time.Time) (model.ScheduleResult, error)
+	Previous(t time.Time) (model.ScheduleResult, error)
+	After(t time.Time, limit int) []model.ScheduleResult
+	Before(t time.Time, limit int) []model.ScheduleResult
+	Day(on time.Time) []model.ScheduleResult
 }
 
 type Schedules interface {
@@ -64,4 +65,8 @@ type StopTextSearch interface {
 type Reach interface {
 	ReachableForwardWithNext(originId, routeId string, after time.Time) []model.ReachableSchedule
 	ReachableBackwardWithPrevious(originId, routeId string, after time.Time) []model.ReachableSchedule
+}
+
+type ReachBetween interface {
+	ReachableBetweenWithSchedule(originId, destinationId, routeId string) (Schedule, Schedule)
 }

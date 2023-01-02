@@ -7,37 +7,32 @@ import (
 	"stop-checker.com/db/model"
 )
 
-type ScheduleResult struct {
-	model.StopTime
-	time.Time
-}
-
 type ScheduleResults struct {
 	*indexesRequiredBySchedule
 	results []model.StopTime
 }
 
-func (s *ScheduleResults) Next(after time.Time) (ScheduleResult, error) {
+func (s *ScheduleResults) Next(after time.Time) (model.ScheduleResult, error) {
 	results := s.After(after, 1)
 
 	if len(results) == 0 {
-		return ScheduleResult{}, errors.New("not found")
+		return model.ScheduleResult{}, errors.New("not found")
 	}
 
 	return results[0], nil
 }
 
-func (s *ScheduleResults) Previous(before time.Time) (ScheduleResult, error) {
+func (s *ScheduleResults) Previous(before time.Time) (model.ScheduleResult, error) {
 	results := s.Before(before, 1)
 
 	if len(results) == 0 {
-		return ScheduleResult{}, errors.New("not found")
+		return model.ScheduleResult{}, errors.New("not found")
 	}
 
 	return results[0], nil
 }
 
-func (s *ScheduleResults) Before(before time.Time, limit int) []ScheduleResult {
+func (s *ScheduleResults) Before(before time.Time, limit int) []model.ScheduleResult {
 	results := s.beforeWithinDay(before, limit)
 
 	before = truncate(before).Add(-time.Second)
@@ -52,7 +47,7 @@ func (s *ScheduleResults) Before(before time.Time, limit int) []ScheduleResult {
 }
 
 // query next N stop times after a specific time
-func (s *ScheduleResults) After(after time.Time, limit int) []ScheduleResult {
+func (s *ScheduleResults) After(after time.Time, limit int) []model.ScheduleResult {
 	results := s.afterWithinDay(after, limit)
 
 	attempts := 0
@@ -66,12 +61,12 @@ func (s *ScheduleResults) After(after time.Time, limit int) []ScheduleResult {
 }
 
 // query all stop times on a specific date
-func (s *ScheduleResults) Day(on time.Time) []ScheduleResult {
+func (s *ScheduleResults) Day(on time.Time) []model.ScheduleResult {
 	return s.afterWithinDay(truncate(on), -1)
 }
 
-func (s *ScheduleResults) afterWithinDay(t time.Time, limit int) []ScheduleResult {
-	results := []ScheduleResult{}
+func (s *ScheduleResults) afterWithinDay(t time.Time, limit int) []model.ScheduleResult {
+	results := []model.ScheduleResult{}
 	year, month, day := t.Date()
 
 	for _, stopTime := range s.results {
@@ -85,7 +80,7 @@ func (s *ScheduleResults) afterWithinDay(t time.Time, limit int) []ScheduleResul
 
 		dt := time.Date(year, month, day, stopTime.Hour(), stopTime.Minute(), 0, 0, time.Local)
 
-		results = append(results, ScheduleResult{
+		results = append(results, model.ScheduleResult{
 			StopTime: stopTime,
 			Time:     dt,
 		})
@@ -98,8 +93,8 @@ func (s *ScheduleResults) afterWithinDay(t time.Time, limit int) []ScheduleResul
 	return results
 }
 
-func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []ScheduleResult {
-	results := []ScheduleResult{}
+func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []model.ScheduleResult {
+	results := []model.ScheduleResult{}
 	year, month, day := t.Date()
 
 	for _, stopTime := range reverse(s.results) {
@@ -111,7 +106,7 @@ func (s *ScheduleResults) beforeWithinDay(t time.Time, limit int) []ScheduleResu
 			continue
 		}
 
-		results = append(results, ScheduleResult{
+		results = append(results, model.ScheduleResult{
 			StopTime: stopTime,
 			Time:     time.Date(year, month, day, stopTime.Hour(), stopTime.Minute(), 0, 0, time.Local),
 		})

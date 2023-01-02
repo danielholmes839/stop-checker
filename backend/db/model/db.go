@@ -16,3 +16,8 @@ type ReachableSchedule struct {
 	Destination Stop      // destination stop
 	Trip        Trip
 }
+
+type ScheduleResult struct {
+	StopTime
+	time.Time
+}
