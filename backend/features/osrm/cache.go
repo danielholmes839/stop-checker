@@ -23,11 +23,6 @@ func (c *Cache) GetDirections(originId, destinationId string) (model.Path, error
 
 	directions, ok = c.data[fmt.Sprintf("%s:%s", destinationId, originId)]
 	if ok {
-		// reversed
-		copy := make([]model.Location, len(directions.Path))
-		for i, j := 0, len(directions.Path)-1; i < j; i, j = i+1, j-1 {
-			copy[i], copy[j] = directions.Path[j], directions.Path[i]
-		}
 		return directions, nil
 	}
 
