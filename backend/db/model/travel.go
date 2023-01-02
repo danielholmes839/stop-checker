@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type TravelPlan struct {
 	Origin      Location
@@ -34,8 +37,13 @@ type Leg struct {
 	// walking, transit information
 	Transit *LegTransit
 	Walk    *Path
+}
 
-	Duration time.Duration // the walking duration or bus duration
+func (l *Leg) String() string {
+	if l.Transit == nil {
+		return fmt.Sprintf("%s -> %s. %s, %s. %.2f", l.OriginId, l.DestinationId, l.OriginArrival, l.DestinationArrival, l.Walk.Distance)
+	}
+	return fmt.Sprintf("%s -> %s. %s, %s. %s %s", l.OriginId, l.DestinationId, l.OriginArrival, l.DestinationArrival, l.Transit.RouteId, l.Transit.OriginDeparture)
 }
 
 type LegTransit struct {
