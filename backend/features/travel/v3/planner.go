@@ -2,7 +2,6 @@ package v3
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -290,7 +289,7 @@ func (p *Planner) exploreInitial(initial *node, mode Mode) []*node {
 			// directions
 			directions, err := p.directions.GetDirections(initial.Location, neighbor.Location)
 			if err != nil {
-				fmt.Println(err)
+				return
 			}
 
 			// calculate arrival time
