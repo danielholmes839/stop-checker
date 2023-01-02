@@ -42,7 +42,6 @@ func (s *scheduleWalkEdge) Depart(at time.Time) (model.Leg, error) {
 		DestinationArrival:  at.Add(s.duration),
 		Transit:             nil,
 		Walk:                s.path,
-		Duration:            s.duration,
 	}, nil
 }
 
@@ -108,5 +107,6 @@ func (s *scheduleTransitEdge) Arrive(by time.Time) (model.Leg, error) {
 			RouteId:         s.routeId,
 			OriginDeparture: res.originDeparture,
 		},
+		Walk: nil,
 	}, nil
 }

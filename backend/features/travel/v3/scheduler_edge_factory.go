@@ -16,14 +16,12 @@ type edgeFactory struct {
 }
 
 func (f *edgeFactory) Edges(plan *model.TravelPlan) ([]scheduleEdge, error) {
-	finalOrigin := &scheduleNode{
+	edges := []scheduleEdge{}
+
+	current := &scheduleNode{
 		Id:       "#ORIGIN",
 		Location: plan.Origin,
 	}
-
-	edges := []scheduleEdge{}
-
-	current := finalOrigin
 
 	for _, leg := range plan.Legs {
 		originNode, destinationNode, err := f.getNodes(leg)
@@ -53,14 +51,24 @@ func (f *edgeFactory) Edges(plan *model.TravelPlan) ([]scheduleEdge, error) {
 	return edges, nil
 }
 
+func (f *edgeFactory) getWalkingDirectionsEdge(origin, destination *scheduleNode) *scheduleWalkEdge {
+	path := f.getDirections(origin, destination)
+
+	return &scheduleWalkEdge{
+		edge:     &edge{origin: origin, destination: destination},
+		path:     &path,
+		duration: walkingDuration(path.Distance),
+	}
+}
+
 func (f *edgeFactory) getDirections(origin, destination *scheduleNode) model.Path {
 	// first check the directions cache. expected to error when the final origin/destination are used
-	if directions, err := f.directionsCache.GetDirections(origin.Id, destination.Id); err != nil {
+	if directions, err := f.directionsCache.GetDirections(origin.Id, destination.Id); err == nil {
 		return directions
 	}
 
 	// get directions. not expected to error
-	if directions, err := f.directions.GetDirections(origin.Location, destination.Location); err != nil {
+	if directions, err := f.directions.GetDirections(origin.Location, destination.Location); err == nil {
 		return directions
 	}
 
@@ -72,16 +80,6 @@ func (f *edgeFactory) getDirections(origin, destination *scheduleNode) model.Pat
 	return model.Path{
 		Distance: model.Distance(origin.Location, destination.Location),
 		Path:     []model.Location{origin.Location, destination.Location},
-	}
-}
-
-func (f *edgeFactory) getWalkingDirectionsEdge(origin, destination *scheduleNode) *scheduleWalkEdge {
-	path := f.getDirections(origin, destination)
-
-	return &scheduleWalkEdge{
-		edge:     &edge{origin: origin, destination: destination},
-		path:     &path,
-		duration: walkingDuration(path.Distance),
 	}
 }
 
@@ -99,7 +97,7 @@ func (f *edgeFactory) getNodes(leg model.TravelPlanLeg) (*scheduleNode, *schedul
 	}
 
 	// get destination stop
-	destination, err := f.stops.Get(leg.OriginId)
+	destination, err := f.stops.Get(leg.DestinationId)
 	if err != nil {
 		return nil, nil, err
 	}

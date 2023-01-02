@@ -95,21 +95,6 @@ func (s *scheduleReachImpl) Arrive(originId, destinationId, routeId string, by t
 	}, nil
 }
 
-// helper to get origin and destination stops
-func (s *scheduleReachImpl) stops(originId, destinationId string) (model.Stop, model.Stop, error) {
-	origin, err := s.stopIndex.Get(originId)
-	if err != nil {
-		return model.Stop{}, model.Stop{}, err
-	}
-
-	destination, err := s.stopIndex.Get(destinationId)
-	if err != nil {
-		return model.Stop{}, model.Stop{}, err
-	}
-
-	return origin, destination, nil
-}
-
 // helper to get stop time from a trip
 func (s *scheduleReachImpl) stoptime(stopId string, all []model.StopTime) (model.StopTime, error) {
 	for _, stopTime := range all {

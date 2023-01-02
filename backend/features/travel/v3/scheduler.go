@@ -3,106 +3,106 @@ package v3
 import (
 	"time"
 
-	"stop-checker.com/db"
 	"stop-checker.com/db/model"
 	"stop-checker.com/db/repository"
 )
 
 type Scheduler struct {
-	directions      walkingDirections
-	directionsCache walkingDirectionsCache
-	reach           db.ReachIndex
-	stops           repository.Stops
+	*edgeFactory
 }
 
-func (s *Scheduler) Arrive(plan *model.TravelPlan, by time.Time) (*model.TravelSchedule, error) {
-	return nil, nil
-}
-
-func (s *Scheduler) arrive(plan *model.TravelPlan, by time.Time) (*model.TravelSchedule, error) {
-	return nil, nil
+func NewScheduler(
+	directions walkingDirections,
+	directionsCache walkingDirectionsCache,
+	stopIndex repository.Stops,
+	reachIndex repository.ReachBetween,
+	stopTimesByTrip repository.InvertedIndex[model.StopTime],
+) *Scheduler {
+	return &Scheduler{
+		edgeFactory: &edgeFactory{
+			directions:      directions,
+			directionsCache: directionsCache,
+			stops:           stopIndex,
+			reach: &scheduleReachImpl{
+				reachIndex:      reachIndex,
+				stopTimesByTrip: stopTimesByTrip,
+				stopIndex:       stopIndex,
+			},
+		},
+	}
 }
 
 func (s *Scheduler) Depart(plan *model.TravelPlan, at time.Time) (*model.TravelSchedule, error) {
-	original, err := s.depart(plan, at)
+	edges, err := s.Edges(plan)
 	if err != nil {
 		return nil, err
 	}
 
-	backward, err := s.arrive(plan, original.DestinationArrival)
+	// create an initial schedule - departure time may be earlier than necessary
+	initial, err := s.depart(edges, at)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return s.depart(plan, backward.OriginDeparture)
+	return s.arrive(edges, initial.DestinationArrival)
 }
 
-func (s *Scheduler) depart(plan *model.TravelPlan, at time.Time) (*model.TravelSchedule, error) {
-	// if len(plan.Legs) == 0 {
-	// 	return s.departZeroLegs(plan, at)
-	// }
-
-	// previousId := "INITIAL"
-	// previousLocation := plan.Origin
-
-	// legs := []model.Leg{}
-
-	// for i, leg := range plan.Legs {
-	// 	if leg.OriginId != previousId {
-	// 		legs = append(legs, model.Leg{
-	// 			OriginId:       previousId,
-	// 			OriginLocation: previousLocation,
-	// 			OriginArrival:  at,
-	// 			DestinationId:  leg.OriginId,
-	// 		})
-	// 	}
-	// }
-
-	// schedule := &model.TravelSchedule{}
-
-	return nil, nil
-}
-
-func (s *Scheduler) departZeroLegs(plan *model.TravelPlan, at time.Time) (*model.TravelSchedule, error) {
-	path, err := s.directions.GetDirections(plan.Origin, plan.Destination)
+func (s *Scheduler) Arrive(plan *model.TravelPlan, by time.Time) (*model.TravelSchedule, error) {
+	edges, err := s.Edges(plan)
 	if err != nil {
 		return nil, err
 	}
 
-	duration := walkingDuration(path.Distance)
-	originArrival := at
-	destinationArrival := at.Add(duration)
-
-	return createZeroLegSchedule(plan, originArrival, destinationArrival, duration, path), nil
-}
-
-func (s *Scheduler) arriveZeroLegs(plan *model.TravelPlan, by time.Time) (*model.TravelSchedule, error) {
-	path, err := s.directions.GetDirections(plan.Origin, plan.Destination)
+	// create an initial schedule - arrival time may be later than necessary
+	initial, err := s.arrive(edges, by)
 	if err != nil {
 		return nil, err
 	}
 
-	duration := walkingDuration(path.Distance)
-	originArrival := by.Add(-duration)
-	destinationArrival := by
-
-	return createZeroLegSchedule(plan, originArrival, destinationArrival, duration, path), nil
+	return s.depart(edges, initial.OriginDeparture)
 }
 
-func createZeroLegSchedule(plan *model.TravelPlan, originArrival, destinationArrival time.Time, duration time.Duration, path model.Path) *model.TravelSchedule {
+func (s *Scheduler) depart(edges []scheduleEdge, at time.Time) (*model.TravelSchedule, error) {
+	acc := at
+	legs := []model.Leg{}
+
+	for _, edge := range edges {
+		leg, err := edge.Depart(acc)
+		if err != nil {
+			return nil, err
+		}
+		legs = append(legs, leg)
+		acc = leg.DestinationArrival
+	}
+
 	return &model.TravelSchedule{
-		OriginDeparture:    originArrival,
-		DestinationArrival: destinationArrival,
-		Legs: []model.Leg{{
-			OriginId:            "",
-			OriginLocation:      plan.Origin,
-			OriginArrival:       originArrival,
-			DestinationId:       "",
-			DestinationLocation: plan.Destination,
-			DestinationArrival:  destinationArrival,
-			Transit:             nil,
-			Walk:                &path,
-			Duration:            duration,
-		}},
+		OriginDeparture:    at,
+		DestinationArrival: acc,
+		Legs:               legs,
+	}, nil
+}
+
+func (s *Scheduler) arrive(edges []scheduleEdge, by time.Time) (*model.TravelSchedule, error) {
+	acc := by
+	legs := []model.Leg{}
+
+	for i := len(edges) - 1; i >= 0; i-- {
+		leg, err := edges[i].Arrive(acc)
+		if err != nil {
+			return nil, err
+		}
+		legs = append(legs, leg)
+		acc = leg.OriginArrival
 	}
+
+	for i, j := 0, len(legs)-1; i < j; i, j = i+1, j-1 {
+		legs[i], legs[j] = legs[j], legs[i]
+	}
+
+	return &model.TravelSchedule{
+		OriginDeparture:    acc,
+		DestinationArrival: by,
+		Legs:               legs,
+	}, nil
 }
