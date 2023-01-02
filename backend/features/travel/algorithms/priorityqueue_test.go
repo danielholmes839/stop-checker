@@ -6,6 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type path struct {
+	weight int
+}
+
 func TestPriorityQueue(t *testing.T) {
 	queue := NewPriorityQueue(func(a, b path) bool {
 		return a.weight < b.weight
