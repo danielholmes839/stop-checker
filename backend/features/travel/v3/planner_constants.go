@@ -19,7 +19,7 @@ const DISTANCE_PENALTY = (3 * time.Minute) / 1000
 
 // walking constants
 const WALK_SPEED = 1.4 // meters per second
-const WALK_PENALTY = 1
+const WALK_PENALTY = 0.5
 
 type Kind int
 
