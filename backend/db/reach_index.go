@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"stop-checker.com/db/model"
+	"stop-checker.com/db/repository"
 )
 
 type hashStopInfo struct {
@@ -141,7 +142,7 @@ returns the *ScheduleResults for the all stop times that run between the origin 
 - used by the travel.Scheduler
 - used to provide alternative stop times for travel plans
 */
-func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, routeId string) (*ScheduleResults, *ScheduleResults) {
+func (r *ReachIndex) ReachableBetweenWithSchedule(originId, destinationId, routeId string) (repository.Schedule, repository.Schedule) {
 	// hashes that visit the origin and destination
 	originHashes := r.hashesByStopRoute[stopRouteId(originId, routeId)]
 	destinationHashes := r.hashesByStopRoute[stopRouteId(destinationId, routeId)]
