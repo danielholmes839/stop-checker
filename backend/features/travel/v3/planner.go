@@ -12,35 +12,20 @@ import (
 	"stop-checker.com/features/travel/algorithms"
 )
 
-type fastestTransit struct {
-	tripId       string
-	routeId      string
-	stopId       string
-	stopArrival  time.Time
-	stopLocation model.Location
-}
-
-func (f *fastestTransit) Faster(t time.Time, mode Mode) bool {
-	if mode == DEPART_AT {
-		return f.stopArrival.Before(t)
-	}
-	return f.stopArrival.After(t)
-}
-
 type Planner struct {
 	stopLocationIndex repository.StopLocationSearch
 	stopRouteIndex    repository.StopRoutes
 	reachIndex        repository.Reach
-	directionsCache   WalkingDirectionsCache
-	directions        WalkingDirections
+	directionsCache   walkingDirectionsCache
+	directions        walkingDirections
 }
 
 func NewPlanner(
 	stopLocationIndex repository.StopLocationSearch,
 	stopRouteIndex repository.StopRoutes,
 	reachIndex repository.Reach,
-	directionsCache WalkingDirectionsCache,
-	directions WalkingDirections,
+	directionsCache walkingDirectionsCache,
+	directions walkingDirections,
 ) *Planner {
 	return &Planner{
 		stopLocationIndex: stopLocationIndex,
@@ -51,30 +36,66 @@ func NewPlanner(
 	}
 }
 
-func (p *Planner) Arrive(by time.Time, origin, destination model.Location) {
+func (p *Planner) Arrive(by time.Time, origin, destination model.Location) (*model.TravelPlan, error) {
 	solution, err := p.explore(by, destination, origin, ARRIVE_BY)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-
-	for solution != nil {
-		fmt.Println(solution.id, solution.time)
-		fmt.Println(solution.transit, solution.walking)
-		solution = solution.prev
-	}
+	return p.arriveTravelPlan(solution, origin, destination), nil
 }
 
-func (p *Planner) Depart(at time.Time, origin, destination model.Location) {
+func (p *Planner) Depart(at time.Time, origin, destination model.Location) (*model.TravelPlan, error) {
 	solution, err := p.explore(at, origin, destination, DEPART_AT)
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+	return p.departTravelPlan(solution, origin, destination), nil
+}
+
+func (p *Planner) departTravelPlan(solution *node, origin, destination model.Location) *model.TravelPlan {
+	plan := &model.TravelPlan{
+		Origin:      origin,
+		Destination: destination,
+		Legs:        []model.TravelPlanLeg{},
 	}
 
 	for solution != nil {
-		fmt.Println(solution.id, solution.time)
-		fmt.Println(solution.transit, solution.walking)
+		if solution.transit != nil {
+			plan.Legs = append(plan.Legs, model.TravelPlanLeg{
+				OriginId:      solution.prev.id,
+				DestinationId: solution.id,
+				RouteId:       solution.transit.routeId,
+			})
+		}
 		solution = solution.prev
 	}
+
+	for i, j := 0, len(plan.Legs)-1; i < j; i, j = i+1, j-1 {
+		plan.Legs[i], plan.Legs[j] = plan.Legs[j], plan.Legs[i]
+	}
+
+	return plan
+}
+
+func (p *Planner) arriveTravelPlan(solution *node, origin, destination model.Location) *model.TravelPlan {
+	plan := &model.TravelPlan{
+		Origin:      origin,
+		Destination: destination,
+		Legs:        []model.TravelPlanLeg{},
+	}
+
+	for solution != nil {
+		if solution.transit != nil {
+			plan.Legs = append(plan.Legs, model.TravelPlanLeg{
+				OriginId:      solution.id,
+				DestinationId: solution.prev.id,
+				RouteId:       solution.transit.routeId,
+			})
+		}
+		solution = solution.prev
+	}
+
+	return plan
 }
 
 func (p *Planner) explore(t time.Time, initial, target model.Location, mode Mode) (*node, error) {
@@ -132,7 +153,7 @@ func (p *Planner) explore(t time.Time, initial, target model.Location, mode Mode
 func (p *Planner) exploreWalking(current *node, mode Mode) []*node {
 	nodes := []*node{}
 
-	// skip don't walk two nodes in a row
+	// don't walk two nodes in a row
 	if current.kind == STOP && current.transit == nil {
 		return nodes
 	}
@@ -219,9 +240,6 @@ func (p *Planner) exploreTransitRoute(current *node, stopRoute model.StopRoute, 
 
 	for i, result := range results {
 		if mode == DEPART_AT {
-			/* since we're going forward (depart at):
-			TODO: comments
-			*/
 			reachable[i] = fastestTransit{
 				stopId:       result.Destination.Id,
 				stopArrival:  result.Arrival,
@@ -230,9 +248,6 @@ func (p *Planner) exploreTransitRoute(current *node, stopRoute model.StopRoute, 
 				routeId:      result.Trip.RouteId,
 			}
 		} else {
-			/* since we're going backward (arrive by):
-			TODO: comments
-			*/
 			reachable[i] = fastestTransit{
 				stopId:       result.Origin.Id,
 				stopArrival:  result.Departure,
