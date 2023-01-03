@@ -32,7 +32,7 @@ func NewScheduler(
 	}
 }
 
-func (s *Scheduler) Depart(plan *model.TravelPlan, at time.Time) (*model.TravelSchedule, error) {
+func (s *Scheduler) Depart(at time.Time, plan *model.TravelPlan) (*model.TravelSchedule, error) {
 	edges, err := s.Edges(plan)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (s *Scheduler) Depart(plan *model.TravelPlan, at time.Time) (*model.TravelS
 	return s.arrive(edges, initial.DestinationArrival)
 }
 
-func (s *Scheduler) Arrive(plan *model.TravelPlan, by time.Time) (*model.TravelSchedule, error) {
+func (s *Scheduler) Arrive(by time.Time, plan *model.TravelPlan) (*model.TravelSchedule, error) {
 	edges, err := s.Edges(plan)
 	if err != nil {
 		return nil, err
