@@ -1,4 +1,4 @@
-package v3
+package travel
 
 import (
 	"time"
