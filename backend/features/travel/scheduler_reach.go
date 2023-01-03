@@ -22,7 +22,7 @@ type scheduleReach interface {
 }
 
 type scheduleReachImpl struct {
-	reachIndex      repository.ReachBetween
+	reachIndex      repository.ReachableBetween
 	stopTimesByTrip repository.InvertedIndex[model.StopTime]
 	stopIndex       repository.Stops
 }

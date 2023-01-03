@@ -15,7 +15,7 @@ func NewScheduler(
 	directions walkingDirections,
 	directionsCache walkingDirectionsCache,
 	stopIndex repository.Stops,
-	reachIndex repository.ReachBetween,
+	reachIndex repository.ReachableBetween,
 	stopTimesByTrip repository.InvertedIndex[model.StopTime],
 ) *Scheduler {
 	return &Scheduler{

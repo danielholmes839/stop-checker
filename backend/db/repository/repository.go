@@ -62,11 +62,21 @@ type StopTextSearch interface {
 	Query(search string) []model.Stop
 }
 
-type Reach interface {
-	ReachableForwardWithNext(originId, routeId string, after time.Time) []model.ReachableSchedule
-	ReachableBackwardWithPrevious(originId, routeId string, after time.Time) []model.ReachableSchedule
+type Reachable interface {
+	Reachable(originId, routeId string, reverse bool) []model.Stop
 }
 
-type ReachBetween interface {
+type ReachableWithSchedule interface {
+	ReachableForwardWithNext(originId, routeId string, after time.Time) []model.ReachableSchedule
+	ReachableBackwardWithPrevious(originId, routeId string, before time.Time) []model.ReachableSchedule
+}
+
+type ReachableBetween interface {
 	ReachableBetweenWithSchedule(originId, destinationId, routeId string) (Schedule, Schedule)
+}
+
+type Reach interface {
+	Reachable
+	ReachableWithSchedule
+	ReachableBetween
 }

@@ -14,7 +14,7 @@ import (
 type Planner struct {
 	stopLocationIndex repository.StopLocationSearch
 	stopRouteIndex    repository.StopRoutes
-	reachIndex        repository.Reach
+	reachIndex        repository.ReachableWithSchedule
 	directionsCache   walkingDirectionsCache
 	directions        walkingDirections
 }
@@ -22,7 +22,7 @@ type Planner struct {
 func NewPlanner(
 	stopLocationIndex repository.StopLocationSearch,
 	stopRouteIndex repository.StopRoutes,
-	reachIndex repository.Reach,
+	reachIndex repository.ReachableWithSchedule,
 	directionsCache walkingDirectionsCache,
 	directions walkingDirections,
 ) *Planner {
