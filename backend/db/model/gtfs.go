@@ -37,11 +37,10 @@ func (s ServiceException) ID() string {
 }
 
 type Route struct {
-	Id        string
-	Name      string
-	Type      int
-	Color     string
-	TextColor string
+	Id              string
+	Name            string
+	BackgroundColor string
+	TextColor       string
 }
 
 func (r Route) ID() string {
@@ -52,12 +51,12 @@ type StopTime struct {
 	Time
 	TripId   string
 	StopId   string
-	StopSeq  int
+	Sequence int
 	Overflow bool // stop times can be past 24 hours.
 }
 
 func (st StopTime) ID() string {
-	return fmt.Sprintf("stoptime:%s:%s:%d", st.StopId, st.TripId, st.StopSeq)
+	return fmt.Sprintf("stoptime:%s:%s:%d", st.StopId, st.TripId, st.Sequence)
 }
 
 type Stop struct {

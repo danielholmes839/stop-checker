@@ -136,11 +136,10 @@ func (p *CSVParser) parseServiceException(data CalendarDate) model.ServiceExcept
 
 func (p *CSVParser) parseRoute(data Route) model.Route {
 	return model.Route{
-		Id:        data.ID,
-		Name:      data.ShortName,
-		Type:      data.Type,
-		Color:     "#" + data.Color,
-		TextColor: "#" + data.TextColor,
+		Id:              data.ID,
+		Name:            data.ShortName,
+		BackgroundColor: "#" + data.Color,
+		TextColor:       "#" + data.TextColor,
 	}
 }
 
@@ -157,7 +156,7 @@ func (p *CSVParser) parseStopTime(data StopTime) model.StopTime {
 
 	return model.StopTime{
 		StopId:   data.StopID,
-		StopSeq:  seq,
+		Sequence: seq,
 		TripId:   data.TripID,
 		Time:     t,
 		Overflow: overflow,

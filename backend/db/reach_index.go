@@ -73,7 +73,7 @@ func NewReachIndex(
 				}
 				info := hashStopInfo{
 					index:    i,
-					sequence: stoptime.StopSeq,
+					sequence: stoptime.Sequence,
 				}
 				hashesByStopRoute[srId][hash] = info
 				stopsByHash[hash][stoptime.StopId] = info

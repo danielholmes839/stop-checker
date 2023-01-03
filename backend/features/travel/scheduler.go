@@ -65,7 +65,7 @@ func (s *Scheduler) Arrive(plan *model.TravelPlan, by time.Time) (*model.TravelS
 
 func (s *Scheduler) depart(edges []scheduleEdge, at time.Time) (*model.TravelSchedule, error) {
 	acc := at
-	legs := []model.Leg{}
+	legs := []model.TravelScheduleLeg{}
 
 	for _, edge := range edges {
 		leg, err := edge.Depart(acc)
@@ -73,7 +73,7 @@ func (s *Scheduler) depart(edges []scheduleEdge, at time.Time) (*model.TravelSch
 			return nil, err
 		}
 		legs = append(legs, leg)
-		acc = leg.DestinationArrival
+		acc = leg.Destination.Arrival
 	}
 
 	return &model.TravelSchedule{
@@ -85,7 +85,7 @@ func (s *Scheduler) depart(edges []scheduleEdge, at time.Time) (*model.TravelSch
 
 func (s *Scheduler) arrive(edges []scheduleEdge, by time.Time) (*model.TravelSchedule, error) {
 	acc := by
-	legs := []model.Leg{}
+	legs := []model.TravelScheduleLeg{}
 
 	for i := len(edges) - 1; i >= 0; i-- {
 		leg, err := edges[i].Arrive(acc)
@@ -93,7 +93,7 @@ func (s *Scheduler) arrive(edges []scheduleEdge, by time.Time) (*model.TravelSch
 			return nil, err
 		}
 		legs = append(legs, leg)
-		acc = leg.OriginArrival
+		acc = leg.Origin.Arrival
 	}
 
 	for i, j := 0, len(legs)-1; i < j; i, j = i+1, j-1 {
