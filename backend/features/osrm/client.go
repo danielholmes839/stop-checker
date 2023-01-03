@@ -27,7 +27,7 @@ func (c *Client) requestWalkingDirections(origin, destination model.Location) (*
 
 	res, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("osm request error: %w", err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
