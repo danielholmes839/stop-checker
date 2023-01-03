@@ -2,6 +2,7 @@ package octranspo
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -43,13 +44,13 @@ func (api *API) StopData(stop model.Stop) (map[string][]model.Bus, error) {
 }
 
 // Request by stop code and route name
-func (api *API) StopRouteData(stop model.Stop, routeName string) ([]model.Bus, error) {
+func (api *API) StopRouteData(stop model.Stop, routeName string, routeDirection string) ([]model.Bus, error) {
 	routes, err := api.StopData(stop)
 	if err != nil {
 		return nil, err
 	}
 
-	buses, ok := routes[routeName]
+	buses, ok := routes[fmt.Sprintf("%s:%s", routeName, routeDirection)]
 	if !ok {
 		return nil, errors.New("route not found")
 	}

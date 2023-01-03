@@ -39,6 +39,8 @@ func (c *Client) Request(stop model.Stop) (map[string][]model.Bus, error) {
 		return nil, err
 	}
 
+	fmt.Println(string(data))
+
 	parsed := &soapEnvelope{}
 	err = xml.Unmarshal(data, parsed)
 	if err != nil {
@@ -71,10 +73,11 @@ type responseGetRouteSummaryForStopResult struct {
 type responseRoutes struct {
 	Routes []responseRoute `xml:"Route"`
 }
+
 type responseRoute struct {
 	RouteNo    string        `xml:"RouteNo"`    // route name
 	RouteLabel string        `xml:"RouteLabel"` // trip headsign
-	Direction  string        `xml:"Direction"`
+	Direction  string        `xml:"DirectionID"`
 	Error      string        `xml:"Error"`
 	Trips      responseTrips `xml:"Trips"`
 }
@@ -103,7 +106,7 @@ func parseResults(results []responseGetRouteSummaryForStopResult, destination mo
 			for _, trip := range route.Trips.Trips {
 				buses = append(buses, parseTrip(trip, destination))
 			}
-			data[route.RouteNo] = buses
+			data[fmt.Sprintf("%s:%s", route.RouteNo, route.Direction)] = buses
 		}
 	}
 
