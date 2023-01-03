@@ -42,7 +42,15 @@ func (m *Map) AddMarker(marker Marker) {
 	m.markers = append(m.markers, marker)
 }
 
-func (m *Map) Encode(key string) string {
+type StaticMapEncoder interface {
+	Encode(m *Map) string
+}
+
+type GoogleMapEncoder struct {
+	Key string
+}
+
+func (e *GoogleMapEncoder) Encode(m *Map) string {
 	center := calculateCenter(m.markers)
 	zoom := calculateZoom(center, m.markers, m.width, m.height)
 
@@ -50,7 +58,7 @@ func (m *Map) Encode(key string) string {
 	sizeParamValue := fmt.Sprintf("%dx%d", m.width, m.height)
 
 	params := url.Values{}
-	params.Add("key", key)
+	params.Add("key", e.Key)
 	params.Add("center", centerParamValue)
 	params.Add("size", sizeParamValue)
 	params.Add("zoom", fmt.Sprint(zoom))
