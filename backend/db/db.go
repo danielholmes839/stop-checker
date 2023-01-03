@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"stop-checker.com/db/gtfs"
 	"stop-checker.com/db/model"
-	"stop-checker.com/gtfs"
 )
 
 type DB struct {
