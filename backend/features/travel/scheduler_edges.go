@@ -93,6 +93,7 @@ func (s *scheduleTransitEdge) Depart(at time.Time) (model.TravelScheduleLeg, err
 		Transit: &model.Transit{
 			TripId:          res.tripId,
 			TripDuration:    res.destinationArrival.Sub(res.originDeparture),
+			WaitDuration:    res.originDeparture.Sub(at),
 			RouteId:         s.routeId,
 			OriginDeparture: res.originDeparture,
 		},
@@ -110,7 +111,7 @@ func (s *scheduleTransitEdge) Arrive(by time.Time) (model.TravelScheduleLeg, err
 		Origin: model.TravelScheduleNode{
 			Id:       s.origin.Id,
 			Location: s.origin.Location,
-			Arrival:  res.originDeparture,
+			Arrival:  res.originDeparture, // fixed by depart at mode
 		},
 		Destination: model.TravelScheduleNode{
 			Id:       s.destination.Id,
@@ -120,6 +121,7 @@ func (s *scheduleTransitEdge) Arrive(by time.Time) (model.TravelScheduleLeg, err
 		Transit: &model.Transit{
 			TripId:          res.tripId,
 			TripDuration:    res.destinationArrival.Sub(res.originDeparture),
+			WaitDuration:    -1, // fixed by depart at mode, cannot be calculated in arrive by mode
 			RouteId:         s.routeId,
 			OriginDeparture: res.originDeparture,
 		},

@@ -40,12 +40,19 @@ func (s *Scheduler) Depart(at time.Time, plan *model.TravelPlan) (*model.TravelS
 
 	// create an initial schedule - departure time may be earlier than necessary
 	initial, err := s.depart(edges, at)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return s.arrive(edges, initial.DestinationArrival)
+	// has correct OriginDeparture and DestinationArrival but
+	// every plan shown to the user should come from a depart mode plan...
+	// certain fields are not calculated correctly by arrive mode plan such as Origin.Arrival
+	optimized, err := s.arrive(edges, initial.DestinationArrival)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.depart(edges, optimized.OriginDeparture)
 }
 
 func (s *Scheduler) Arrive(by time.Time, plan *model.TravelPlan) (*model.TravelSchedule, error) {

@@ -51,6 +51,7 @@ func (l *TravelScheduleLeg) String() string {
 type Transit struct {
 	TripId          string
 	TripDuration    time.Duration // time spent on transit
+	WaitDuration    time.Duration // time spent waiting for transit
 	RouteId         string
 	OriginDeparture time.Time
 }
