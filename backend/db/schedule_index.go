@@ -39,7 +39,7 @@ func NewScheduleIndex(stopTimes []model.StopTime, indexes *indexesRequiredBySche
 	}
 }
 
-func (schedule *ScheduleIndex) Get(stopId, routeId string) *ScheduleResults {
+func (schedule *ScheduleIndex) Get(stopId, routeId string) repository.Schedule {
 	results, _ := schedule.index.Get(fmt.Sprintf("%s:%s", stopId, routeId))
 	return &ScheduleResults{
 		indexesRequiredBySchedule: schedule.indexesRequiredBySchedule,

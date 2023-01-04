@@ -51,7 +51,7 @@ type Schedule interface {
 }
 
 type Schedules interface {
-	Get(stopId, routeId string) (Schedule, error)
+	Get(stopId, routeId string) Schedule
 }
 
 type StopLocationSearch interface {

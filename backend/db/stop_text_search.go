@@ -49,7 +49,7 @@ func NewStopTextIndex(
 	return index
 }
 
-func (s *StopTextIndex) Query(text string) []*StopTextResult {
+func (s *StopTextIndex) Query(text string) []model.Stop {
 	tokens := s.tokenize(text)
 	resultsMap := map[string]*StopTextResult{}
 
@@ -112,7 +112,11 @@ func (s *StopTextIndex) Query(text string) []*StopTextResult {
 		return ri.MatchingTokens > rj.MatchingTokens
 	})
 
-	return results
+	stops := make([]model.Stop, len(results))
+	for i, result := range results {
+		stops[i] = result.Stop
+	}
+	return stops
 
 }
 

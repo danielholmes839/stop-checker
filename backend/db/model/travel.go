@@ -23,6 +23,18 @@ type TravelSchedule struct {
 	Legs               []TravelScheduleLeg
 }
 
+func (t *TravelSchedule) Origin() TravelScheduleNode {
+	return t.Legs[0].Origin
+}
+
+func (t *TravelSchedule) Destination() TravelScheduleNode {
+	return t.Legs[len(t.Legs)-1].Origin
+}
+
+func (t *TravelSchedule) Duration() time.Duration {
+	return t.Destination().Arrival.Sub(t.Origin().Arrival)
+}
+
 type TravelScheduleNode struct {
 	Id       string // stop id, "ORIGIN" or "DESTINATION"
 	Location Location
