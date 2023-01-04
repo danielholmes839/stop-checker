@@ -4,8 +4,8 @@ schema:
 
 # Where should the generated server code go?
 exec:
-  filename: server/graph/generated/generated.go
-  package: generated
+  filename: application/schema/schema.go
+  package: schema
 
 # Uncomment to enable federation
 # federation:
@@ -14,41 +14,40 @@ exec:
 
 # Where should any generated models go?
 model:
-  filename: server/graph/sdl/sdl.go
-  package: sdl
+  filename: application/schema/sdl.go
+  package: schema
 
 # Where should the resolver implementations go?
-resolver:
-  layout: follow-schema
-  dir: server/graph
-  package: graph
+# resolver:
+#   layout: follow-schema
+#   dir: application/codegen/graph
+#   package: graph
 
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
 # struct_tag: json
 
 # Optional: turn on to use []Thing instead of []*Thing
-# omit_slice_element_pointers: false
+omit_slice_element_pointers: true
 
 # Optional: turn off to make struct-type struct fields not use pointers
 # e.g. type Thing struct { FieldA OtherThing } instead of { FieldA *OtherThing }
 # struct_fields_always_pointers: true
 
 # Optional: turn off to make resolvers return values instead of pointers for structs
-resolvers_always_return_pointers: true
+resolvers_always_return_pointers: false
 
 # Optional: set to speed up generation time by not performing a final validation pass.
 # skip_validation: true
 
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
-autobind:
-#  - "stop-checker.com/graph/model"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
 # The first line in each type will be used as defaults for resolver arguments and
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
+
 models:
   ID:
     model:
@@ -62,16 +61,18 @@ models:
     model: "stop-checker.com/db/model.Location"
   LocationInput:
     model: "stop-checker.com/db/model.Location"
+  Path:
+    model: "stop-checker.com/db/model.Path"
   Stop:
     model: "stop-checker.com/db/model.Stop"
   StopTime:
     model: "stop-checker.com/db/model.StopTime"
   ScheduleResult:
-    model: "stop-checker.com/db.ScheduleResult"
+    model: "stop-checker.com/db/model.ScheduleResult"
   StopRoute:
     model: "stop-checker.com/db/model.StopRoute"
-  StopRouteSchedule:
-    model: "stop-checker.com/db.ScheduleResults"
+  Schedule:
+    model: "stop-checker.com/db/repository.Schedule"
   StopLocationResult:
     model: "stop-checker.com/db.StopLocationResult"
   StopTextResult:
@@ -84,19 +85,21 @@ models:
     model: "stop-checker.com/db/model.Service"
   ServiceException:
     model: "stop-checker.com/db/model.ServiceException"
-  Time:
-    model: "stop-checker.com/server/graph/scalars.Time"
-  Date:
-    model: "stop-checker.com/server/graph/scalars.Date"
-  DateTime:
-    model: "stop-checker.com/server/graph/scalars.DateTime"
+  TravelSchedule:
+    model: "stop-checker.com/db/model.TravelSchedule"
+  TravelScheduleLeg:
+    model: "stop-checker.com/db/model.TravelScheduleLeg"
+  TravelScheduleNode:
+    model: "stop-checker.com/db/model.TravelScheduleNode"
   Transit:
     model: "stop-checker.com/db/model.Transit"
-  TravelSchedule:
-    model: "stop-checker.com/features/travel.Schedule"
-  TravelScheduleLeg:
-    model: "stop-checker.com/features/travel.Leg"
-  TravelRoute:
-    model: "stop-checker.com/features/travel.Route"
-  TravelRouteLeg:
-    model: "stop-checker.com/features/travel.FixedLeg"
+  TravelPlanInput:
+    model: "stop-checker.com/db/model.TravelPlan"
+  TravelPlanLegInput:
+    model: "stop-checker.com/db/model.TravelPlanLeg"
+  Date:
+    model: "stop-checker.com/application/resolvers/scalars.Date"
+  Datetime:
+    model: "stop-checker.com/application/resolvers/scalars.DateTime"
+  Time:
+    model: "stop-checker.com/application/resolvers/scalars.Time"

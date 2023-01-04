@@ -1,204 +1,209 @@
-scalar DateTime     # Input/Output: "2022-07-28T06:30:00Z"
-scalar Date         # Input/Output: "2022-07-28"
-scalar Time         # Output: 6:30pm, 8:30am...
-scalar Color 
-
+scalar Datetime # Input/Output: "2022-07-28T06:30:00Z"
+scalar Date # Input/Output: "2022-07-28"
+scalar Time # Output: 6:30pm, 8:30am...
+scalar Color # #FFFFFF
 enum ScheduleMode {
-    ARRIVE_BY
-    DEPART_AT
-}
-
-enum RouteType {
-    BUS
-    TRAIN
+  ARRIVE_BY
+  DEPART_AT
 }
 
 type Location {
-    latitude: Float!
-    longitude: Float!
-    distance(location: LocationInput!): Float!
+  latitude: Float!
+  longitude: Float!
+  distance(location: LocationInput!): Float!
+}
+
+type Path {
+  distance: Float!
+  path: [Location!]!
 }
 
 type Stop {
-    id: ID!
-    name: String!
-    code: String!
-    location: Location!
-    routes: [StopRoute!]!
+  id: ID!
+  name: String!
+  code: String!
+  location: Location!
+  routes: [StopRoute!]!
 }
 
 type Bus {
-    headsign: String!
-    arrival: Time!
-    lastUpdated: Time!
-    lastUpdatedMinutes: Int!
-    lastUpdatedMessage: String!
-    distance: Float
-    location: Location
+  headsign: String!
+  arrival: Time!
+  lastUpdated: Time!
+  lastUpdatedMinutes: Int!
+  lastUpdatedMessage: String!
+  distance: Float
+  location: Location
 }
 
-type StopRoute { 
-    stop: Stop!
-    route: Route!
-    direction: ID!
-    headsign: String!
-    schedule: StopRouteSchedule!                            # schedule all stop times               
-    scheduleReaches(destination: ID!): StopRouteSchedule    # schedule to reach the destination
-    reaches(forward: Boolean!): [Stop!]!                    # stops that this stop route reaches
-    liveMap: String
-    liveBuses: [Bus!]!
+type StopRoute {
+  stop: Stop!
+  route: Route!
+  direction: ID!
+  headsign: String!
+  schedule: Schedule! # schedule all stop times
+  scheduleReaches(destination: ID!): Schedule # schedule to reach the destination
+  reaches(forward: Boolean!): [Stop!]! # stops that this stop route reaches
+  liveMap: String
+  liveBuses: [Bus!]!
 }
 
-type StopRouteSchedule {
-    next(limit: Int!, after: DateTime): [ScheduleResult!]!
-    on(date: Date!): [ScheduleResult!]!
+type Schedule {
+  next(limit: Int!, after: Datetime): [ScheduleResult!]!
+  on(date: Date!): [ScheduleResult!]!
 }
 
 type ScheduleResult {
-    stoptime: StopTime!
-    datetime: DateTime!
+  stoptime: StopTime!
+  datetime: Datetime!
 }
 
 type Route {
-    id: ID!
-    name: String!
-    text: Color!
-    background: Color!
-    type: RouteType!
+  id: ID!
+  name: String!
+  text: Color!
+  background: Color!
 }
 
 type Trip {
-    id: ID!
-    route: Route!
-    stoptimes: [StopTime!]!
-    shape: [Location!]!
-    service: Service!
-    direction: ID!
-    headsign: String!
+  id: ID!
+  route: Route!
+  stoptimes: [StopTime!]!
+  shape: [Location!]!
+  service: Service!
+  direction: ID!
+  headsign: String!
 }
 
 type StopTime {
-    id: ID!
-    stop: Stop!
-    trip: Trip!
-    time: Time!
-    sequence: Int!
-    overflow: Boolean!
+  id: ID!
+  stop: Stop!
+  trip: Trip!
+  time: Time!
+  sequence: Int!
+  overflow: Boolean!
 }
 
 type Service {
-    sunday: Boolean!
-    monday: Boolean!
-    tuesday: Boolean!
-    wednesday: Boolean!
-    thursday: Boolean!
-    friday: Boolean!
-    saturday: Boolean!
-    start: Date!
-    end: Date!
-    exceptions: [ServiceException!]!
+  sunday: Boolean!
+  monday: Boolean!
+  tuesday: Boolean!
+  wednesday: Boolean!
+  thursday: Boolean!
+  friday: Boolean!
+  saturday: Boolean!
+  start: Date!
+  end: Date!
+  exceptions: [ServiceException!]!
 }
 
 type ServiceException {
-    added: Boolean!
-    date: Date!
-}
-
-type TravelSchedule {
-    legs: [TravelScheduleLeg!]!
-    origin: Stop!
-    destination: Stop!
-    duration: Int! 
-    departure: DateTime!        # origin departure time
-    arrival: DateTime!          # destination arrival time
-}
-
-type TravelScheduleLeg {
-    origin: Stop!
-    destination: Stop!
-    walk: Boolean!
-    transit: Transit            # if null then walking
-    shape: [Location!]!
-    distance: Float!
-    duration: Int!
-    departure: DateTime!
-    arrival: DateTime!
-}
-
-# Transit taken by a scheduled leg
-type Transit {
-    route: Route!
-    trip: Trip!
-    departure: StopTime!
-    arrival: StopTime!
-}
-
-input TravelLegInput {
-    origin: ID!
-    destination: ID!
-    route: ID # if the route id is null then walk
-}
-
-input TravelOptions {
-    datetime: DateTime # default is the current time
-    mode: ScheduleMode!
+  added: Boolean!
+  date: Date!
 }
 
 type TravelSchedulePayload {
-    schedule: TravelSchedule
-    error: String
+  schedule: TravelSchedule
+  error: String
 }
 
-type TravelRoutePayload {
-    route: [TravelRouteLeg!]
-    error: String
+type TravelSchedule {
+  origin: TravelScheduleNode!
+  destination: TravelScheduleNode!
+  duration: Int! # minutes
+  legs: [TravelScheduleLeg!]!
 }
 
-type TravelRouteLeg {
-    origin: Stop!
-    destination: Stop!
-    stopRoute: StopRoute # starting at the origin
-    walk: Boolean!
-    distance: Float!
+type TravelScheduleLeg {
+  origin: TravelScheduleNode!
+  destination: TravelScheduleNode!
+  duration: Int! # minutes
+  transit: Transit
+  walk: Path
 }
 
-type StopSearchPayload {
-    page: PageInfo!
-    results: [Stop!]!
+type TravelScheduleNode {
+  location: Location!
+  arrival: Datetime!
+  stop: Stop
+}
+
+type Transit {
+  route: Route!
+  trip: Trip!
+  departure: Datetime! # bus departure time
+  duration: Int! # minutes, spent on the bus
+  wait: Int! # minutes, spent on waiting for the bus
+}
+
+input TravelPlannerOptions {
+  datetime: Datetime
+  mode: ScheduleMode!
+}
+
+input TravelPlanInput {
+  origin: LocationInput!
+  destination: LocationInput!
+  legs: [TravelPlanLegInput]!
+}
+
+input TravelPlanLegInput {
+  originId: ID!
+  destinationId: ID!
+  routeId: ID!
 }
 
 input LocationInput {
-    latitude: Float!
-    longitude: Float!
+  latitude: Float!
+  longitude: Float!
 }
 
 type Query {
-    # lookup by id
-    stop(id: ID!): Stop
-    stopRoute(stop: ID!, route: ID!): StopRoute
+  # lookup by id
+  stop(id: ID!): Stop
+  stopRoute(stopId: ID!, routeId: ID!): StopRoute
 
-    # search
-    searchStopText(text: String!, page: PageInput!): StopSearchPayload! 
-    searchStopLocation(location: LocationInput!, radius: Float!, page: PageInput!, sorted: Boolean!): StopSearchPayload! 
-    
-    # travel planner that creates a route and schedule
-    travelPlanner(origin: ID!, destination: ID!, options: TravelOptions!): TravelSchedulePayload!
+  # search
+  searchStopText(text: String!, page: PageInput!): StopSearchPayload!
 
-    # travel planner that creates a schedule from a route
-    travelPlannerFixedRoute(input: [TravelLegInput!]!, options: TravelOptions!): TravelSchedulePayload!
+  searchStopLocation(
+    location: LocationInput!
+    radius: Float!
+    page: PageInput!
+    sorted: Boolean!
+  ): StopSearchPayload!
 
-    travelPlannerFixedRoutes(input: [[TravelLegInput!]!]!, options: TravelOptions!): [TravelSchedulePayload!]!
+  # travel planner between two locations
+  travelPlanner(
+    origin: LocationInput!
+    destination: LocationInput!
+    options: TravelPlannerOptions!
+  ): TravelSchedulePayload!
 
-    # validate the travel route
-    travelRoute(input: [TravelLegInput!]): TravelRoutePayload!
+  # travel planner using a fixed route
+  travelPlannerFixedRoute(
+    input: TravelPlanInput!
+    options: TravelPlannerOptions!
+  ): TravelSchedulePayload!
+
+  # travel planner using multiple fixed routes
+  travelPlannerFixedRoutes(
+    input: [TravelPlanInput!]!
+    options: TravelPlannerOptions!
+  ): [TravelSchedulePayload!]!
 }
 
 type PageInfo {
-    cursor: Int!   # how many to skip next time
-    remaining: Int!
+  cursor: Int! # how many to skip next time
+  remaining: Int!
 }
 
 input PageInput {
-    skip: Int!
-    limit: Int! # use a negative number to disable the limit
+  skip: Int!
+  limit: Int! # use a negative number to disable the limit
+}
+
+type StopSearchPayload {
+  page: PageInfo!
+  results: [Stop!]!
 }
