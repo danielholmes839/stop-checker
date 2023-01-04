@@ -1,5 +1,3 @@
-import { RouteType } from "client/types";
-
 export const formatTime = (datetime: string): string => {
   let date = new Date(datetime);
 
@@ -32,10 +30,6 @@ export const formatDistanceShort = (distance: number): string => {
   }
 
   return (Math.round(distance / 10) * 10).toFixed(0) + "m";
-};
-
-export const formatRouteType = (rt: RouteType): string => {
-  return rt.toLowerCase();
 };
 
 export const currentDate = (dayOffset: number = 0): string => {

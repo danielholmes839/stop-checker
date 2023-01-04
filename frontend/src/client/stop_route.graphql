@@ -1,5 +1,5 @@
 query StopRoute($stop: ID!, $route: ID!, $today: Date!, $tomorrow: Date!) {
-  stopRoute(stop: $stop, route: $route) {
+  stopRoute(stopId: $stop, routeId: $route) {
     stop {
       id
       name
