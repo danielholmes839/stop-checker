@@ -1,5 +1,5 @@
 export type TravelLocation = {
-  id: string | undefined;
+  id: string;
   title: string;
   description: string;
   position: Position;
