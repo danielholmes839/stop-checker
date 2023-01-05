@@ -4,15 +4,9 @@ import {
   GoogleMap,
   Marker,
   InfoWindow,
-  useLoadScript,
 } from "@react-google-maps/api";
 import { LocationInput, Stop, useLocationSearchQuery } from "client/types";
 
-import { googleMapsKey } from "config";
-
-const key = googleMapsKey;
-
-const libraries = ["geometry", "drawing"];
 const mapOptions = {
   gestureHandling: "greedy",
   mapTypeControl: false,
@@ -47,11 +41,6 @@ export const SimpleMap: React.FC<{ origin: LocationInput }> = ({
   children,
   origin,
 }) => {
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: key,
-    libraries: libraries as any,
-  });
-
   const mapRef = useRef<google.maps.Map>();
 
   const onMapLoad = useCallback(
@@ -64,14 +53,6 @@ export const SimpleMap: React.FC<{ origin: LocationInput }> = ({
     },
     [origin.latitude, origin.longitude]
   );
-
-  if (!isLoaded) {
-    return <></>;
-  }
-
-  if (loadError) {
-    return <div>{loadError.message}</div>;
-  }
 
   return (
     <GoogleMap
@@ -97,10 +78,6 @@ export const SearchMap: React.FC<{
   setSelected: React.Dispatch<React.SetStateAction<Stop | null>>;
 }> = ({ selected, setSelected }) => {
   // load google maps
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: key,
-    libraries: libraries as any,
-  });
 
   // with the initial location / center  as downtown ottawa
   const [location, setLocation] = useState<LocationInput>(initialLocation);
@@ -143,14 +120,6 @@ export const SearchMap: React.FC<{
       page: { limit: -1, skip: 0 },
     },
   })[0];
-
-  if (!isLoaded) {
-    return <></>;
-  }
-
-  if (loadError) {
-    return <div>{loadError.message}</div>;
-  }
 
   return (
     <div className="mb-3">
