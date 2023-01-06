@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
 import usePlacesAutocompleteService from "react-google-autocomplete/lib/usePlacesAutocompleteService";
+import { useStorage } from "./storage";
 import { TravelLocation } from "./types";
 
 export const usePlace = (placeId: string | null) => {
+  const { getFavourite } = useStorage();
   const [place, setPlace] = useState<TravelLocation | null>(null);
   const { placesService: service } = usePlacesAutocompleteService({
     debounce: 200,
   });
   useEffect(() => {
     if (placeId === null) {
+      return;
+    }
+
+    let fav = getFavourite(placeId);
+    if (fav) {
+      setPlace(fav);
       return;
     }
 

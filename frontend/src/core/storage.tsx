@@ -16,6 +16,7 @@ type StorageValue = {
   addFavourite: (location: TravelLocation) => void;
   updateFavourite: (favourite: FavouriteTravelLocation) => void;
   deleteFavourite: (id: string) => void;
+  getFavourite: (id: string) => FavouriteTravelLocation | undefined;
   clearHistory: () => void;
   clear: () => void;
 };
@@ -29,6 +30,9 @@ const StorageContext = React.createContext<StorageValue>({
   isFavourite: (id) => false,
   isHistory: (id) => false,
   updateFavourite: (favourite) => {},
+  getFavourite: (id) => {
+    return undefined;
+  },
   clearHistory: () => {},
   clear: () => {},
 });
@@ -101,9 +105,9 @@ export const StorageProvider: React.FC = ({ children }) => {
     setFavourites(Object.assign({}, { [favourite.id]: favourite }, favourites));
   };
 
-  // const getFavourite = (place: string): FavouriteTravelLocation => {
-
-  // }
+  const getFavourite = (id: string): FavouriteTravelLocation | undefined => {
+    return favourites[id];
+  };
 
   const updateFavourite = (favourite: FavouriteTravelLocation) => {
     setFavourites(Object.assign({}, favourites, { [favourite.id]: favourite }));
@@ -126,6 +130,7 @@ export const StorageProvider: React.FC = ({ children }) => {
         isFavourite: (id) => favourites[id] !== undefined,
         isHistory: (id) => history[id] !== undefined,
         updateFavourite: updateFavourite,
+        getFavourite: getFavourite,
         clearHistory: clearHistory,
         clear: clear,
       }}
