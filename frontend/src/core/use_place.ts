@@ -3,20 +3,36 @@ import usePlacesAutocompleteService from "react-google-autocomplete/lib/usePlace
 import { useStorage } from "./storage_provider";
 import { TravelLocation } from "./types";
 
-export const usePlace = (placeId: string | null) => {
-  const { getFavourite } = useStorage();
+type UsePlaceHook = {
+  place: TravelLocation | null;
+  loading: boolean;
+};
+
+export const usePlace = (placeId: string | null): UsePlaceHook => {
+  const { getFavourite, getRecent } = useStorage();
   const [place, setPlace] = useState<TravelLocation | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const { placesService: service } = usePlacesAutocompleteService({
     debounce: 200,
   });
   useEffect(() => {
     if (placeId === null) {
+      setLoading(false);
       return;
     }
 
     let fav = getFavourite(placeId);
     if (fav) {
       setPlace(fav);
+      setLoading(false);
+      return;
+    }
+
+    let recent = getRecent(placeId);
+    if (recent) {
+      setPlace(recent);
+      setLoading(false);
       return;
     }
 
@@ -26,6 +42,7 @@ export const usePlace = (placeId: string | null) => {
         fields: ["name", "formatted_address", "geometry"],
       },
       (placeDetails) => {
+        setLoading(false);
         if (!placeDetails) {
           return;
         }
@@ -43,5 +60,5 @@ export const usePlace = (placeId: string | null) => {
     );
   }, [placeId, service, getFavourite]);
 
-  return place;
+  return { place, loading };
 };

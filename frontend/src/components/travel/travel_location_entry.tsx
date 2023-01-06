@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Container } from "../util";
+import { Container } from "components/util";
 
-import { formatDistanceShort } from "helper";
 import {
   PlacePrediction,
   TravelLocation,
@@ -97,14 +96,14 @@ export const TravelLocationDisplay: React.FC<{
       </div>
       <div
         className="pl-2 border-l border-gray-300 inline-block align-middle"
-        style={{ maxWidth: "85%" }}
+        style={{ maxWidth: "90%" }}
       >
         {travelLocation ? (
           <div>
             {" "}
             <h2>{travelLocation.title}</h2>
             <span className="text-xs">{travelLocation.description}</span>
-            <div>
+            {/* <div>
               {isFavourite(travelLocation.id) ? (
                 <button
                   onClick={() => deleteFavourite(travelLocation.id)}
@@ -120,7 +119,7 @@ export const TravelLocationDisplay: React.FC<{
                   Add Favourite
                 </button>
               )}
-            </div>
+            </div> */}
           </div>
         ) : (
           <div>
@@ -140,22 +139,16 @@ export const Travel: React.FC = () => {
 
   return (
     <Container>
-      <h1 className="text-3xl font-bold tracking-wide font mt-4">
-        Travel Planner
-      </h1>
+      <h1 className="text-3xl font-bold font mt-3">Travel Planner</h1>
       <div className="mt-2">
         <TravelLocationDisplay travelLocation={travelLocation} symbol={"A"} />
       </div>
-      <div className="mt-2">
+      {/* <div className="mt-2">
         <TravelLocationDisplay travelLocation={null} symbol={"B"} />
-      </div>
-      <div>
-        <button onClick={clearHistory}>Clear History</button>{" "}
-        <button onClick={clear}>Clear All Data</button>
-      </div>
-      <div className="mt-2">
-        <h2 className="text-xl font">Where do you want to go?</h2>
-        <div className="mt-3">
+      </div> */}
+      <div className="mt-3">
+        <h2 className="text-xl font-bold">Where do you want to go?</h2>
+        <div className="mt-1">
           <TravelLocationInput setTravelLocation={setTravelLocation} />
         </div>
       </div>
@@ -187,18 +180,18 @@ const TravelLocationResult: React.FC<{
       className="px-3 py-2 mt-2 bg-gray-50 rounded border-b hover:bg-primary-100 cursor-pointer"
       onClick={() => setPlaceId(pred.id)}
     >
-      <h1>
-        <TravelLocationIcon placeId={pred.id} />{" "}
-        <span className="inline-block align-middle">{pred.title}</span>
-      </h1>
-      <p className="text-xs mt-1">
-        {pred.distance && (
-          <span className="font-semibold">
-            {formatDistanceShort(pred.distance)}.
-          </span>
-        )}{" "}
-        {pred.description}
-      </p>
+      <div className="inline-block align-middle">
+        <TravelLocationIcon placeId={pred.id} />
+      </div>
+      <div
+        className="pl-2 inline-block align-middle"
+        style={{ maxWidth: "90%" }}
+      >
+        <span>
+          {pred.title} {pred.id}
+        </span>
+        <p className="text-xs mt-1">{pred.description}</p>
+      </div>
     </div>
   );
 };
@@ -235,7 +228,7 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
   // selected place
   const [prevPlaceId, setPrevPlaceId] = useState<string | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
-  const place = usePlace(placeId);
+  const { place } = usePlace(placeId);
 
   useEffect(() => {
     if (place === null) {
@@ -261,7 +254,7 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
       </div>
       <div>
         <input
-          className="bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow"
+          className="bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-lg"
           placeholder="Search"
           onChange={(e) => {
             predictionsRequest(e.target.value);
@@ -269,32 +262,36 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
         />
       </div>
       {/* action buttons */}
-      {!predictions.loading && (
-        <TravelLocationResults
-          predictions={predictions.data}
-          setPlaceId={setPlaceId}
-        />
-      )}
-      {!predictions.loading && predictions.data.length === 0 && (
+      {!predictions.loading && predictions.data.length > 0 && (
         <div>
-          <h2 className="mt-1 text-sm text-gray-700 font-semibold">
-            Favourites
-          </h2>
-          {favourites.map((favourite) => (
-            <TravelLocationResult
-              pred={{ ...favourite, distance: undefined }}
-              setPlaceId={setPlaceId}
-            />
-          ))}
-
-          {history.map((recent) => (
-            <TravelLocationResult
-              pred={{ ...recent, distance: undefined }}
-              setPlaceId={setPlaceId}
-            />
-          ))}
+          <TravelLocationResults
+            predictions={predictions.data}
+            setPlaceId={setPlaceId}
+          />
         </div>
       )}
+      {!predictions.loading &&
+        predictions.data.length === 0 &&
+        favourites.length + history.length > 0 && (
+          <div>
+            <h2 className="mt-2 text-sm text-gray-700 font-semibold">
+              Suggested
+            </h2>
+            {favourites.map((favourite) => (
+              <TravelLocationResult
+                pred={{ ...favourite, distance: undefined }}
+                setPlaceId={setPlaceId}
+              />
+            ))}
+
+            {history.map((recent) => (
+              <TravelLocationResult
+                pred={{ ...recent, distance: undefined }}
+                setPlaceId={setPlaceId}
+              />
+            ))}
+          </div>
+        )}
     </>
   );
 };
