@@ -41,7 +41,7 @@ export const usePlace = (placeId: string | null) => {
         });
       }
     );
-  }, [placeId, service]);
+  }, [placeId, service, getFavourite]);
 
   return place;
 };
