@@ -58,7 +58,7 @@ export const usePlace = (placeId: string | null): UsePlaceHook => {
         });
       }
     );
-  }, [placeId, service, getFavourite]);
+  }, [placeId, service, getFavourite, getRecent]);
 
   return { place, loading };
 };

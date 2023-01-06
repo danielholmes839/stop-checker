@@ -2,7 +2,13 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider as UrqlProvider } from "urql";
 import { client } from "client";
-import { SearchPage, StopPage, StopRoutePage, Travel } from "components";
+import {
+  Dashboard,
+  SearchPage,
+  StopPage,
+  StopRoutePage,
+  Travel,
+} from "components";
 import { Nav } from "components/util";
 import { StorageProvider } from "core";
 
@@ -27,7 +33,8 @@ const App: React.FC = () => {
             element={<AutomaticOutput />}
           />
           <Route path="/travel/r/:encoded" element={<FixedRoute />} />
-          <Route path="/dashboard" element={<Dashboard />} /> */}
+           */}
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </StorageProvider>
       </BrowserRouter>
