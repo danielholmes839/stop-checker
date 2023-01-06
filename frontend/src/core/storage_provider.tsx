@@ -102,7 +102,7 @@ export const StorageProvider: React.FC = ({ children }) => {
       icon: undefined,
     };
     deleteHistory(favourite.id); // we don't want to show a place in history and favourite
-    setFavourites(Object.assign({}, { [favourite.id]: favourite }, favourites));
+    setFavourites(Object.assign({}, favourites, { [favourite.id]: favourite }));
   };
 
   const getFavourite = (id: string): FavouriteTravelLocation | undefined => {

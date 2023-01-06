@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import usePlacesAutocompleteService from "react-google-autocomplete/lib/usePlacesAutocompleteService";
-import { useStorage } from "./storage";
+import { useStorage } from "./storage_provider";
 import { TravelLocation } from "./types";
 
 export const usePlace = (placeId: string | null) => {

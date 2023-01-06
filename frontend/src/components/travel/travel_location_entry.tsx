@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Container } from "../util";
 
 import { formatDistanceShort } from "helper";
 import {
-  Position,
+  PlacePrediction,
   TravelLocation,
-  useCurrentPosition,
   usePlace,
   usePlaceAutoComplete,
   useStorage,
@@ -53,24 +52,23 @@ const FavouriteIcon: React.FC = () => {
       fill="currentColor"
       className="w-6 h-6 inline-block align-middle"
     >
-      <path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-1.9C4.045 12.733 2 10.352 2 7.5a4.5 4.5 0 018-2.828A4.5 4.5 0 0118 7.5c0 2.852-2.044 5.233-3.885 6.82a22.049 22.049 0 01-3.744 2.582l-.019.01-.005.003h-.002a.739.739 0 01-.69.001l-.002-.001z" />
+      <path
+        fillRule="evenodd"
+        d="M10 2c-1.716 0-3.408.106-5.07.31C3.806 2.45 3 3.414 3 4.517V17.25a.75.75 0 001.075.676L10 15.082l5.925 2.844A.75.75 0 0017 17.25V4.517c0-1.103-.806-2.068-1.93-2.207A41.403 41.403 0 0010 2z"
+        clipRule="evenodd"
+      />
     </svg>
   );
 };
 
-const useReverseGeocode = (position: Position | null): string | null => {
-  const [placeId, setPlaceId] = useState<string | null>(null);
-  const geocoder = useMemo(() => new google.maps.Geocoder(), []);
-  useEffect(() => {
-    if (position === null) {
-      return;
-    }
-    setPlaceId(null);
+const requestCurrentLocation = (setPlaceId: React.Dispatch<string>) => {
+  navigator.geolocation.getCurrentPosition((position) => {
+    let geocoder = new google.maps.Geocoder();
     geocoder.geocode(
       {
         location: new google.maps.LatLng({
-          lat: position.latitude,
-          lng: position.longitude,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
         }),
       },
       (res) => {
@@ -84,9 +82,7 @@ const useReverseGeocode = (position: Position | null): string | null => {
         }
       }
     );
-  }, [position, geocoder]);
-
-  return placeId;
+  });
 };
 
 export const TravelLocationDisplay: React.FC<{
@@ -112,7 +108,7 @@ export const TravelLocationDisplay: React.FC<{
               {isFavourite(travelLocation.id) ? (
                 <button
                   onClick={() => deleteFavourite(travelLocation.id)}
-                  className="text-primary-500 text-sm mt-1"
+                  className="text-red-500 text-sm mt-1"
                 >
                   Delete Favourite
                 </button>
@@ -181,49 +177,88 @@ const TravelLocationIcon: React.FC<{ placeId: string }> = ({ placeId }) => {
   return <MarkerIcon />;
 };
 
+const TravelLocationResult: React.FC<{
+  setPlaceId: React.Dispatch<string>;
+  pred: PlacePrediction;
+}> = ({ pred, setPlaceId }) => {
+  return (
+    <div
+      key={pred.id}
+      className="px-3 py-2 mt-2 bg-gray-50 rounded border-b hover:bg-primary-100 cursor-pointer"
+      onClick={() => setPlaceId(pred.id)}
+    >
+      <h1>
+        <TravelLocationIcon placeId={pred.id} />{" "}
+        <span className="inline-block align-middle">{pred.title}</span>
+      </h1>
+      <p className="text-xs mt-1">
+        {pred.distance && (
+          <span className="font-semibold">
+            {formatDistanceShort(pred.distance)}.
+          </span>
+        )}{" "}
+        {pred.description}
+      </p>
+    </div>
+  );
+};
+
+const TravelLocationResults: React.FC<{
+  setPlaceId: React.Dispatch<string>;
+  predictions: PlacePrediction[];
+}> = ({ setPlaceId, predictions }) => {
+  const { getFavourite } = useStorage();
+  return (
+    <div>
+      {predictions.map((p) => {
+        let pred = p;
+        let fav = getFavourite(pred.id);
+        if (fav) {
+          pred = {
+            ...p,
+            title: fav.title,
+          };
+        }
+        return <TravelLocationResult pred={pred} setPlaceId={setPlaceId} />;
+      })}
+    </div>
+  );
+};
 export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
   setTravelLocation,
 }) => {
-  const { addHistory } = useStorage();
-  const { data, request: positionRequest } = useCurrentPosition();
-  const position = data.position;
-
+  const { addHistory, favourites, history } = useStorage();
   const { predictions, search: predictionsRequest } = usePlaceAutoComplete({
-    position: position,
+    position: null,
   });
 
   // selected place
+  const [prevPlaceId, setPrevPlaceId] = useState<string | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
-  const selectedPlace = usePlace(placeId);
-
-  // current gps place
-  const currentPlace = usePlace(useReverseGeocode(position));
-
-  // place given to the parent
-  const [inputPlace, setInputPlace] = useState<TravelLocation | null>(null);
+  const place = usePlace(placeId);
 
   useEffect(() => {
-    if (inputPlace === null) {
+    if (place === null) {
       return;
     }
-    setTravelLocation(inputPlace);
-    addHistory(inputPlace);
-  }, [inputPlace, addHistory, setTravelLocation]);
-
-  useEffect(() => {
-    setInputPlace(selectedPlace);
-  }, [selectedPlace]);
-
-  useEffect(() => {
-    if (currentPlace === null) {
+    if (place.id === prevPlaceId) {
       return;
     }
-    setInputPlace(currentPlace);
-  }, [currentPlace]);
+    setPrevPlaceId(place.id);
+    setTravelLocation(place);
+    addHistory(place);
+  }, [place, addHistory, setTravelLocation, prevPlaceId, setPrevPlaceId]);
 
   return (
     <>
-      {/* input */}
+      <div className="mb-1">
+        <button
+          className="text-primary-500 mr-5 text-sm"
+          onClick={() => requestCurrentLocation(setPlaceId)}
+        >
+          Current Location
+        </button>
+      </div>
       <div>
         <input
           className="bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow"
@@ -234,49 +269,29 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
         />
       </div>
       {/* action buttons */}
-      <div className="mt-1">
-        <button
-          className="text-primary-500 mr-5 text-sm"
-          onClick={positionRequest}
-        >
-          Current Location
-        </button>
-
-        <button className="text-primary-500 text-sm">Saved Locations</button>
-      </div>
-      {/* prediction results */}
       {!predictions.loading && (
+        <TravelLocationResults
+          predictions={predictions.data}
+          setPlaceId={setPlaceId}
+        />
+      )}
+      {!predictions.loading && predictions.data.length === 0 && (
         <div>
-          {predictions.data.map((pred, i) => (
-            <div
-              key={i}
-              className="px-3 py-2 mt-2 bg-gray-50 rounded border-b hover:bg-primary-100 cursor-pointer"
-              onClick={() => {
-                if (
-                  selectedPlace === null ||
-                  selectedPlace.id !== pred.placeId
-                ) {
-                  // we load the place
-                  setPlaceId(pred.placeId);
-                } else {
-                  // we just set the place
-                  setInputPlace(selectedPlace);
-                }
-              }}
-            >
-              <h1>
-                <TravelLocationIcon placeId={pred.placeId} />{" "}
-                <span className="inline-block align-middle">{pred.title}</span>
-              </h1>
-              <p className="text-xs mt-1">
-                {pred.distance && (
-                  <span className="font-semibold">
-                    {formatDistanceShort(pred.distance)}.
-                  </span>
-                )}{" "}
-                {pred.description}
-              </p>
-            </div>
+          <h2 className="mt-1 text-sm text-gray-700 font-semibold">
+            Favourites
+          </h2>
+          {favourites.map((favourite) => (
+            <TravelLocationResult
+              pred={{ ...favourite, distance: undefined }}
+              setPlaceId={setPlaceId}
+            />
+          ))}
+
+          {history.map((recent) => (
+            <TravelLocationResult
+              pred={{ ...recent, distance: undefined }}
+              setPlaceId={setPlaceId}
+            />
           ))}
         </div>
       )}
