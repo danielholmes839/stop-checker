@@ -15,11 +15,11 @@ const TRANSFER_PENALTY = 5 * time.Minute
 
 // value multiplied by distance remaining to the stop (3 minute penalty per km away)
 // typical A* heuristic
-const DISTANCE_PENALTY = (3 * time.Minute) / 1000
+const DISTANCE_PENALTY = (1 * time.Minute) / 1000
 
 // walking constants
-const WALK_SPEED = 1.4 // meters per second
-const WALK_PENALTY = 0.5
+const WALK_SPEED = 1.3 // meters per second
+const WALK_PENALTY = 0.50
 
 type Kind int
 
