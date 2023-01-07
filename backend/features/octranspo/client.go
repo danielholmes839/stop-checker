@@ -39,8 +39,6 @@ func (c *Client) Request(stop model.Stop) (map[string][]model.Bus, error) {
 		return nil, err
 	}
 
-	fmt.Println(string(data))
-
 	parsed := &soapEnvelope{}
 	err = xml.Unmarshal(data, parsed)
 	if err != nil {
