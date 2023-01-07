@@ -79,5 +79,5 @@ func main() {
 			StaticMapEncoder:   mapEncoder,
 		})
 
-	server.Run(":3001")
+	server.Run(config.SERVER_PORT)
 }
