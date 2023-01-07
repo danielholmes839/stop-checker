@@ -352,6 +352,25 @@ export type TextSearchQueryVariables = Exact<{
 
 export type TextSearchQuery = { __typename?: 'Query', searchStopText: { __typename?: 'StopSearchPayload', results: Array<{ __typename?: 'Stop', id: string, name: string, code: string, routes: Array<{ __typename?: 'StopRoute', headsign: string, route: { __typename?: 'Route', id: string, name: string, text: any, background: any } }> }> } };
 
+export type ScheduleNodeFragment = { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null };
+
+export type ScheduleWalkFragment = { __typename?: 'TravelScheduleLeg', duration: number, walk?: { __typename?: 'Path', distance: number, path: Array<{ __typename?: 'Location', latitude: number, longitude: number }> } | null };
+
+export type ScheduleTransitFragment = { __typename?: 'Transit', departure: any, duration: number, wait: number, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, trip: { __typename?: 'Trip', id: string, headsign: string, shape: Array<{ __typename?: 'Location', latitude: number, longitude: number }>, stoptimes: Array<{ __typename?: 'StopTime', id: string, time: any, stop: { __typename?: 'Stop', id: string, name: string } }> } };
+
+export type ScheduleFragment = { __typename?: 'TravelSchedule', duration: number, origin: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, destination: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, legs: Array<{ __typename?: 'TravelScheduleLeg', duration: number, origin: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, destination: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, transit?: { __typename?: 'Transit', departure: any, duration: number, wait: number, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, trip: { __typename?: 'Trip', id: string, headsign: string, shape: Array<{ __typename?: 'Location', latitude: number, longitude: number }>, stoptimes: Array<{ __typename?: 'StopTime', id: string, time: any, stop: { __typename?: 'Stop', id: string, name: string } }> } } | null, walk?: { __typename?: 'Path', distance: number, path: Array<{ __typename?: 'Location', latitude: number, longitude: number }> } | null }> };
+
+export type SchedulePayloadFragment = { __typename?: 'TravelSchedulePayload', error?: string | null, schedule?: { __typename?: 'TravelSchedule', duration: number, origin: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, destination: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, legs: Array<{ __typename?: 'TravelScheduleLeg', duration: number, origin: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, destination: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, transit?: { __typename?: 'Transit', departure: any, duration: number, wait: number, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, trip: { __typename?: 'Trip', id: string, headsign: string, shape: Array<{ __typename?: 'Location', latitude: number, longitude: number }>, stoptimes: Array<{ __typename?: 'StopTime', id: string, time: any, stop: { __typename?: 'Stop', id: string, name: string } }> } } | null, walk?: { __typename?: 'Path', distance: number, path: Array<{ __typename?: 'Location', latitude: number, longitude: number }> } | null }> } | null };
+
+export type TravelPlannerQueryVariables = Exact<{
+  origin: LocationInput;
+  destination: LocationInput;
+  options: TravelPlannerOptions;
+}>;
+
+
+export type TravelPlannerQuery = { __typename?: 'Query', travelPlanner: { __typename?: 'TravelSchedulePayload', error?: string | null, schedule?: { __typename?: 'TravelSchedule', duration: number, origin: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, destination: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, legs: Array<{ __typename?: 'TravelScheduleLeg', duration: number, origin: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, destination: { __typename?: 'TravelScheduleNode', arrival: any, location: { __typename?: 'Location', latitude: number, longitude: number }, stop?: { __typename?: 'Stop', id: string, name: string, code: string } | null }, transit?: { __typename?: 'Transit', departure: any, duration: number, wait: number, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, trip: { __typename?: 'Trip', id: string, headsign: string, shape: Array<{ __typename?: 'Location', latitude: number, longitude: number }>, stoptimes: Array<{ __typename?: 'StopTime', id: string, time: any, stop: { __typename?: 'Stop', id: string, name: string } }> } } | null, walk?: { __typename?: 'Path', distance: number, path: Array<{ __typename?: 'Location', latitude: number, longitude: number }> } | null }> } | null } };
+
 export const StopExploreFragmentDoc = gql`
     fragment StopExplore on Stop {
   id
@@ -412,6 +431,94 @@ export const LiveDataFragmentDoc = gql`
   }
 }
     `;
+export const ScheduleNodeFragmentDoc = gql`
+    fragment ScheduleNode on TravelScheduleNode {
+  arrival
+  location {
+    latitude
+    longitude
+  }
+  stop {
+    id
+    name
+    code
+  }
+}
+    `;
+export const ScheduleTransitFragmentDoc = gql`
+    fragment ScheduleTransit on Transit {
+  route {
+    id
+    name
+    text
+    background
+  }
+  trip {
+    id
+    headsign
+    shape {
+      latitude
+      longitude
+    }
+    stoptimes {
+      id
+      stop {
+        id
+        name
+      }
+      time
+    }
+  }
+  departure
+  duration
+  wait
+}
+    `;
+export const ScheduleWalkFragmentDoc = gql`
+    fragment ScheduleWalk on TravelScheduleLeg {
+  duration
+  walk {
+    distance
+    path {
+      latitude
+      longitude
+    }
+  }
+}
+    `;
+export const ScheduleFragmentDoc = gql`
+    fragment Schedule on TravelSchedule {
+  duration
+  origin {
+    ...ScheduleNode
+  }
+  destination {
+    ...ScheduleNode
+  }
+  legs {
+    origin {
+      ...ScheduleNode
+    }
+    destination {
+      ...ScheduleNode
+    }
+    transit {
+      ...ScheduleTransit
+    }
+    ...ScheduleWalk
+  }
+}
+    ${ScheduleNodeFragmentDoc}
+${ScheduleTransitFragmentDoc}
+${ScheduleWalkFragmentDoc}`;
+export const SchedulePayloadFragmentDoc = gql`
+    fragment SchedulePayload on TravelSchedulePayload {
+  schedule {
+    ...Schedule
+  }
+  error
+}
+    ${ScheduleFragmentDoc}`;
 export const LocationSearchDocument = gql`
     query LocationSearch($location: LocationInput!, $page: PageInput!) {
   searchStopLocation(
@@ -598,4 +705,15 @@ export const TextSearchDocument = gql`
 
 export function useTextSearchQuery(options: Omit<Urql.UseQueryArgs<TextSearchQueryVariables>, 'query'>) {
   return Urql.useQuery<TextSearchQuery, TextSearchQueryVariables>({ query: TextSearchDocument, ...options });
+};
+export const TravelPlannerDocument = gql`
+    query TravelPlanner($origin: LocationInput!, $destination: LocationInput!, $options: TravelPlannerOptions!) {
+  travelPlanner(origin: $origin, destination: $destination, options: $options) {
+    ...SchedulePayload
+  }
+}
+    ${SchedulePayloadFragmentDoc}`;
+
+export function useTravelPlannerQuery(options: Omit<Urql.UseQueryArgs<TravelPlannerQueryVariables>, 'query'>) {
+  return Urql.useQuery<TravelPlannerQuery, TravelPlannerQueryVariables>({ query: TravelPlannerDocument, ...options });
 };

@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Container } from "components/util";
+import { useNavigate, useParams } from "react-router-dom";
 
-import { TravelLocation } from "core";
+import { TravelLocation, usePlace } from "core";
 import { TravelLocationInput } from "components/travel";
+import { ScheduleMode, useTravelPlannerQuery } from "client/types";
+import { Instructions } from "./instructions";
 
 export const TravelLocationDisplay: React.FC<{
   travelLocation: TravelLocation | null;
@@ -31,23 +34,120 @@ export const TravelLocationDisplay: React.FC<{
     </div>
   );
 };
-export const Travel: React.FC = () => {
-  const [travelLocation, setTravelLocation] = useState<TravelLocation | null>(
-    null
-  );
+
+export const TravelOriginInput: React.FC = () => {
+  const nav = useNavigate();
+  const onTravelLocationChange = (location: TravelLocation) => {
+    nav(`/travel/p/${location.id}`);
+  };
 
   return (
     <Container>
       <h1 className="text-3xl font-bold font mt-3">Travel Planner</h1>
-      <div className="mt-2">
+      {/* <div className="mt-2">
         <TravelLocationDisplay travelLocation={travelLocation} symbol={"A"} />
-      </div>
-      <div className="mt-3">
-        <h2 className="text-xl font-bold">Where do you want to go?</h2>
+      </div> */}
+      <div className="mt-1">
+        <h2 className="text-xl mt-2">Where do you want to go?</h2>
         <div className="mt-1">
-          <TravelLocationInput setTravelLocation={setTravelLocation} />
+          <TravelLocationInput
+            setTravelLocation={onTravelLocationChange}
+            suggestCurrentLocation={false}
+          />
         </div>
       </div>
     </Container>
   );
+};
+
+export const TravelDestinationInput: React.FC = () => {
+  const nav = useNavigate();
+  const { destinationId } = useParams();
+  const destination = usePlace(destinationId ? destinationId : null);
+
+  const onTravelLocationChange = (location: TravelLocation) => {
+    nav(`/travel/p/${destinationId}/${location.id}`);
+  };
+
+  if (destination === null) {
+    return <></>;
+  }
+
+  return (
+    <Container>
+      <h1 className="text-3xl font-bold font mt-3">Travel Planner</h1>
+      {/* <div className="mt-2">
+        <TravelLocationDisplay travelLocation={null} symbol={"A"} />
+      </div>
+      <div className="mt-2">
+        <TravelLocationDisplay travelLocation={origin} symbol={"B"} />
+      </div> */}
+      <div className="mt-1">
+        <h2 className="text-xl mt-2">Where are you starting from?</h2>
+        <div className="mt-1">
+          <TravelLocationInput
+            setTravelLocation={onTravelLocationChange}
+            suggestCurrentLocation={true}
+          />
+        </div>
+      </div>
+    </Container>
+  );
+};
+
+export const TravelSchedule: React.FC = () => {
+  const { originId, destinationId } = useParams();
+  const origin = usePlace(originId ? originId : null);
+  const destination = usePlace(destinationId ? destinationId : null);
+
+  console.log(originId, origin, destination, destinationId);
+  if (origin === null || destination === null) {
+    return <></>;
+  }
+
+  return <TravelScheduleQuery origin={origin} destination={destination} />;
+};
+
+export const TravelScheduleQuery: React.FC<{
+  origin: TravelLocation;
+  destination: TravelLocation;
+}> = ({ origin, destination }) => {
+  const {
+    data,
+    fetching,
+    error: err,
+  } = useTravelPlannerQuery({
+    variables: {
+      origin: origin.position,
+      destination: destination.position,
+      options: {
+        mode: ScheduleMode.DepartAt,
+        datetime: null,
+      },
+    },
+  })[0];
+
+  if (fetching) {
+    return <></>;
+  }
+
+  if (err) {
+    return (
+      <>
+        {err.name}: {err.message}
+      </>
+    );
+  }
+
+  if (data) {
+    return (
+      <Instructions
+        origin={origin}
+        destination={destination}
+        payload={data.travelPlanner}
+      />
+    );
+  }
+
+  return <></>;
 };

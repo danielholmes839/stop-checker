@@ -1,0 +1,89 @@
+fragment ScheduleNode on TravelScheduleNode {
+  arrival
+  location {
+    latitude
+    longitude
+  }
+  stop {
+    id
+    name
+    code
+  }
+}
+
+fragment ScheduleWalk on TravelScheduleLeg {
+  duration
+  walk {
+    distance
+    path {
+      latitude
+      longitude
+    }
+  }
+}
+fragment ScheduleTransit on Transit {
+  route {
+    id
+    name
+    text
+    background
+  }
+  trip {
+    id
+    headsign
+    shape {
+      latitude
+      longitude
+    }
+    stoptimes {
+      id
+      stop {
+        id
+        name
+      }
+      time
+    }
+  }
+  departure
+  duration
+  wait
+}
+
+fragment Schedule on TravelSchedule {
+  duration
+  origin {
+    ...ScheduleNode
+  }
+  destination {
+    ...ScheduleNode
+  }
+  legs {
+    origin {
+      ...ScheduleNode
+    }
+    destination {
+      ...ScheduleNode
+    }
+    transit {
+      ...ScheduleTransit
+    }
+    ...ScheduleWalk
+  }
+}
+
+fragment SchedulePayload on TravelSchedulePayload {
+  schedule {
+    ...Schedule
+  }
+  error
+}
+
+query TravelPlanner(
+  $origin: LocationInput!
+  $destination: LocationInput!
+  $options: TravelPlannerOptions!
+) {
+  travelPlanner(origin: $origin, destination: $destination, options: $options) {
+    ...SchedulePayload
+  }
+}

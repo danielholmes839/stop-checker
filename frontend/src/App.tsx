@@ -4,10 +4,14 @@ import { Provider as UrqlProvider } from "urql";
 import { client } from "client";
 import {
   Dashboard,
+  DashboardAddFavourite,
+  DashboardEditFavourite,
   SearchPage,
   StopPage,
   StopRoutePage,
-  Travel,
+  TravelDestinationInput,
+  TravelOriginInput,
+  TravelSchedule,
 } from "components";
 import { Nav } from "components/util";
 import { StorageProvider } from "core";
@@ -25,7 +29,15 @@ const App: React.FC = () => {
               path="/stop/:stop/route/:route"
               element={<StopRoutePage />}
             />
-            <Route path="/travel" element={<Travel />} />
+            <Route path="/travel" element={<TravelOriginInput />} />
+            <Route
+              path="/travel/p/:destinationId"
+              element={<TravelDestinationInput />}
+            />
+            <Route
+              path="/travel/p/:destinationId/:originId"
+              element={<TravelSchedule />}
+            />
             {/* <Route path="/travel/create" element={<ManualOriginInput />} />
           <Route path="/travel/m/:origin" element={<ManualLegInput />} />
           <Route
@@ -35,6 +47,14 @@ const App: React.FC = () => {
           <Route path="/travel/r/:encoded" element={<FixedRoute />} />
            */}
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route
+              path="/dashboard/favourite/add"
+              element={<DashboardAddFavourite />}
+            />
+            <Route
+              path="/dashboard/favourite/:id"
+              element={<DashboardEditFavourite />}
+            />
           </Routes>
         </StorageProvider>
       </BrowserRouter>

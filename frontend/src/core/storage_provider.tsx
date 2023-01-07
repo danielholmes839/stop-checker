@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { TravelLocation } from "./types";
 
+export type FavouriteIconName = "home" | "office" | "school" | "saved";
 type Favourite = {
-  icon: "home" | "office" | "school" | undefined;
+  icon: FavouriteIconName;
 };
 
 export type FavouriteTravelLocation = TravelLocation & Favourite;
@@ -103,7 +104,7 @@ export const StorageProvider: React.FC = ({ children }) => {
   const addFavourite = (location: TravelLocation) => {
     let favourite: FavouriteTravelLocation = {
       ...location,
-      icon: undefined,
+      icon: "saved",
     };
     deleteHistory(favourite.id); // we don't want to show a place in history and favourite
     setFavourites(Object.assign({}, favourites, { [favourite.id]: favourite }));

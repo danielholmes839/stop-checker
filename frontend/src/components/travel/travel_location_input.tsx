@@ -5,7 +5,11 @@ import {
   useStorage,
 } from "core";
 import { useEffect, useState } from "react";
-import { TravelLocationResult, TravelLocationResults } from "components/travel";
+import {
+  TravelCurrentLocationOption,
+  TravelLocationResult,
+  TravelLocationResults,
+} from "components/travel";
 
 const requestCurrentLocation = (setPlaceId: React.Dispatch<string>) => {
   navigator.geolocation.getCurrentPosition((position) => {
@@ -33,10 +37,16 @@ const requestCurrentLocation = (setPlaceId: React.Dispatch<string>) => {
 
 type TravelLocationInputProps = {
   setTravelLocation: React.Dispatch<TravelLocation>;
+  suggestCurrentLocation?: boolean;
+  suggestFavourites?: boolean;
+  suggestHistory?: boolean;
 };
 
 export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
   setTravelLocation,
+  suggestCurrentLocation = true,
+  suggestFavourites = true,
+  suggestHistory = true,
 }) => {
   const { addHistory, favourites, history } = useStorage();
   const { predictions, search: predictionsRequest } = usePlaceAutoComplete({
@@ -46,7 +56,7 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
   // selected place
   const [prevPlaceId, setPrevPlaceId] = useState<string | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
-  const { place } = usePlace(placeId);
+  const place = usePlace(placeId);
 
   useEffect(() => {
     if (place === null) {
@@ -55,21 +65,13 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
     if (place.id === prevPlaceId) {
       return;
     }
+    addHistory(place);
     setPrevPlaceId(place.id);
     setTravelLocation(place);
-    addHistory(place);
   }, [place, addHistory, setTravelLocation, prevPlaceId, setPrevPlaceId]);
 
   return (
     <>
-      <div className="mb-1">
-        <button
-          className="text-primary-500 mr-5 text-sm"
-          onClick={() => requestCurrentLocation(setPlaceId)}
-        >
-          Current Location
-        </button>
-      </div>
       <div>
         <input
           className="bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-lg"
@@ -90,20 +92,30 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
       )}
       {!predictions.loading &&
         predictions.data.length === 0 &&
-        favourites.length + history.length > 0 && (
+        ((favourites.length > 0 && suggestFavourites) ||
+          (history.length > 0 && suggestHistory) ||
+          suggestCurrentLocation) && (
           <div>
-            <h2 className="mt-2 text-sm text-gray-700 font-semibold">
+            <h2 className="mt-3 text-sm text-gray-700 font-semibold">
               Suggested
             </h2>
-            {favourites.map((favourite) => (
-              <TravelLocationResult
-                pred={{ ...favourite, distance: undefined }}
-                setPlaceId={setPlaceId}
+            {suggestCurrentLocation && (
+              <TravelCurrentLocationOption
+                onClick={() => requestCurrentLocation(setPlaceId)}
               />
-            ))}
+            )}
+            {suggestFavourites &&
+              favourites.map((favourite) => (
+                <TravelLocationResult
+                  key={favourite.id}
+                  pred={{ ...favourite, distance: undefined }}
+                  setPlaceId={setPlaceId}
+                />
+              ))}
 
             {history.map((recent) => (
               <TravelLocationResult
+                key={recent.id}
                 pred={{ ...recent, distance: undefined }}
                 setPlaceId={setPlaceId}
               />
