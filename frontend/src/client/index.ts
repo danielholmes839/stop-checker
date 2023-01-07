@@ -6,5 +6,5 @@ export const client = createClient({
   url:
     process.env.NODE_ENV === "production"
       ? "https://api.stop-checker.com/graphql"
-      : "http://localhost:3001/graphql",
+      : "http://192.168.0.214:3001/graphql",
 });

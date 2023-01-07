@@ -131,9 +131,11 @@ export const SearchLocationIcon: React.FC<{ placeId: string }> = ({
   return <MarkerIcon />;
 };
 
-export const PlaceIcon: React.FC<{ placeId: string }> = ({ placeId }) => {
+export const PlaceIcon: React.FC<{ placeId: string | null }> = ({
+  placeId,
+}) => {
   const { isFavourite } = useStorage();
-  if (isFavourite(placeId)) {
+  if (placeId && isFavourite(placeId)) {
     return <FavouriteIcon placeId={placeId} />;
   }
   return <MarkerIcon />;

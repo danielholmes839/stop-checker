@@ -3,7 +3,7 @@ import { Container } from "components/util";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { TravelLocation, usePlace } from "core";
-import { TravelLocationInput } from "components/travel";
+import { PlaceIcon, TravelLocationInput } from "components/travel";
 import { ScheduleMode, useTravelPlannerQuery } from "client/types";
 import { Instructions } from "./instructions";
 
@@ -14,7 +14,7 @@ export const TravelLocationDisplay: React.FC<{
   return (
     <div className="px-3 py-2 bg-gray-50 rounded border-b">
       <div className="inline-block align-middle text-4xl font-bold mr-2">
-        {symbol}
+        <PlaceIcon placeId={travelLocation ? travelLocation.id : null} />
       </div>
       <div
         className="pl-2 border-l border-gray-300 inline-block align-middle"
@@ -35,7 +35,7 @@ export const TravelLocationDisplay: React.FC<{
   );
 };
 
-export const TravelOriginInput: React.FC = () => {
+export const TravelDestinationInput: React.FC = () => {
   const nav = useNavigate();
   const onTravelLocationChange = (location: TravelLocation) => {
     nav(`/travel/p/${location.id}`);
@@ -60,7 +60,7 @@ export const TravelOriginInput: React.FC = () => {
   );
 };
 
-export const TravelDestinationInput: React.FC = () => {
+export const TravelOriginInput: React.FC = () => {
   const nav = useNavigate();
   const { destinationId } = useParams();
   const destination = usePlace(destinationId ? destinationId : null);
@@ -76,18 +76,16 @@ export const TravelDestinationInput: React.FC = () => {
   return (
     <Container>
       <h1 className="text-3xl font-bold font mt-3">Travel Planner</h1>
-      {/* <div className="mt-2">
-        <TravelLocationDisplay travelLocation={null} symbol={"A"} />
-      </div>
       <div className="mt-2">
-        <TravelLocationDisplay travelLocation={origin} symbol={"B"} />
-      </div> */}
+        <TravelLocationDisplay travelLocation={destination} symbol={"D"} />
+      </div>
       <div className="mt-1">
         <h2 className="text-xl mt-2">Where are you starting from?</h2>
         <div className="mt-1">
           <TravelLocationInput
             setTravelLocation={onTravelLocationChange}
             suggestCurrentLocation={true}
+            suggestionFilter={(suggestion) => suggestion.id !== destination.id}
           />
         </div>
       </div>

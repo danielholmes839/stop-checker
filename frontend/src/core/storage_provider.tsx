@@ -78,7 +78,6 @@ export const StorageProvider: React.FC = ({ children }) => {
   const clear = () => {
     setFavourites({});
     setHistory({});
-    console.log("clear");
   };
 
   const clearHistory = () => {

@@ -16,7 +16,7 @@ const linkClassNameFunc: any = ({ isActive }: { isActive: boolean }) =>
 const NavStandard: React.FC = () => {
   return (
     <div className="hidden w-full md:block md:w-auto mb-1">
-      <ul className="flex flex-col p-4 mt-4 md:flex-row">
+      <ul className="flex flex-col mt-3 md:flex-row">
         {links.map(({ to, text }, i) => (
           <li key={i} className="ml-5">
             <NavLink to={to} className={linkClassNameFunc}>
@@ -52,7 +52,7 @@ export const Nav: React.FC = () => {
     setDropDown(false);
   }, [location]);
   return (
-    <nav className="bg-gray-50 py-2">
+    <nav className="bg-gray-50 py-3">
       <Container>
         <div className="flex flex-wrap justify-between items-center mx-auto">
           <h1 className="text-xl lg:text-2xl text-primary-600 font-semibold">
@@ -60,7 +60,7 @@ export const Nav: React.FC = () => {
           </h1>
           <button
             onClick={() => setDropDown(!dropDown)}
-            className="inline-flex items-center ml-3 text-sm text-primary-500 rounded md:hidden hover:bg-primary-100 focus:outline-none"
+            className="inline-flex items-center ml-3 mr-1 text-sm text-primary-500 rounded md:hidden hover:bg-primary-100 focus:outline-none"
           >
             <svg
               className="w-6 h-6"

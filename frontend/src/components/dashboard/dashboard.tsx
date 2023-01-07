@@ -83,7 +83,7 @@ export const DashboardAddFavourite: React.FC = () => {
 export const DashboardEditFavourite: React.FC = () => {
   const nav = useNavigate();
   const { id } = useParams();
-  const { updateFavourite, getFavourite } = useStorage();
+  const { updateFavourite, getFavourite, deleteFavourite } = useStorage();
 
   const favourite = getFavourite(id ? id : "");
   const [icon, setIcon] = useState<FavouriteIconName>(
@@ -100,50 +100,86 @@ export const DashboardEditFavourite: React.FC = () => {
     }
   }, [favourite, nav]);
 
+  if (favourite === undefined) {
+    return <></>;
+  }
+
   return (
     <Container>
       <h1 className="text-3xl font-bold font mt-3 mb-1">Edit Favourite</h1>
-      <input
-        className="mt-3 bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-sm"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
       <div>
+        <h2 className="font-semibold">Name</h2>
         <input
-          className="mt-3 bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-sm"
+          className="mt-1 bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-sm"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
+      <div className="mt-3">
+        <h2 className="font-semibold">Description</h2>
+        <input
+          className="mt-1 bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-sm"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
       <div className="mt-3">
-        <span className="mr-5">
-          <FavouriteIconInput
-            icon="home"
-            activeIcon={icon}
-            setActiveIcon={setIcon}
-          />
-        </span>
-        <span className="mr-5">
-          <FavouriteIconInput
-            icon="office"
-            activeIcon={icon}
-            setActiveIcon={setIcon}
-          />
-        </span>
-        <span className="mr-5">
-          <FavouriteIconInput
-            icon="saved"
-            activeIcon={icon}
-            setActiveIcon={setIcon}
-          />
-        </span>
-        <span className="mr-5">
-          <FavouriteIconInput
-            icon="school"
-            activeIcon={icon}
-            setActiveIcon={setIcon}
-          />
-        </span>
+        <h2 className="font-semibold">Icon</h2>
+        <div className="mt-1">
+          <span className="mr-3">
+            <FavouriteIconInput
+              icon="saved"
+              activeIcon={icon}
+              setActiveIcon={setIcon}
+            />
+          </span>
+          <span className="mr-3">
+            <FavouriteIconInput
+              icon="home"
+              activeIcon={icon}
+              setActiveIcon={setIcon}
+            />
+          </span>
+          <span className="mr-3">
+            <FavouriteIconInput
+              icon="school"
+              activeIcon={icon}
+              setActiveIcon={setIcon}
+            />
+          </span>
+          <span className="mr-3">
+            <FavouriteIconInput
+              icon="office"
+              activeIcon={icon}
+              setActiveIcon={setIcon}
+            />
+          </span>
+        </div>
+        <div className="mt-3 pt-3 border-t">
+          <button
+            className="text-primary-700 bg-primary-100 hover:bg-primary-200 px-10 py-2 rounded text-sm mr-2"
+            onClick={() => {
+              updateFavourite({
+                ...favourite,
+                title: title,
+                description: description,
+                icon: icon,
+              });
+              nav("/dashboard");
+            }}
+          >
+            Save
+          </button>
+          <button
+            className="text-red-700 bg-red-100 hover:bg-red-200 px-10 py-2 rounded text-sm mr-2"
+            onClick={() => {
+              deleteFavourite(favourite.id);
+              nav("/dashboard");
+            }}
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </Container>
   );
@@ -154,17 +190,23 @@ export const Dashboard: React.FC = () => {
   return (
     <Container>
       <h1 className="text-3xl font-bold font mt-3">Dashboard</h1>
+      <h2 className="text font-medium text-gray-800 text-xl mt-2">
+        Favourites
+      </h2>
+      <Link
+        to="/dashboard/favourite/add"
+        className="text-primary-700 text-sm underline"
+      >
+        New Favourite
+      </Link>
 
-      <h2 className="text-lg font-bold text-gray-800">Favourites</h2>
-      <Link to="/dashboard/favourite/add">Add Favourite</Link>
-
-      <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-3">
+      <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-3 mt-2">
         {favourites.map((fav) => (
           <Favourite favourite={fav} />
         ))}
       </div>
 
-      <div>
+      <div className="mt-10">
         <button onClick={clear}>Clear All</button>
         <button onClick={clearHistory}>Clear History</button>
       </div>

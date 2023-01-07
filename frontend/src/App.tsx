@@ -29,10 +29,10 @@ const App: React.FC = () => {
               path="/stop/:stop/route/:route"
               element={<StopRoutePage />}
             />
-            <Route path="/travel" element={<TravelOriginInput />} />
+            <Route path="/travel" element={<TravelDestinationInput />} />
             <Route
               path="/travel/p/:destinationId"
-              element={<TravelDestinationInput />}
+              element={<TravelOriginInput />}
             />
             <Route
               path="/travel/p/:destinationId/:originId"

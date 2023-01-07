@@ -40,6 +40,7 @@ type TravelLocationInputProps = {
   suggestCurrentLocation?: boolean;
   suggestFavourites?: boolean;
   suggestHistory?: boolean;
+  suggestionFilter?: (travelLocation: TravelLocation) => boolean;
 };
 
 export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
@@ -47,6 +48,7 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
   suggestCurrentLocation = true,
   suggestFavourites = true,
   suggestHistory = true,
+  suggestionFilter = (location) => true,
 }) => {
   const { addHistory, favourites, history } = useStorage();
   const { predictions, search: predictionsRequest } = usePlaceAutoComplete({
@@ -105,15 +107,17 @@ export const TravelLocationInput: React.FC<TravelLocationInputProps> = ({
               />
             )}
             {suggestFavourites &&
-              favourites.map((favourite) => (
-                <TravelLocationResult
-                  key={favourite.id}
-                  pred={{ ...favourite, distance: undefined }}
-                  setPlaceId={setPlaceId}
-                />
-              ))}
+              favourites
+                .filter(suggestionFilter)
+                .map((favourite) => (
+                  <TravelLocationResult
+                    key={favourite.id}
+                    pred={{ ...favourite, distance: undefined }}
+                    setPlaceId={setPlaceId}
+                  />
+                ))}
 
-            {history.map((recent) => (
+            {history.filter(suggestionFilter).map((recent) => (
               <TravelLocationResult
                 key={recent.id}
                 pred={{ ...recent, distance: undefined }}

@@ -29,7 +29,6 @@ export const usePlace = (placeId: string | null): TravelLocation | null => {
   });
 
   useEffect(() => {
-    console.log("USE EFFECT", placeId);
     if (placeId === null) {
       setPlace(null);
       return;
@@ -46,8 +45,6 @@ export const usePlace = (placeId: string | null): TravelLocation | null => {
       setPlace(recent);
       return;
     }
-
-    console.log("USE EFFECT GET DETAILS", placeId);
 
     service?.getDetails(
       {

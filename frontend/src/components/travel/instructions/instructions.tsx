@@ -106,7 +106,9 @@ const TransitInstructions: React.FC<{
         <InstructionTitle>
           Exit the <Sign props={transit.route} /> at {destination.stop.name}
         </InstructionTitle>
-        <InstructionSubtitle>After Stop</InstructionSubtitle>
+        <InstructionSubtitle>
+          After {stopsBetween[j - i - 1].stop.name}
+        </InstructionSubtitle>
         <InstructionText>
           Scheduled to arrive at {formatTime(destination.arrival)}
         </InstructionText>
@@ -149,16 +151,16 @@ export const Instructions: React.FC<{
       <h2 className="text-xl mt-2">
         <span className="inline-block mt-1">
           <PlaceIcon placeId={origin.id} />
-          <span className="align-middle mr-2">{origin.title}</span>
+          <span className="align-middle ml-1 mr-2">{origin.title}</span>
         </span>
         <span className="inline-block mt-1">
-          <PlaceIcon placeId={origin.id} />
-          <span className="align-middle">{destination.title}</span>
+          <PlaceIcon placeId={destination.id} />
+          <span className="align-middle ml-1">{destination.title}</span>
         </span>
       </h2>
       <h3 className="mt-2 text-sm font-semibold text-gray-800">
         Leave by {formatTime(schedule.origin.arrival)} - Arrive at{" "}
-        {formatTime(schedule.destination.arrival)} ({schedule.duration} min).
+        {formatTime(schedule.destination.arrival)} ({schedule.duration} min)
       </h3>
 
       {schedule.legs.map((leg, i) => {
