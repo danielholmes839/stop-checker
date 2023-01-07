@@ -1,10 +1,5 @@
 import React, { useCallback, useRef, useState } from "react";
-import {
-  Circle,
-  GoogleMap,
-  Marker,
-  InfoWindow,
-} from "@react-google-maps/api";
+import { Circle, GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { LocationInput, Stop, useLocationSearchQuery } from "client/types";
 
 const mapOptions = {
@@ -58,7 +53,7 @@ export const SimpleMap: React.FC<{ origin: LocationInput }> = ({
     <GoogleMap
       mapContainerStyle={{
         width: "100%",
-        height: "350px",
+        height: "40%",
       }}
       options={mapOptions}
       onLoad={onMapLoad}

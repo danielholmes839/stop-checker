@@ -1,11 +1,13 @@
+import { Polyline } from "@react-google-maps/api";
 import {
   ScheduleNodeFragment,
   SchedulePayloadFragment,
   ScheduleTransitFragment,
   ScheduleWalkFragment,
 } from "client/types";
+import { SimpleMap } from "components/search/map";
 import { Container, Sign } from "components/util";
-import { TravelLocation } from "core";
+import { Position, TravelLocation } from "core";
 import { formatDistance, formatTime } from "helper";
 import React, { useState } from "react";
 import { PlaceIcon } from "../place_icon";
@@ -163,6 +165,58 @@ export const Instructions: React.FC<{
         {formatTime(schedule.destination.arrival)} ({schedule.duration} min)
       </h3>
 
+      <SimpleMap origin={origin.position}>
+        {schedule.legs.map((leg, i) => {
+          let path: any = [];
+
+          let options = leg.transit
+            ? {
+                strokeColor: leg.transit.route.background,
+              }
+            : {
+                strokeColor: "#d1d5db",
+              };
+
+          if (leg.walk) {
+            path = leg.walk.path.map(({ latitude, longitude }) => {
+              return { lat: latitude, lng: longitude };
+            });
+          }
+          if (leg.transit) {
+            path = transitPath(
+              leg.origin.location,
+              leg.destination.location,
+              leg.transit.trip.shape
+            );
+          }
+
+          return (
+            <>
+              <Polyline
+                path={path}
+                options={{
+                  strokeWeight: 5,
+                  strokeOpacity: 1,
+                  geodesic: true,
+                  clickable: false,
+                  strokeColor: "#000000",
+                }}
+              />
+              <Polyline
+                path={path}
+                options={{
+                  strokeWeight: 4,
+                  strokeOpacity: 1,
+                  geodesic: true,
+                  clickable: false,
+                  ...options,
+                }}
+              />
+            </>
+          );
+        })}
+      </SimpleMap>
+
       {schedule.legs.map((leg, i) => {
         if (leg.transit) {
           return (
@@ -188,3 +242,85 @@ export const Instructions: React.FC<{
     </Container>
   );
 };
+
+const transitPath = (
+  origin: Position,
+  destination: Position,
+  shape: Position[]
+): any[] => {
+  let i = 0;
+  let minOriginDistance = getDistanceFromLatLonInKm(
+    shape[0].latitude,
+    shape[0].longitude,
+    origin.latitude,
+    origin.longitude
+  );
+
+  let j = 0;
+  let minDestinationDistance = getDistanceFromLatLonInKm(
+    shape[0].latitude,
+    shape[0].longitude,
+    origin.latitude,
+    origin.longitude
+  );
+
+  for (let k = 0; k < shape.length; k += 1) {
+    let location = shape[k];
+    let originDistance = getDistanceFromLatLonInKm(
+      location.latitude,
+      location.longitude,
+      origin.latitude,
+      origin.longitude
+    );
+
+    let destinationDistance = getDistanceFromLatLonInKm(
+      location.latitude,
+      location.longitude,
+      destination.latitude,
+      destination.longitude
+    );
+
+    if (originDistance < minOriginDistance) {
+      minOriginDistance = originDistance;
+      i = k;
+    }
+
+    if (destinationDistance < minDestinationDistance) {
+      minDestinationDistance = destinationDistance;
+      j = k;
+    }
+  }
+
+  let path = [origin, ...shape.slice(i, j + 1), destination];
+  console.log("PATH", path);
+  return path.map((position) => {
+    return {
+      lat: position.latitude,
+      lng: position.longitude,
+    };
+  });
+};
+
+function getDistanceFromLatLonInKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(lat2 - lat1); // deg2rad below
+  var dLon = deg2rad(lon2 - lon1);
+  var a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) *
+      Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg: number) {
+  return deg * (Math.PI / 180);
+}
