@@ -55,7 +55,7 @@ func (c *Client) GetDirections(origin, destination model.Location) (model.Path, 
 	}
 
 	// all points in the directions
-	points := []model.Location{}
+	points := []model.Location{origin}
 
 	for _, route := range directions.Routes {
 		for _, leg := range route.Legs {
@@ -70,6 +70,8 @@ func (c *Client) GetDirections(origin, destination model.Location) (model.Path, 
 			}
 		}
 	}
+
+	points = append(points, destination)
 
 	return model.Path{
 		Path:     points,

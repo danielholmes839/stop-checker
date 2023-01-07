@@ -43,7 +43,15 @@ func PrepareCacheData(
 				panic(err)
 			}
 
-			paths[key1] = path
+			inclusive := []model.Location{}
+			inclusive = append(inclusive, origin.Location)
+			inclusive = append(inclusive, path.Path...)
+			inclusive = append(inclusive, destination.Location)
+
+			paths[key1] = model.Path{
+				Distance: model.Distance(inclusive...),
+				Path:     inclusive,
+			}
 		}
 	}
 
