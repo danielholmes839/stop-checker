@@ -7,6 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/cors"
 	"stop-checker.com/application/resolvers"
 	"stop-checker.com/application/schema"
 	"stop-checker.com/application/services"
@@ -101,11 +102,14 @@ func NewServer(config *ServerConfig, deps *ServerDependencies) *Server {
 }
 
 func (s *Server) Run(port string) {
-	// https://github.com/danielholmes839/stop-checker.com-2/commit/55a7a8a3d7f46111111c1a482e1b504c8e216520#diff-2395afde28d649c46a74a24d548789a3384fbca13e5ef45e71040ac7f8e0c7cd
 	r := chi.NewRouter()
+	r.Use(cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+	}).Handler)
+
 	graphqlHandler := handler.NewDefaultServer(s.schema)
 
-	r.Get("/graphql-playground", playground.Handler("stop-checker.com", "/graphql"))
+	r.Get("/graphql", playground.Handler("stop-checker.com", "/graphql"))
 
 	r.Post("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		graphqlHandler.ServeHTTP(w, r)
