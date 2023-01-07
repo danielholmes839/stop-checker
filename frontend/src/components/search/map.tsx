@@ -41,10 +41,12 @@ export const SimpleMap: React.FC<{ origin: LocationInput }> = ({
   const onMapLoad = useCallback(
     (map: google.maps.Map) => {
       mapRef.current = map;
-      mapRef.current.setCenter({
-        lat: origin.latitude,
-        lng: origin.longitude,
-      });
+      mapRef.current.setCenter(
+        new google.maps.LatLng({
+          lat: origin.latitude,
+          lng: origin.longitude,
+        })
+      );
     },
     [origin.latitude, origin.longitude]
   );
@@ -59,8 +61,8 @@ export const SimpleMap: React.FC<{ origin: LocationInput }> = ({
       onLoad={onMapLoad}
       zoom={12}
       center={{
-        lat: mapRef.current?.getCenter()?.lat() as any,
-        lng: mapRef.current?.getCenter()?.lng() as any,
+        lat: initialLocation.latitude,
+        lng: initialLocation.longitude,
       }}
     >
       {children}

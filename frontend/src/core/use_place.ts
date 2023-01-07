@@ -1,4 +1,3 @@
-import React from "react";
 import { useEffect, useState } from "react";
 import usePlacesAutocompleteService from "react-google-autocomplete/lib/usePlacesAutocompleteService";
 import { useStorage } from "./storage_provider";
@@ -69,23 +68,4 @@ export const usePlace = (placeId: string | null): TravelLocation | null => {
   }, [placeId, service, getFavourite, getRecent]);
 
   return place;
-};
-
-// https://www.30secondsofcode.org/react/s/use-timeout
-const useTimeout = (callback: any, delay: number) => {
-  const savedCallback: any = React.useRef();
-
-  React.useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
-
-  React.useEffect(() => {
-    const tick = () => {
-      savedCallback.current();
-    };
-    if (delay !== null) {
-      let id = setTimeout(tick, delay);
-      return () => clearTimeout(id);
-    }
-  }, [delay]);
 };

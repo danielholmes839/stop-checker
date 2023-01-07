@@ -12,26 +12,34 @@ import {
 } from "components/travel";
 
 const requestCurrentLocation = (setPlaceId: React.Dispatch<string>) => {
-  navigator.geolocation.getCurrentPosition((position) => {
-    let geocoder = new google.maps.Geocoder();
-    geocoder.geocode(
-      {
-        location: new google.maps.LatLng({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        }),
-      },
-      (res) => {
-        if (res === null || res.length === 0) {
-          return;
+  const getPosition = () => {
+    navigator.geolocation.getCurrentPosition((position) => {
+      let geocoder = new google.maps.Geocoder();
+      geocoder.geocode(
+        {
+          location: new google.maps.LatLng({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          }),
+        },
+        (res) => {
+          if (res === null || res.length === 0) {
+            return;
+          }
+          if (res.length > 1) {
+            setPlaceId(res[1].place_id);
+          } else {
+            setPlaceId(res[0].place_id);
+          }
         }
-        if (res.length > 1) {
-          setPlaceId(res[1].place_id);
-        } else {
-          setPlaceId(res[0].place_id);
-        }
-      }
-    );
+      );
+    });
+  };
+
+  navigator.permissions.query({ name: "geolocation" }).then((result) => {
+    if (result.state === "granted" || result.state === "prompt") {
+      getPosition();
+    }
   });
 };
 

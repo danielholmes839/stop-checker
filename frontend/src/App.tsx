@@ -38,14 +38,6 @@ const App: React.FC = () => {
               path="/travel/p/:destinationId/:originId"
               element={<TravelSchedule />}
             />
-            {/* <Route path="/travel/create" element={<ManualOriginInput />} />
-          <Route path="/travel/m/:origin" element={<ManualLegInput />} />
-          <Route
-            path="/travel/p/:origin/:destination"
-            element={<AutomaticOutput />}
-          />
-          <Route path="/travel/r/:encoded" element={<FixedRoute />} />
-           */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route
               path="/dashboard/favourite/add"

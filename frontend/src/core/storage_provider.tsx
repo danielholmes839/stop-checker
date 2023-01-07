@@ -96,7 +96,13 @@ export const StorageProvider: React.FC = ({ children }) => {
       favourites[location.id] === undefined &&
       history[location.id] === undefined
     ) {
-      setHistory(Object.assign({}, { [location.id]: location }, history));
+      let historyCopy: { [key: string]: TravelLocation } = {};
+      Object.keys(history)
+        .slice(0, 7)
+        .forEach((key) => {
+          historyCopy[key] = history[key];
+        });
+      setHistory(Object.assign({}, { [location.id]: location }, historyCopy));
     }
   };
 

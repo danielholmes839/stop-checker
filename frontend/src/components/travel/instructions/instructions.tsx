@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Polyline } from "@react-google-maps/api";
 import {
   ScheduleNodeFragment,
@@ -9,7 +10,6 @@ import { SimpleMap } from "components/search/map";
 import { Container, Sign } from "components/util";
 import { Position, TravelLocation } from "core";
 import { formatDistance, formatTime } from "helper";
-import React, { useState } from "react";
 import { PlaceIcon } from "../place_icon";
 
 const InstructionContainer: React.FC<{ color?: string; dotted?: boolean }> = ({
@@ -122,10 +122,14 @@ const TransitInstructions: React.FC<{
         </button>
         {showStopsBetween && (
           <div className="mt-2 pt-1 border-t">
-            {stopsBetween.map((stoptime) => {
+            {stopsBetween.map((stoptime, i) => {
               return (
-                <p className="text-sm mt-1">
-                  {stoptime.time} - {stoptime.stop.name}
+                <p className="text-sm mt-1" key={stoptime.id}>
+                  {stoptime.time} - {stoptime.stop.name}{" "}
+                  {i === 0 && <span className="font-semibold">(Board)</span>}
+                  {i === stopsBetween.length - 1 && (
+                    <span className="font-semibold">(Exit)</span>
+                  )}
                 </p>
               );
             })}
@@ -136,11 +140,101 @@ const TransitInstructions: React.FC<{
   );
 };
 
+const InstructionsMap: React.FC<{
+  schedule: SchedulePayloadFragment;
+  origin: TravelLocation;
+}> = ({ schedule, origin }) => {
+  return (
+    <SimpleMap origin={origin.position}>
+      {schedule.schedule?.legs.map((leg, i) => {
+        let path: any = [];
+
+        let options = leg.transit
+          ? {
+              strokeColor: leg.transit.route.background,
+            }
+          : {
+              strokeColor: "#d1d5db",
+            };
+
+        if (leg.walk) {
+          path = leg.walk.path.map(({ latitude, longitude }) => {
+            return { lat: latitude, lng: longitude };
+          });
+        }
+        if (leg.transit) {
+          path = transitPath(
+            leg.origin.location,
+            leg.destination.location,
+            leg.transit.trip.shape
+          );
+        }
+
+        return (
+          <div key={i}>
+            <Polyline
+              path={path}
+              options={{
+                strokeWeight: 5,
+                strokeOpacity: 1,
+                geodesic: true,
+                clickable: false,
+                strokeColor: "#000000",
+              }}
+            />
+            <Polyline
+              path={path}
+              options={{
+                strokeWeight: 4,
+                strokeOpacity: 1,
+                geodesic: true,
+                clickable: false,
+                ...options,
+              }}
+            />
+          </div>
+        );
+      })}
+    </SimpleMap>
+  );
+};
+
+export const EndpointLocationDisplay: React.FC<{
+  travelLocation: TravelLocation | null;
+  endpoint: string;
+}> = ({ travelLocation, endpoint }) => {
+  return (
+    <div className="px-3 py-2 bg-gray-50 rounded border-b">
+      <div className="inline-block align-middle text-4xl font-bold mr-2">
+        <PlaceIcon placeId={travelLocation ? travelLocation.id : null} />
+      </div>
+      <div
+        className="pl-2 border-l border-gray-300 inline-block align-middle"
+        style={{ maxWidth: "90%" }}
+      >
+        {travelLocation ? (
+          <div>
+            <h1 className="text-sm font-bold text-gray-800">{endpoint}</h1>
+            <h2>{travelLocation.title}</h2>
+            <span className="text-xs">{travelLocation.description}</span>
+          </div>
+        ) : (
+          <div>
+            <h2>Not Selected</h2>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const Instructions: React.FC<{
   payload: SchedulePayloadFragment;
   origin: TravelLocation;
   destination: TravelLocation;
 }> = ({ payload, origin, destination }) => {
+  let [openMap, setOpenMap] = useState(false);
+
   if (payload.error || !payload.schedule) {
     return <>{payload.error}</>;
   }
@@ -148,75 +242,31 @@ export const Instructions: React.FC<{
   let { schedule } = payload;
 
   return (
-    <Container>
-      <h1 className="text-3xl font-bold font mt-3">Travel Schedule</h1>
-      <h2 className="text-xl mt-2">
-        <span className="inline-block mt-1">
-          <PlaceIcon placeId={origin.id} />
-          <span className="align-middle ml-1 mr-2">{origin.title}</span>
-        </span>
-        <span className="inline-block mt-1">
-          <PlaceIcon placeId={destination.id} />
-          <span className="align-middle ml-1">{destination.title}</span>
-        </span>
-      </h2>
-      <h3 className="mt-2 text-sm font-semibold text-gray-800">
-        Leave by {formatTime(schedule.origin.arrival)} - Arrive at{" "}
+    <div>
+      <h3 className="text-sm font-semibold text-gray-800">
+        Leave by {formatTime(schedule.origin.arrival)}. Arrive at{" "}
         {formatTime(schedule.destination.arrival)} ({schedule.duration} min)
       </h3>
-
-      <SimpleMap origin={origin.position}>
-        {schedule.legs.map((leg, i) => {
-          let path: any = [];
-
-          let options = leg.transit
-            ? {
-                strokeColor: leg.transit.route.background,
-              }
-            : {
-                strokeColor: "#d1d5db",
-              };
-
-          if (leg.walk) {
-            path = leg.walk.path.map(({ latitude, longitude }) => {
-              return { lat: latitude, lng: longitude };
-            });
-          }
-          if (leg.transit) {
-            path = transitPath(
-              leg.origin.location,
-              leg.destination.location,
-              leg.transit.trip.shape
-            );
-          }
-
-          return (
-            <>
-              <Polyline
-                path={path}
-                options={{
-                  strokeWeight: 5,
-                  strokeOpacity: 1,
-                  geodesic: true,
-                  clickable: false,
-                  strokeColor: "#000000",
-                }}
-              />
-              <Polyline
-                path={path}
-                options={{
-                  strokeWeight: 4,
-                  strokeOpacity: 1,
-                  geodesic: true,
-                  clickable: false,
-                  ...options,
-                }}
-              />
-            </>
-          );
-        })}
-      </SimpleMap>
-
+      <div className="mt-2">
+        {openMap ? (
+          <>
+            <button
+              className="text-primary-700 bg-primary-100 hover:bg-primary-200 px-2 mb-2 rounded text-sm"
+              onClick={() => setOpenMap(!openMap)}
+            >
+              Hide Map
+            </button>
+            <InstructionsMap origin={origin} schedule={payload} />
+          </>
+        ) : (
+          <button
+            className="text-primary-700 bg-primary-100 hover:bg-primary-200 px-2 rounded text-sm"
+            onClick={() => setOpenMap(!openMap)}
+          >
+            Open Map
+          </button>
+        )}
+      </div>
       {schedule.legs.map((leg, i) => {
         if (leg.transit) {
           return (
@@ -239,7 +289,8 @@ export const Instructions: React.FC<{
           />
         );
       })}
-    </Container>
+      <div className="py-5"></div>
+    </div>
   );
 };
 
@@ -260,8 +311,8 @@ const transitPath = (
   let minDestinationDistance = getDistanceFromLatLonInKm(
     shape[0].latitude,
     shape[0].longitude,
-    origin.latitude,
-    origin.longitude
+    destination.latitude,
+    destination.longitude
   );
 
   for (let k = 0; k < shape.length; k += 1) {
@@ -292,7 +343,7 @@ const transitPath = (
   }
 
   let path = [origin, ...shape.slice(i, j + 1), destination];
-  console.log("PATH", path);
+
   return path.map((position) => {
     return {
       lat: position.latitude,
