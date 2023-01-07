@@ -28,7 +28,7 @@ func (t *TravelSchedule) Origin() TravelScheduleNode {
 }
 
 func (t *TravelSchedule) Destination() TravelScheduleNode {
-	return t.Legs[len(t.Legs)-1].Origin
+	return t.Legs[len(t.Legs)-1].Destination
 }
 
 func (t *TravelSchedule) Duration() time.Duration {
