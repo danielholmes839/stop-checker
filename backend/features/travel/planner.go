@@ -101,6 +101,10 @@ func (p *Planner) explore(t time.Time, initial, target model.Location, mode Mode
 	// initial node
 	initialNode := createInitialNode(t, initial)
 
+	if len(p.stopLocationIndex.Query(target, MAX_WALK_TARGET)) == 0 {
+		return nil, errors.New("no solution")
+	}
+
 	// priority queue
 	pq := algorithms.NewPriorityQueue(func(a, b *node) bool {
 		return a.Weight(target, t, mode) < b.Weight(target, t, mode)
