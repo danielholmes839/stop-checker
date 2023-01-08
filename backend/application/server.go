@@ -35,8 +35,8 @@ type ServerDependencies struct {
 }
 
 type ServerConfig struct {
-	CORS       bool
-	Playground bool
+	EnableCORS       bool
+	EnablePlayground bool
 }
 
 type Server struct {
@@ -103,17 +103,32 @@ func NewServer(config *ServerConfig, deps *ServerDependencies) *Server {
 
 func (s *Server) Run(port string) {
 	r := chi.NewRouter()
-	r.Use(cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-	}).Handler)
+
+	r.Use(s.CORSMiddleware())
 
 	graphqlHandler := handler.NewDefaultServer(s.schema)
 
-	r.Get("/graphql", playground.Handler("stop-checker.com", "/graphql"))
+	if s.config.EnablePlayground {
+		r.Get("/graphql", playground.Handler("stop-checker.com", "/graphql"))
+	}
 
 	r.Post("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		graphqlHandler.ServeHTTP(w, r)
 	})
 
 	http.ListenAndServe(port, r)
+}
+
+func (s *Server) CORSMiddleware() func(h http.Handler) http.Handler {
+	if s.config.EnableCORS {
+		// allow all origins
+		return cors.New(cors.Options{
+			AllowedOrigins: []string{"*"},
+		}).Handler
+	}
+
+	// allow only stop-checker.com
+	return cors.New(cors.Options{
+		AllowedOrigins: []string{"stop-checker.com", "www.stop-checker.com"},
+	}).Handler
 }

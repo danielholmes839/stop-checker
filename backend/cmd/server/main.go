@@ -57,8 +57,8 @@ func main() {
 
 	server := application.NewServer(
 		&application.ServerConfig{
-			CORS:       config.SERVER_ENABLE_CORS,
-			Playground: config.SERVER_ENABLE_PLAYGROUND,
+			EnableCORS:       config.SERVER_ENABLE_CORS,
+			EnablePlayground: config.SERVER_ENABLE_PLAYGROUND,
 		},
 		&application.ServerDependencies{
 			Stops:              database.Stops,
