@@ -10,7 +10,8 @@ import { Sign, Card } from "components/util";
 import { useDebounce } from "use-debounce";
 
 import { SearchMap } from "./map";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { usePlace } from "core";
 
 type Config = {
   enableMap: boolean;
@@ -145,6 +146,8 @@ export const Search: React.FC<{ config: Config }> = ({ config }) => {
   const [selected, setSelected] = useState<Stop | null>(null);
   const [searchText, setSearchText] = useState("");
   const [searchTextDebounced] = useDebounce(searchText, 200);
+  const { placeId } = useParams();
+  const place = usePlace(placeId ? placeId : null);
 
   const { data } = useTextSearchQuery({
     variables: {
@@ -167,7 +170,11 @@ export const Search: React.FC<{ config: Config }> = ({ config }) => {
       />
       {enableMap && (
         <>
-          <SearchMap selected={selected} setSelected={setSelected} />
+          <SearchMap
+            selected={selected}
+            setSelected={setSelected}
+            origin={place ? place.position : null}
+          />
           {selected && <SelectedStopPreview config={config} id={selected.id} />}
         </>
       )}

@@ -42,7 +42,7 @@ export const TravelLocationDisplay: React.FC<{
 export const TravelDestinationInput: React.FC = () => {
   const nav = useNavigate();
   const onTravelLocationChange = (location: TravelLocation) => {
-    nav(`/travel/p/${location.id}`);
+    nav(`/p/${location.id}`);
   };
 
   return (
@@ -70,7 +70,7 @@ export const TravelOriginInput: React.FC = () => {
   const destination = usePlace(destinationId ? destinationId : null);
 
   const onTravelLocationChange = (location: TravelLocation) => {
-    nav(`/travel/p/${destinationId}/${location.id}`);
+    nav(`/p/${destinationId}/${location.id}`);
   };
 
   if (destination === null) {
@@ -124,11 +124,7 @@ export const TravelScheduleQuery: React.FC<{
 }> = ({ origin, destination }) => {
   const [mode, setMode] = useState(ScheduleMode.DepartAt);
   const [date, setDate] = useState<Date>(new Date());
-  const {
-    data,
-    fetching,
-    error: err,
-  } = useTravelPlannerQuery({
+  const { data, error: err } = useTravelPlannerQuery({
     variables: {
       origin: origin.position,
       destination: destination.position,
@@ -216,7 +212,6 @@ export const TravelScheduleQuery: React.FC<{
       <div className="mt-2 pt-2 border-t">
         {data && (
           <>
-            <h1 className="text-2xl mt-2 mb-2">Instructions</h1>
             <Instructions
               origin={origin}
               destination={destination}

@@ -1,6 +1,10 @@
 import { useStopRouteQuery } from "client/types";
 import { Container, Sign } from "components/util";
-import { currentDate, formatDistance } from "helper";
+import {
+  currentDate,
+  formatDistance,
+  formatTime,
+} from "helper";
 import React from "react";
 import { useParams } from "react-router-dom";
 
@@ -55,7 +59,9 @@ export const StopRoutePage: React.FC = () => {
                     {bus.lastUpdatedMessage}{" "}
                     {bus.distance ? `(${formatDistance(bus.distance)})` : ""}
                   </h2>
-                  <p className="text-sm">Estimated arrival {bus.arrival}</p>
+                  <p className="text-sm">
+                    Estimated arrival {formatTime(bus.arrival)}
+                  </p>
                 </div>
               );
             })}

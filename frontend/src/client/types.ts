@@ -21,10 +21,10 @@ export type Scalars = {
 
 export type Bus = {
   __typename?: 'Bus';
-  arrival: Scalars['Time'];
+  arrival: Scalars['Datetime'];
   distance?: Maybe<Scalars['Float']>;
   headsign: Scalars['String'];
-  lastUpdated: Scalars['Time'];
+  lastUpdated: Scalars['Datetime'];
   lastUpdatedMessage: Scalars['String'];
   lastUpdatedMinutes: Scalars['Int'];
   location?: Maybe<Location>;
@@ -343,6 +343,16 @@ export type StopRouteQueryVariables = Exact<{
 export type StopRouteQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', headsign: string, liveMap?: string | null, stop: { __typename?: 'Stop', id: string, name: string, code: string }, route: { __typename?: 'Route', id: string, name: string, text: any, background: any }, schedule: { __typename?: 'Schedule', today: Array<{ __typename?: 'ScheduleResult', stoptime: { __typename?: 'StopTime', id: string, time: any } }>, tomorrow: Array<{ __typename?: 'ScheduleResult', stoptime: { __typename?: 'StopTime', id: string, time: any } }>, next: Array<{ __typename?: 'ScheduleResult', stoptime: { __typename?: 'StopTime', id: string, time: any, overflow: boolean, trip: { __typename?: 'Trip', service: { __typename?: 'Service', saturday: boolean, sunday: boolean, monday: boolean, start: any, end: any } } } }> }, liveBuses: Array<{ __typename?: 'Bus', headsign: string, arrival: any, lastUpdated: any, lastUpdatedMessage: string, lastUpdatedMinutes: number, distance?: number | null, location?: { __typename?: 'Location', latitude: number, longitude: number } | null }> } | null };
 
 export type LiveDataFragment = { __typename?: 'StopRoute', liveMap?: string | null, liveBuses: Array<{ __typename?: 'Bus', headsign: string, arrival: any, lastUpdated: any, lastUpdatedMessage: string, lastUpdatedMinutes: number, distance?: number | null, location?: { __typename?: 'Location', latitude: number, longitude: number } | null }> };
+
+export type StopRouteDetailsQueryVariables = Exact<{
+  originId: Scalars['ID'];
+  destinationId: Scalars['ID'];
+  routeId: Scalars['ID'];
+  after?: InputMaybe<Scalars['Datetime']>;
+}>;
+
+
+export type StopRouteDetailsQuery = { __typename?: 'Query', stopRoute?: { __typename?: 'StopRoute', scheduleReaches?: { __typename?: 'Schedule', next: Array<{ __typename?: 'ScheduleResult', datetime: any }> } | null, liveBuses: Array<{ __typename?: 'Bus', arrival: any, distance?: number | null, lastUpdatedMinutes: number, lastUpdated: any }> } | null };
 
 export type TextSearchQueryVariables = Exact<{
   text: Scalars['String'];
@@ -692,6 +702,27 @@ export const StopRouteDocument = gql`
 
 export function useStopRouteQuery(options: Omit<Urql.UseQueryArgs<StopRouteQueryVariables>, 'query'>) {
   return Urql.useQuery<StopRouteQuery, StopRouteQueryVariables>({ query: StopRouteDocument, ...options });
+};
+export const StopRouteDetailsDocument = gql`
+    query StopRouteDetails($originId: ID!, $destinationId: ID!, $routeId: ID!, $after: Datetime) {
+  stopRoute(stopId: $originId, routeId: $routeId) {
+    scheduleReaches(destination: $destinationId) {
+      next(after: $after, limit: 3) {
+        datetime
+      }
+    }
+    liveBuses {
+      arrival
+      distance
+      lastUpdatedMinutes
+      lastUpdated
+    }
+  }
+}
+    `;
+
+export function useStopRouteDetailsQuery(options: Omit<Urql.UseQueryArgs<StopRouteDetailsQueryVariables>, 'query'>) {
+  return Urql.useQuery<StopRouteDetailsQuery, StopRouteDetailsQueryVariables>({ query: StopRouteDetailsDocument, ...options });
 };
 export const TextSearchDocument = gql`
     query TextSearch($text: String!, $page: PageInput!) {

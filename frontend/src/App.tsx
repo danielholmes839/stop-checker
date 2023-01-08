@@ -6,6 +6,7 @@ import {
   Dashboard,
   DashboardAddFavourite,
   DashboardEditFavourite,
+  Nearby,
   SearchPage,
   StopPage,
   StopRoutePage,
@@ -30,12 +31,9 @@ const App: React.FC = () => {
               element={<StopRoutePage />}
             />
             <Route path="/travel" element={<TravelDestinationInput />} />
+            <Route path="/p/:destinationId" element={<TravelOriginInput />} />
             <Route
-              path="/travel/p/:destinationId"
-              element={<TravelOriginInput />}
-            />
-            <Route
-              path="/travel/p/:destinationId/:originId"
+              path="/p/:destinationId/:originId"
               element={<TravelSchedule />}
             />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -47,6 +45,8 @@ const App: React.FC = () => {
               path="/dashboard/favourite/:id"
               element={<DashboardEditFavourite />}
             />
+            <Route path="/search/nearby" element={<Nearby />} />
+            <Route path="/search/:placeId" element={<SearchPage />} />
           </Routes>
         </StorageProvider>
       </BrowserRouter>

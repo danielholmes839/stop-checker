@@ -5,12 +5,12 @@ import {
   SchedulePayloadFragment,
   ScheduleTransitFragment,
   ScheduleWalkFragment,
+  useStopRouteDetailsQuery,
 } from "client/types";
 import { SimpleMap } from "components/search/map";
-import { Container, Sign } from "components/util";
+import { Sign } from "components/util";
 import { Position, TravelLocation } from "core";
-import { formatDistance, formatTime } from "helper";
-import { PlaceIcon } from "../place_icon";
+import { formatDistance, formatDistanceShort, formatTime } from "helper";
 
 const InstructionContainer: React.FC<{ color?: string; dotted?: boolean }> = ({
   children,
@@ -70,12 +70,102 @@ const WalkInstructions: React.FC<{
   );
 };
 
+const TransitExtraInstruction: React.FC<{
+  originId: string;
+  destinationId: string;
+  routeId: string;
+  after: any;
+}> = ({ originId, destinationId, routeId, after }) => {
+  const [{ data, fetching }, refetch] = useStopRouteDetailsQuery({
+    variables: {
+      routeId: routeId,
+      originId: originId,
+      destinationId: destinationId,
+      after: after,
+    },
+    requestPolicy: "network-only",
+  });
+
+  if (fetching) {
+    return <>Loading</>;
+  }
+
+  if (!data) {
+    return <></>;
+  }
+
+  if (!data.stopRoute) {
+    return <></>;
+  }
+
+  let schedule = data.stopRoute.scheduleReaches;
+  let buses = data.stopRoute.liveBuses.filter((bus) => {
+    let busArrival = new Date(bus.arrival);
+    let busArrivalLowerBound = new Date(new Date(after).valueOf() - 600_000); // 10 minutes
+    let busArrivalUpperBound = new Date(new Date(after).valueOf() + 14_400_000); // 4 hours
+    return (
+      busArrival >= busArrivalLowerBound && busArrival <= busArrivalUpperBound
+    );
+  });
+
+  return (
+    <div>
+      {schedule && (
+        <>
+          <h1 className="mt-1 font-semibold text-sm">Schedule</h1>
+          <p className="text-sm">
+            {schedule.next.map((res, i) => (
+              <span key={i} className="mr-2">
+                {formatTime(res.datetime)}
+              </span>
+            ))}
+          </p>
+        </>
+      )}
+
+      <h1 className="mt-1 font-semibold text-sm">Live Data</h1>
+      <p className="text-sm">
+        {buses.length > 0 ? (
+          buses.map((bus, i) => {
+            return (
+              <span key={i} className="mr-2">
+                {formatTime(bus.arrival)}{" "}
+                {bus.distance && (
+                  <span>({formatDistanceShort(bus.distance)})</span>
+                )}
+              </span>
+            );
+          })
+        ) : (
+          <span>Not Available</span>
+        )}
+      </p>
+      <button
+        className="text-primary-700 bg-primary-100 hover:bg-primary-200 px-2 mt-2 rounded text-sm"
+        onClick={() =>
+          refetch({
+            routeId: routeId,
+            originId: originId,
+            destinationId: destinationId,
+            after: after,
+          })
+        }
+        disabled={fetching}
+      >
+        Refresh
+      </button>
+    </div>
+  );
+};
+
 const TransitInstructions: React.FC<{
   origin: ScheduleNodeFragment;
   destination: ScheduleNodeFragment;
   transit: ScheduleTransitFragment;
 }> = ({ origin, destination, transit }) => {
   const [showStopsBetween, setShowStopsBetween] = useState(false);
+  const [showStopRouteDetails, setShowStopRouteDetails] = useState(false);
+
   if (!origin.stop || !destination.stop) {
     return <></>;
   }
@@ -103,6 +193,22 @@ const TransitInstructions: React.FC<{
           Scheduled to depart at {formatTime(transit.departure)}.{" "}
           {transit.wait > 0 && <span>Wait ({transit.wait} min)</span>}
         </InstructionText>
+        <button
+          className="text-primary-500 text-xs mt-1"
+          onClick={() => setShowStopRouteDetails(!showStopRouteDetails)}
+        >
+          {showStopRouteDetails ? "Less" : "More"}
+        </button>
+        {showStopRouteDetails && (
+          <div className="mt-2 pt-1 border-t">
+            <TransitExtraInstruction
+              originId={origin.stop.id}
+              destinationId={destination.stop.id}
+              routeId={transit.route.id}
+              after={origin.arrival}
+            />
+          </div>
+        )}
       </InstructionContainer>
       <InstructionContainer color={transit.route.background} dotted={false}>
         <InstructionTitle>
@@ -126,10 +232,8 @@ const TransitInstructions: React.FC<{
               return (
                 <p className="text-sm mt-1" key={stoptime.id}>
                   {stoptime.time} - {stoptime.stop.name}{" "}
-                  {i === 0 && <span className="font-semibold">(Board)</span>}
-                  {i === stopsBetween.length - 1 && (
-                    <span className="font-semibold">(Exit)</span>
-                  )}
+                  {i === 0 && <span>(Board)</span>}
+                  {i === stopsBetween.length - 1 && <span>(Exit)</span>}
                 </p>
               );
             })}
@@ -199,35 +303,6 @@ const InstructionsMap: React.FC<{
   );
 };
 
-export const EndpointLocationDisplay: React.FC<{
-  travelLocation: TravelLocation | null;
-  endpoint: string;
-}> = ({ travelLocation, endpoint }) => {
-  return (
-    <div className="px-3 py-2 bg-gray-50 rounded border-b">
-      <div className="inline-block align-middle text-4xl font-bold mr-2">
-        <PlaceIcon placeId={travelLocation ? travelLocation.id : null} />
-      </div>
-      <div
-        className="pl-2 border-l border-gray-300 inline-block align-middle"
-        style={{ maxWidth: "90%" }}
-      >
-        {travelLocation ? (
-          <div>
-            <h1 className="text-sm font-bold text-gray-800">{endpoint}</h1>
-            <h2>{travelLocation.title}</h2>
-            <span className="text-xs">{travelLocation.description}</span>
-          </div>
-        ) : (
-          <div>
-            <h2>Not Selected</h2>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export const Instructions: React.FC<{
   payload: SchedulePayloadFragment;
   origin: TravelLocation;
@@ -236,14 +311,21 @@ export const Instructions: React.FC<{
   let [openMap, setOpenMap] = useState(false);
 
   if (payload.error || !payload.schedule) {
-    return <>{payload.error}</>;
+    return (
+      <div className="bg-red-200 text-red-800 p-3 rounded font-medium">
+        Sorry, we couldn't create a travel plan for this request. Please make
+        sure there's an OC Transpo bus stop within at least 1km of the origin
+        and destination.
+      </div>
+    );
   }
 
   let { schedule } = payload;
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-gray-800">
+      <h2 className="text-2xl">Instructions</h2>
+      <h3 className="mt-1 text-sm font-semibold text-gray-800">
         Leave by {formatTime(schedule.origin.arrival)}. Arrive at{" "}
         {formatTime(schedule.destination.arrival)} ({schedule.duration} min)
       </h3>

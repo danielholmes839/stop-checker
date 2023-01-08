@@ -28,7 +28,7 @@ export const Favourite: React.FC<{
           Directions
         </button>
         <button
-          className="text-primary-700 bg-primary-100 hover:bg-primary-200 px-2 rounded text-sm mr-2"
+          className="bg-gray-200 border hover:bg-gray-300 px-2 rounded text-sm mr-2"
           onClick={() => nav(`/dashboard/favourite/${favourite.id}`)}
         >
           Edit

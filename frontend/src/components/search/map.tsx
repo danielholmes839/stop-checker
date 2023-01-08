@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from "react";
 import { Circle, GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { LocationInput, Stop, useLocationSearchQuery } from "client/types";
+import { Position } from "core";
 
 const mapOptions = {
   gestureHandling: "greedy",
@@ -73,23 +74,36 @@ export const SimpleMap: React.FC<{ origin: LocationInput }> = ({
 export const SearchMap: React.FC<{
   selected: Stop | null;
   setSelected: React.Dispatch<React.SetStateAction<Stop | null>>;
-}> = ({ selected, setSelected }) => {
+  origin: Position | null;
+}> = ({ selected, setSelected, origin }) => {
   // load google maps
 
   // with the initial location / center  as downtown ottawa
-  const [location, setLocation] = useState<LocationInput>(initialLocation);
+  const [location, setLocation] = useState<LocationInput>(
+    origin ? origin : initialLocation
+  );
 
   // map element ref
   const mapRef = useRef<google.maps.Map>();
 
   // set map element ref
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-    mapRef.current.setCenter({
-      lat: 45.4211,
-      lng: -75.6903,
-    });
-  }, []);
+  const onMapLoad = useCallback(
+    (map: google.maps.Map) => {
+      mapRef.current = map;
+      mapRef.current.setCenter(
+        origin
+          ? {
+              lat: origin.latitude,
+              lng: origin.longitude,
+            }
+          : {
+              lat: 45.4211,
+              lng: -75.6903,
+            }
+      );
+    },
+    [origin]
+  );
 
   const onMapDragEnd = useCallback(() => {
     if (!mapRef.current) {

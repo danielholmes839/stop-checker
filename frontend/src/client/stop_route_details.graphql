@@ -1,0 +1,20 @@
+query StopRouteDetails(
+  $originId: ID!
+  $destinationId: ID!
+  $routeId: ID!
+  $after: Datetime
+) {
+  stopRoute(stopId: $originId, routeId: $routeId) {
+    scheduleReaches(destination: $destinationId) {
+      next(after: $after, limit: 3) {
+        datetime
+      }
+    }
+    liveBuses {
+      arrival
+      distance
+      lastUpdatedMinutes
+      lastUpdated
+    }
+  }
+}

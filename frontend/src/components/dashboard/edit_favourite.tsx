@@ -54,7 +54,7 @@ export const DashboardEditFavourite: React.FC = () => {
       <div>
         <h2 className="font-semibold">Name</h2>
         <input
-          className="mt-1 bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-sm"
+          className="bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-sm"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
@@ -62,7 +62,7 @@ export const DashboardEditFavourite: React.FC = () => {
       <div className="mt-3">
         <h2 className="font-semibold">Description</h2>
         <input
-          className="mt-1 bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-sm"
+          className="bg-gray-50 border-b rounded w-full p-3 focus:outline-none focus:border-b focus:border-gray-200 focus:border-0 focus:shadow text-sm"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
