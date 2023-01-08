@@ -35,7 +35,7 @@ export const History: React.FC<{
             nav(`/dashboard/favourite/${recent.id}`);
           }}
         >
-          <span className="font-semibold">+</span>Favourite
+          Favourite
         </button>
       </div>
     </div>
