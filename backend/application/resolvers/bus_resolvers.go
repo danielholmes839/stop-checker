@@ -11,15 +11,19 @@ import (
 type BusResolvers struct {
 }
 
+func (r *BusResolvers) Arrival(ctx context.Context, obj *model.Bus) (time.Time, error) {
+	return obj.Arrival, nil
+}
+
 func (r *BusResolvers) LastUpdatedMinutes(ctx context.Context, obj *model.Bus) (int, error) {
-	now := model.NewTimeFromDateTime(time.Now().Local())
-	diff := int(model.TimeDiff(obj.LastUpdated, now).Minutes())
+	now := time.Now().Local()
+	diff := int(now.Sub(obj.LastUpdated).Minutes())
 	return diff, nil
 }
 
 func (r *BusResolvers) LastUpdatedMessage(ctx context.Context, obj *model.Bus) (string, error) {
-	now := model.NewTimeFromDateTime(time.Now().Local())
-	diff := int(model.TimeDiff(obj.LastUpdated, now).Minutes())
+	now := time.Now().Local()
+	diff := int(now.Sub(obj.LastUpdated).Minutes())
 	if diff <= 1 {
 		return "Updated just now", nil
 	}

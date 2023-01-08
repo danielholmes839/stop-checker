@@ -1082,8 +1082,8 @@ type Stop {
 
 type Bus {
   headsign: String!
-  arrival: Time!
-  lastUpdated: Time!
+  arrival: Datetime!
+  lastUpdated: Datetime!
   lastUpdatedMinutes: Int!
   lastUpdatedMessage: String!
   distance: Float
@@ -1662,9 +1662,9 @@ func (ec *executionContext) _Bus_arrival(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalNTime2stopᚑcheckerᚗcomᚋdbᚋmodelᚐTime(ctx, field.Selections, res)
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bus_arrival(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1674,7 +1674,7 @@ func (ec *executionContext) fieldContext_Bus_arrival(ctx context.Context, field 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
+			return nil, errors.New("field of type Datetime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1706,9 +1706,9 @@ func (ec *executionContext) _Bus_lastUpdated(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalNTime2stopᚑcheckerᚗcomᚋdbᚋmodelᚐTime(ctx, field.Selections, res)
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bus_lastUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1718,7 +1718,7 @@ func (ec *executionContext) fieldContext_Bus_lastUpdated(ctx context.Context, fi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
+			return nil, errors.New("field of type Datetime does not have child fields")
 		},
 	}
 	return fc, nil

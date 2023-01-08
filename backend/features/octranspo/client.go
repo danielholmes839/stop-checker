@@ -153,7 +153,7 @@ func parseTripArrival(trip responseTrip) (time.Time, time.Time) {
 	arrival := now.Add(time.Minute * time.Duration(duration))
 	lastUpdated := now.Add(-time.Minute * time.Duration(age))
 
-	return arrival, lastUpdated
+	return arrival.Add(time.Minute), lastUpdated
 }
 
 func parseTrip(trip responseTrip, destination model.Stop) model.Bus {
@@ -163,8 +163,8 @@ func parseTrip(trip responseTrip, destination model.Stop) model.Bus {
 	return model.Bus{
 		Destination: destination,
 		Headsign:    trip.Destination,
-		Arrival:     model.NewTimeFromDateTime(arrival),
-		LastUpdated: model.NewTimeFromDateTime(lastUpdated),
+		Arrival:     arrival,
+		LastUpdated: lastUpdated,
 		Location:    loc,
 	}
 }

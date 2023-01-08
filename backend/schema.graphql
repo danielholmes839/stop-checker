@@ -28,8 +28,8 @@ type Stop {
 
 type Bus {
   headsign: String!
-  arrival: Time!
-  lastUpdated: Time!
+  arrival: Datetime!
+  lastUpdated: Datetime!
   lastUpdatedMinutes: Int!
   lastUpdatedMessage: String!
   distance: Float
