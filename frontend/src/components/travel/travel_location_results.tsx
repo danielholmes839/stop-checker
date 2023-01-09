@@ -1,5 +1,53 @@
 import { PlacePrediction, useStorage } from "core";
 import { SearchLocationIcon } from "components/travel";
+import { useState } from "react";
+
+const requestCurrentLocation = (
+  setPlaceId: React.Dispatch<string>,
+  setCurrentLocationError: React.Dispatch<string | null>
+) => {
+  const getCurrentLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        let geocoder = new google.maps.Geocoder();
+        geocoder.geocode(
+          {
+            location: new google.maps.LatLng({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            }),
+          },
+          (res) => {
+            if (res === null || res.length === 0) {
+              setCurrentLocationError(
+                "Sorry, we couldn't find the address of your current location. Please enter your location manually."
+              );
+              return;
+            }
+            if (res.length > 1) {
+              setPlaceId(res[1].place_id);
+            } else {
+              setPlaceId(res[0].place_id);
+            }
+          }
+        );
+      },
+      (error) => {
+        setCurrentLocationError(`${error.message} (${error.code})`);
+      }
+    );
+  };
+
+  navigator.permissions.query({ name: "geolocation" }).then((res) => {
+    if (res.state === "denied") {
+      setCurrentLocationError(
+        "Sorry, we could not access your current location. Please enter your location manually."
+      );
+      return;
+    }
+    getCurrentLocation();
+  });
+};
 
 export const TravelLocationResults: React.FC<{
   setPlaceId: React.Dispatch<string>;
@@ -54,12 +102,18 @@ export const TravelLocationResult: React.FC<{
 };
 
 export const TravelCurrentLocationOption: React.FC<{
-  onClick: () => void;
-}> = ({ onClick }) => {
+  setPlaceId: React.Dispatch<React.SetStateAction<string | null>>;
+}> = ({ setPlaceId }) => {
+  const [currentLocationError, setCurrentLocationError] = useState<
+    string | null
+  >(null);
+
   return (
     <div
       className="px-3 py-2 mt-2 bg-gray-50 rounded border-b hover:bg-primary-100 cursor-pointer"
-      onClick={onClick}
+      onClick={() => {
+        requestCurrentLocation(setPlaceId, setCurrentLocationError);
+      }}
     >
       <div className="inline-block align-middle">
         <svg
@@ -79,7 +133,14 @@ export const TravelCurrentLocationOption: React.FC<{
         className="pl-2 inline-block align-middle"
         style={{ maxWidth: "90%" }}
       >
-        <span>Current Location</span>
+        <div>
+          <span>Current Location</span>
+        </div>
+        {currentLocationError && (
+          <div>
+            <span className="text-sm text-red-600">{currentLocationError}</span>
+          </div>
+        )}
       </div>
     </div>
   );
