@@ -6,41 +6,35 @@ const requestCurrentLocation = (
   setPlaceId: React.Dispatch<string>,
   setCurrentLocationError: React.Dispatch<string | null>
 ) => {
-  const getCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        let geocoder = new google.maps.Geocoder();
-        geocoder.geocode(
-          {
-            location: new google.maps.LatLng({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            }),
-          },
-          (res) => {
-            if (res === null || res.length === 0) {
-              setCurrentLocationError(
-                "Sorry, we couldn't find the address of your current location. Please enter your location manually."
-              );
-              return;
-            }
-            if (res.length > 1) {
-              setPlaceId(res[1].place_id);
-            } else {
-              setPlaceId(res[0].place_id);
-            }
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      let geocoder = new google.maps.Geocoder();
+      geocoder.geocode(
+        {
+          location: new google.maps.LatLng({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          }),
+        },
+        (res) => {
+          if (res === null || res.length === 0) {
+            setCurrentLocationError(
+              "Sorry, we couldn't find the address of your current location. Please enter your location manually."
+            );
+            return;
           }
-        );
-      },
-      (error) => {
-        setCurrentLocationError(`${error.message} (${error.code})`);
-      }
-    );
-
-    setCurrentLocationError("this is a test");
-  };
-
-  getCurrentLocation();
+          if (res.length > 1) {
+            setPlaceId(res[1].place_id);
+          } else {
+            setPlaceId(res[0].place_id);
+          }
+        }
+      );
+    },
+    (error) => {
+      setCurrentLocationError(`${error.message} (${error.code})`);
+    }
+  );
 };
 
 export const TravelLocationResults: React.FC<{
