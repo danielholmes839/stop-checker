@@ -39,12 +39,12 @@ const requestCurrentLocation = (
   };
 
   navigator.permissions.query({ name: "geolocation" }).then((res) => {
-    if (res.state === "denied") {
-      setCurrentLocationError(
-        "Sorry, we could not access your current location. Please enter your location manually."
-      );
-      return;
-    }
+    // if (res.state === "denied") {
+    //   setCurrentLocationError(
+    //     "Sorry, we could not access your current location. Please enter your location manually."
+    //   );
+    //   return;
+    // }
     getCurrentLocation();
   });
 };
