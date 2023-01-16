@@ -1,0 +1,19 @@
+[octranspo]
+endpoint = "https://api.octranspo1.com/v2.0/GetNextTripsForStopAllRoutes"
+api_key = ""
+app_id = ""
+
+[google_cloud]
+api_key = ""
+
+[server]
+port = ":3001"          # format ":port" or "0.0.0.0:port"
+cors = false            # true allows only stop-checker.com (prod). false allows all origins (dev). 
+playground = true       # true enables the GraphQL playground 
+
+[data]
+gtfs = "./data"
+directions = "./data/300m-directions.json" # generate using: go run cmd/cache/prepare.go
+
+[osrm]
+endpoint = "http://localhost:5000" # change to "http://osrm:5000" when running the server with Docker
