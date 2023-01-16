@@ -3,6 +3,10 @@
 stop-checker.com provides a travel planner, bus schedules, and real-time bus GPS positions for Ottawa's public transit system.
 The backend is a GraphQL API written in Go. The frontend was created using React and Typescript.
 
+## GraphQL Schema
+
+The full GraphQL schema can be found [here](https://github.com/danielholmes839/stop-checker.com-2/blob/main/backend/schema.graphql).
+
 ## Travel Planner
 
 **https://www.stop-checker.com/travel**
