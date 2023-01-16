@@ -7,7 +7,7 @@ app_id = ""
 api_key = ""
 
 [server]
-port = ":3001"          # format ":port" or "0.0.0.0:port"
+port = ":3000"          # format ":port" or "0.0.0.0:port"
 cors = false            # true allows only stop-checker.com (prod). false allows all origins (dev). 
 playground = true       # true enables the GraphQL playground 
 
