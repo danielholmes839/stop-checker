@@ -27,6 +27,8 @@ The travel planner algorithm uses A\* search with the following heuristics:
 
 3. The distance of each node to the destination. Harversine distance is used to calculate the distance between two coordinates. This heuristic is meant to improve the performance of the algorithm by reducing the number of nodes the travel planner needs to explore before reaching a solution.
 
+The following diagram compares the nodes explored when the distance penalty is 1 min/km vs. 3 min/km. 
+
 ![distance heuristic demo](./docs/distance-heuristics-1-3.png)
 
 The algorithm explores nodes by transit and walking. A node can be explored by walking as long as the node was reached by transit.
