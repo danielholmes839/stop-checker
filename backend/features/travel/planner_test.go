@@ -14,7 +14,7 @@ func newTestPlanner() *Planner {
 	cacheData, _ := osrm.ReadCacheData("../../../data/300m-directions.json")
 	cache := osrm.NewCache(cacheData)
 	client := osrm.NewClient("http://localhost:5000")
-	return NewPlanner(database.StopLocationIndex, database.StopRouteIndex, database.ReachIndex, cache, client)
+	return NewPlanner(database.StopLocationIndex, database.StopRouteIndex, database.ReachIndex, cache, client, &PlannerMetricsEmpty{})
 }
 func BenchmarkPlanner(b *testing.B) {
 	planner := newTestPlanner()

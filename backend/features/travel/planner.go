@@ -17,6 +17,7 @@ type Planner struct {
 	reachIndex        repository.ReachableWithSchedule
 	directionsCache   walkingDirectionsCache
 	directions        walkingDirections
+	metrics           PlannerMetrics
 }
 
 func NewPlanner(
@@ -25,6 +26,7 @@ func NewPlanner(
 	reachIndex repository.ReachableWithSchedule,
 	directionsCache walkingDirectionsCache,
 	directions walkingDirections,
+	metrics PlannerMetrics,
 ) *Planner {
 	return &Planner{
 		stopLocationIndex: stopLocationIndex,
@@ -32,6 +34,7 @@ func NewPlanner(
 		reachIndex:        reachIndex,
 		directionsCache:   directionsCache,
 		directions:        directions,
+		metrics:           metrics,
 	}
 }
 
@@ -122,6 +125,8 @@ func (p *Planner) explore(t time.Time, initial, target model.Location, mode Mode
 			continue
 		}
 		explored.Add(current.ID())
+
+		p.metrics.RecordExploreNode(current)
 
 		// travel plan solution!
 		if current.kind == TARGET {

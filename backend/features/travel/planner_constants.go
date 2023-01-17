@@ -13,9 +13,9 @@ const MAX_WALK_TARGET = 1000.0
 
 const TRANSFER_PENALTY = 5 * time.Minute
 
-// value multiplied by distance remaining to the stop (3 minute penalty per km away)
+// value multiplied by distance remaining to the stop (2.5 minute penalty per km away)
 // typical A* heuristic
-const DISTANCE_PENALTY = (1 * time.Minute) / 1000
+const DISTANCE_PENALTY = (2*time.Minute + 30*time.Second) / 1000
 
 // walking constants
 const WALK_SPEED = 1.3 // meters per second

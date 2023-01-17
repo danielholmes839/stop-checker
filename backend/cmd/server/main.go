@@ -45,6 +45,7 @@ func main() {
 		database.ReachIndex,
 		directionsCache,
 		directions,
+		&travel.PlannerMetricsEmpty{},
 	)
 
 	scheduler := travel.NewScheduler(
